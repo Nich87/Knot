@@ -214,16 +214,18 @@ public class ReadReceiptHandler implements BaseHook {
       if (context == null)
         return;
 
-      boolean recordOthers = SettingsStore.get("record_others_read", true);
+      boolean recordOthers = SettingsStore.get("record_others_read", false);
       String messageText = null;
+
       try {
         File dbFile = context.getDatabasePath("naver_line");
         if (dbFile.exists()) {
           SQLiteDatabase db = SQLiteDatabase.openDatabase(
               dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
-          Cursor cursor = db.rawQuery("SELECT content, parameter, from_mid " +
-                                      "FROM chat_history WHERE server_id = ?",
-                                      new String[] {msgId});
+          Cursor cursor =
+              db.rawQuery("SELECT content, parameter, from_mid "
+                              + "FROM chat_history WHERE server_id = ?",
+                          new String[] {msgId});
           if (cursor.moveToFirst()) {
             messageText = cursor.getString(0);
             String parameter = cursor.getString(1);
