@@ -215,55 +215,15 @@ public class ReadReceiptHandler implements BaseHook {
         return;
 
       boolean recordOthers = SettingsStore.get("record_others_read", false);
-      String messageText = null;
+      String fromMid =
+          app.zipper.knot.utils.LineDBUtils.resolveMessageSender(msgId);
 
-      try {
-        File dbFile = context.getDatabasePath("naver_line");
-        if (dbFile.exists()) {
-          SQLiteDatabase db = SQLiteDatabase.openDatabase(
-              dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
-          Cursor cursor =
-              db.rawQuery("SELECT content, parameter, from_mid "
-                              + "FROM chat_history WHERE server_id = ?",
-                          new String[] {msgId});
-          if (cursor.moveToFirst()) {
-            messageText = cursor.getString(0);
-            String parameter = cursor.getString(1);
-            String fromMid = cursor.getString(2);
-
-            if (!recordOthers && fromMid != null && !fromMid.trim().isEmpty()) {
-              cursor.close();
-              db.close();
-              return;
-            }
-
-            if (messageText == null || messageText.isEmpty() ||
-                "null".equals(messageText)) {
-              if (parameter != null) {
-                if (parameter.contains("STKPKGID")) {
-                  messageText = app.zipper.knot.utils.ModuleStrings.MSG_STICKER;
-                } else if (parameter.contains("IMAGE") ||
-                           parameter.contains("image")) {
-                  messageText = app.zipper.knot.utils.ModuleStrings.MSG_IMAGE;
-                } else if (parameter.contains("VIDEO") ||
-                           parameter.contains("video")) {
-                  messageText = app.zipper.knot.utils.ModuleStrings.MSG_VIDEO;
-                } else if (parameter.contains("FILE") ||
-                           parameter.contains("file")) {
-                  messageText = app.zipper.knot.utils.ModuleStrings.MSG_FILE;
-                } else if (parameter.contains("LOCATION") ||
-                           parameter.contains("location")) {
-                  messageText =
-                      app.zipper.knot.utils.ModuleStrings.MSG_LOCATION;
-                }
-              }
-            }
-          }
-          cursor.close();
-          db.close();
-        }
-      } catch (Throwable t) {
+      if (!recordOthers && fromMid != null && !fromMid.trim().isEmpty()) {
+        return;
       }
+
+      String messageText =
+          app.zipper.knot.utils.LineDBUtils.resolveMessageContent(msgId);
 
       JSONObject history = SettingsStore.loadReadHistory();
       JSONArray list = history.optJSONArray("read_history");

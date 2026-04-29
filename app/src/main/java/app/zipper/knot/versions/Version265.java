@@ -114,8 +114,10 @@ public class Version265 {
     v.unsend.methodUnsendThriftSilent = "silentlyUnsendMessage";
     v.unsend.methodUnsendAnnouncement = "unsendChatRoomAnnouncement";
     v.unsend.operationTypeField = "c";
+    v.unsend.operationParam1Field = "g";
     v.unsend.operationParam2Field = "h";
     v.unsend.operationParam3Field = "i";
+    v.unsend.operationCreatedTimeField = "b";
     v.unsend.chatMessageIdField = "d";
     v.unsend.isOpReadScheme = true;
     v.unsend.operationUnsendName = "DESTROY_MESSAGE";
@@ -137,8 +139,8 @@ public class Version265 {
     v.thrift.methodDestroyMessages = "destroyMessages";
 
     v.tabs.bottomNavigationBarTextViewClass =
-        "jp.naver.line.android.activity.main.bottomnavigationbar." +
-        "BottomNavigationBarTextView";
+        "jp.naver.line.android.activity.main.bottomnavigationbar."
+        + "BottomNavigationBarTextView";
     v.tabs.resVoom = "bnb_timeline";
     v.tabs.resNews = "bnb_news";
     v.tabs.resMini = "bnb_mini";
@@ -225,6 +227,10 @@ public class Version265 {
     v.res.idTimestamp = 0x7f0b08f7;
     v.res.resSettingsHeaderBtn = "settings_header_button";
     v.res.resSettingsBtn = "settings_button";
+    
+    v.notification.chatHistoryRequestClass = "com.linecorp.line.chat.request.ChatHistoryRequest";
+    v.notification.chatHistoryActivityLaunchActivityClass = "jp.naver.line.android.activity.chathistory.ChatHistoryActivityLaunchActivity";
+    v.notification.lineAppVersionClass = "jp.naver.line.android.common.LineAppVersion";
 
     return v;
   }

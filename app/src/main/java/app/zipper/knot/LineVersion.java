@@ -25,6 +25,7 @@ public class LineVersion {
     public Font font = new Font();
     public ThemeFree themeFree = new ThemeFree();
     public StickerTrial stickerTrial = new StickerTrial();
+    public Notification notification = new Notification();
 
     public static class Main {
       public String mainActivity = "";
@@ -144,8 +145,10 @@ public class LineVersion {
       public String methodUnsendThriftSilent = "";
       public String methodUnsendAnnouncement = "";
       public String operationTypeField = "";
+      public String operationParam1Field = "";
       public String operationParam2Field = "";
       public String operationParam3Field = "";
+      public String operationCreatedTimeField = "";
       public String chatMessageIdField = "";
       public boolean isOpReadScheme = false;
 
@@ -271,6 +274,12 @@ public class LineVersion {
       public int idTimestamp = 0;
       public String resSettingsHeaderBtn = "";
       public String resSettingsBtn = "";
+    }
+
+    public static class Notification {
+      public String chatHistoryRequestClass = "";
+      public String chatHistoryActivityLaunchActivityClass = "";
+      public String lineAppVersionClass = "";
     }
   }
 

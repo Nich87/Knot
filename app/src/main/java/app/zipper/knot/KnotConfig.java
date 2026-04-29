@@ -45,7 +45,6 @@ public class KnotConfig {
       new Item("remove_tab_voom", ModuleStrings.OPT_REMOVE_TAB_VOOM_LABEL,
                ModuleStrings.OPT_REMOVE_TAB_VOOM_DESC, false, Category.DISPLAY);
 
-
   public Item removeTabNews =
       new Item("remove_tab_news", ModuleStrings.OPT_REMOVE_TAB_NEWS_LABEL,
                ModuleStrings.OPT_REMOVE_TAB_NEWS_DESC, false, Category.DISPLAY);
@@ -109,6 +108,11 @@ public class KnotConfig {
       "fix_notifications", ModuleStrings.OPT_FIX_NOTIFICATIONS_LABEL,
       ModuleStrings.OPT_FIX_NOTIFICATIONS_DESC, false, Category.NOTIFICATION);
 
+  public Item reactionNotification = new Item(
+      "reaction_notification", ModuleStrings.OPT_REACTION_NOTIFICATION_LABEL,
+      ModuleStrings.OPT_REACTION_NOTIFICATION_DESC, false,
+      Category.NOTIFICATION);
+
   public Item themeFree = new Item(
       "theme_free", ModuleStrings.OPT_THEME_FREE_LABEL,
       ModuleStrings.OPT_THEME_FREE_DESC, false, Category.STICKER_THEME);
@@ -147,6 +151,7 @@ public class KnotConfig {
                          openUrlInDefaultBrowser,
                          removeNotificationMuteButton,
                          fixNotifications,
+                         reactionNotification,
                          themeFree,
                          stickerTrial,
                          spoofVersion,

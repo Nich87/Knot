@@ -144,6 +144,11 @@ public class ModuleStrings {
       "「通知をオフ」ボタンを非表示";
   public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_DESC =
       "LINEの通知に表示される「通知をオフ」ボタンを削除します。";
+  public static final String OPT_REACTION_NOTIFICATION_LABEL =
+      "リアクション通知";
+  public static final String OPT_REACTION_NOTIFICATION_DESC =
+      "メッセージについたリアクションを通知します。※アプリを開くと送信されま" +
+      "す。";
 
   // Hidden as it breaks notifications when app is frozen; pending a better
   // solution.
@@ -194,4 +199,8 @@ public class ModuleStrings {
   public static final String OPT_RESTORE_DESC =
       "バックアップファイルからトーク履歴を復元します。現在の履歴が上書きされ"
       + "ます。";
+
+  public static final String REACTION_NOTIF_TITLE =
+      "%sが以下のメッセージにリアクションしました";
+  public static final String REACTION_NOTIF_BODY = "%s";
 }

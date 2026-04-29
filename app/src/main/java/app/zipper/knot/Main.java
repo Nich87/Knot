@@ -62,6 +62,7 @@ public class Main
 
       BaseHook[] hooks = {new SettingsUIInjector(),
                           new ReadReceiptHandler(),
+                          new ReactionNotification(),
                           new UnsendProtector(),
                           new VersionSpoof(),
                           new RemoveAds(),
