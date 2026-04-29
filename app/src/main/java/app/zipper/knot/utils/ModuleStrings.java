@@ -13,6 +13,7 @@ public class ModuleStrings {
       "保存先を選択してください";
   public static final String SETTINGS_UNSET = "未設定";
   public static final String SETTINGS_PATH_LABEL = "保存先: ";
+  public static final String SETTINGS_SEARCH_HINT = "設定を検索...";
 
   public static final String CAT_CHAT = "チャット";
   public static final String CAT_STICKER_THEME = "スタンプ・着せかえ";

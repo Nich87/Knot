@@ -8,10 +8,13 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +22,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -38,6 +42,7 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
 
 public class SettingsUIInjector implements BaseHook {
 
@@ -105,7 +110,7 @@ public class SettingsUIInjector implements BaseHook {
               return;
             LineVersion.Config c = LineVersion.get();
             List<Object> items = new ArrayList<>((Collection<?>)param.args[0]);
-            int insertIndex = items.size();
+            int insertPos = items.size();
           findPosition:
             for (int i = 0; i < items.size(); i++) {
               try {
@@ -118,7 +123,7 @@ public class SettingsUIInjector implements BaseHook {
                   if (f.getType() == int.class) {
                     f.setAccessible(true);
                     if (f.getInt(model) == c.res.idPersonalInfo) {
-                      insertIndex = i;
+                      insertPos = i;
                       break findPosition;
                     }
                   }
@@ -199,8 +204,8 @@ public class SettingsUIInjector implements BaseHook {
               }
             }
 
-            items.add(insertIndex, section);
-            items.add(insertIndex + 1, row);
+            items.add(insertPos, section);
+            items.add(insertPos + 1, row);
             param.args[0] = items;
           }
         });
@@ -437,8 +442,8 @@ public class SettingsUIInjector implements BaseHook {
       settingsDialog = dialog;
       dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-      View content = buildSettingsInterface(host, cachedToggle, cachedSuccess,
-                                            dialog.getWindow());
+      View content = createSettingsView(host, cachedToggle, cachedSuccess,
+                                        dialog.getWindow());
 
       dialog.setContentView(content);
 
@@ -512,8 +517,8 @@ public class SettingsUIInjector implements BaseHook {
         .start();
   }
 
-  private View buildSettingsInterface(Activity host, Object toggleType,
-                                      Object statusEnum, Window win) {
+  private View createSettingsView(Activity host, Object toggleType,
+                                  Object statusEnum, Window win) {
     try {
       LineVersion.Config currentCfg = LineVersion.get();
       boolean isDark = ThemeUtils.isContextDarkTheme(host);
@@ -574,22 +579,25 @@ public class SettingsUIInjector implements BaseHook {
         ViewGroup.LayoutParams viewLp = itemListView.getLayoutParams();
         viewParent.removeView(itemListView);
 
-        final ScrollView settingScroller = new ScrollView(host);
-        final FrameLayout itemContentHost = new FrameLayout(host);
-        itemContentHost.addView(
-            renderSettingsItems(host, toggleType, statusEnum));
-        settingScroller.addView(itemContentHost);
-        viewParent.addView(settingScroller, viewIndex, viewLp);
+        LinearLayout settingsRoot = new LinearLayout(host);
+        settingsRoot.setOrientation(LinearLayout.VERTICAL);
+        settingsRoot.setLayoutParams(viewLp);
 
-        onSettingsReloadRequest = () -> host.runOnUiThread(() -> {
-          itemContentHost.removeAllViews();
-          itemContentHost.addView(
-              renderSettingsItems(host, toggleType, statusEnum));
-        });
+        final FrameLayout itemHost = new FrameLayout(host);
+        final ScrollView scroller = new ScrollView(host);
+
+        itemHost.addView(renderSettingsItems(host, toggleType, statusEnum));
+        scroller.addView(itemHost);
+
+        setupSearchBox(host, isDark, settingsRoot, itemHost, toggleType,
+                       statusEnum);
+
+        settingsRoot.addView(scroller, new LinearLayout.LayoutParams(-1, -1));
+        viewParent.addView(settingsRoot, viewIndex, viewLp);
 
         int bgColor = isDark ? Color.parseColor("#111111") : Color.WHITE;
         hostContainer.setBackgroundColor(bgColor);
-        settingScroller.setBackgroundColor(bgColor);
+        scroller.setBackgroundColor(bgColor);
       }
       return hostContainer;
     } catch (Throwable t) {
@@ -617,6 +625,9 @@ public class SettingsUIInjector implements BaseHook {
     injectSectionHeader(layoutInfl, mainList, ModuleStrings.CAT_STORAGE);
     injectPathSelectorRow(layoutInfl, mainList, ctx,
                           ModuleStrings.DESC_PATH_ROW);
+    mainList.getChildAt(mainList.getChildCount() - 1)
+        .setTag((ModuleStrings.CAT_STORAGE + " " + ModuleStrings.DESC_PATH_ROW)
+                    .toLowerCase());
 
     KnotConfig activeConfig = Main.options;
     int lastCategoryIndex = -1;
@@ -697,6 +708,7 @@ public class SettingsUIInjector implements BaseHook {
             pendingRestart = true;
           });
         }
+        settingRow.setTag((i.label + " " + i.description).toLowerCase());
         mainList.addView(settingRow);
       } catch (Throwable ignored) {
       }
@@ -704,11 +716,23 @@ public class SettingsUIInjector implements BaseHook {
 
     injectSectionHeader(layoutInfl, mainList, ModuleStrings.CAT_BACKUP);
     injectBackupRow(layoutInfl, mainList, ctx);
+    mainList.getChildAt(mainList.getChildCount() - 1)
+        .setTag((ModuleStrings.OPT_BACKUP_LABEL + " " +
+                 ModuleStrings.OPT_BACKUP_DESC)
+                    .toLowerCase());
     injectRestoreRow(layoutInfl, mainList, ctx);
+    mainList.getChildAt(mainList.getChildCount() - 1)
+        .setTag((ModuleStrings.OPT_RESTORE_LABEL + " " +
+                 ModuleStrings.OPT_RESTORE_DESC)
+                    .toLowerCase());
 
     injectSectionHeader(layoutInfl, mainList, ModuleStrings.CAT_OTHER);
     injectResetRow(layoutInfl, mainList, ctx, activeConfig,
                    ModuleStrings.DESC_RESET_ROW);
+    mainList.getChildAt(mainList.getChildCount() - 1)
+        .setTag(
+            (ModuleStrings.SETTINGS_RESET + " " + ModuleStrings.DESC_RESET_ROW)
+                .toLowerCase());
     return mainList;
   }
 
@@ -728,8 +752,56 @@ public class SettingsUIInjector implements BaseHook {
           infl.inflate(currentCfg.res.layoutSectionHeader, parent, false);
       if (hView instanceof TextView)
         ((TextView)hView).setText(text);
+      hView.setTag("section_header");
       parent.addView(hView);
     } catch (Throwable ignored) {
+    }
+  }
+
+  private void filterSettings(View settingsList, String query) {
+    if (!(settingsList instanceof ViewGroup))
+      return;
+    ViewGroup list = (ViewGroup)settingsList;
+    boolean isSearching = query.length() > 0;
+
+    int childCount = list.getChildCount();
+    View lastHeader = null;
+    int itemsInCurrentSection = 0;
+
+    for (int i = 0; i < childCount; i++) {
+      View child = list.getChildAt(i);
+      Object tag = child.getTag();
+
+      if (tag instanceof String && ((String)tag).equals("section_header")) {
+        if (lastHeader != null) {
+          lastHeader.setVisibility(itemsInCurrentSection > 0 || !isSearching
+                                       ? View.VISIBLE
+                                       : View.GONE);
+        }
+        lastHeader = child;
+        itemsInCurrentSection = 0;
+        continue;
+      }
+
+      if (!isSearching) {
+        child.setVisibility(View.VISIBLE);
+        continue;
+      }
+
+      if (tag instanceof String) {
+        String searchable = (String)tag;
+        if (searchable.contains(query)) {
+          child.setVisibility(View.VISIBLE);
+          itemsInCurrentSection++;
+        } else {
+          child.setVisibility(View.GONE);
+        }
+      }
+    }
+
+    if (lastHeader != null) {
+      lastHeader.setVisibility(
+          itemsInCurrentSection > 0 || !isSearching ? View.VISIBLE : View.GONE);
     }
   }
 
@@ -958,5 +1030,60 @@ public class SettingsUIInjector implements BaseHook {
                    method.getName())
                    ? type
                    : null);
+  }
+
+  private void setupSearchBox(Context ctx, boolean isDark, LinearLayout root,
+                              FrameLayout itemHost, Object toggleType,
+                              Object statusEnum) {
+    EditText searchBox = new EditText(ctx);
+    searchBox.setHint(ModuleStrings.SETTINGS_SEARCH_HINT);
+    searchBox.setSingleLine(true);
+    searchBox.setTextSize(14);
+
+    float density = ctx.getResources().getDisplayMetrics().density;
+    int pHorizontal = (int)(16 * density);
+    int pVertical = (int)(8 * density);
+    searchBox.setPadding(pHorizontal, pVertical, pHorizontal, pVertical);
+
+    GradientDrawable searchBg = new GradientDrawable();
+    searchBg.setColor(isDark ? Color.parseColor("#222222")
+                             : Color.parseColor("#F5F5F5"));
+    searchBg.setCornerRadius(20 * density);
+    searchBox.setBackground(searchBg);
+
+    searchBox.setTextColor(isDark ? Color.WHITE : Color.BLACK);
+    searchBox.setHintTextColor(isDark ? Color.parseColor("#888888")
+                                      : Color.GRAY);
+
+    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+    int margin = (int)(12 * density);
+    lp.setMargins(margin, margin / 2, margin, margin / 2);
+    searchBox.setLayoutParams(lp);
+
+    root.addView(searchBox, 0);
+
+    searchBox.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count,
+                                    int after) {}
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before,
+                                int count) {
+        filterSettings(itemHost.getChildAt(0), s.toString().toLowerCase());
+      }
+      @Override
+      public void afterTextChanged(Editable s) {}
+    });
+
+    onSettingsReloadRequest = () -> {
+      Activity a = resolveActivity(ctx);
+      if (a != null)
+        a.runOnUiThread(() -> {
+          itemHost.removeAllViews();
+          View newList = renderSettingsItems(ctx, toggleType, statusEnum);
+          itemHost.addView(newList);
+          filterSettings(newList, searchBox.getText().toString().toLowerCase());
+        });
+    };
   }
 }
