@@ -158,6 +158,9 @@ public class Version265 {
         v.ads.classAdMolinBase + ".smartch.v2.view.SmartChannelViewLayout";
 
     v.home.resRecommendation = "home_tab_contents_recommendation_placement";
+    v.home.resServiceCarouselId = "home_tab_service_carousel";
+    v.home.resServiceTitleId = "home_tab_service_title";
+    v.home.resNoServicesId = "home_tab_no_services_title";
 
     v.chat.headerController = "q71.f1";
     v.chat.headerHelper = "jp.naver.line.android.common.view.header.b";

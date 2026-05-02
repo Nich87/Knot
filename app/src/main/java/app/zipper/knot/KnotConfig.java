@@ -67,6 +67,10 @@ public class KnotConfig {
                ModuleStrings.OPT_REMOVE_HOME_RECOMMENDATIONS_DESC, false,
                Category.DISPLAY);
 
+  public Item removeHomeServices = new Item(
+      "remove_home_services", ModuleStrings.OPT_REMOVE_HOME_SERVICES_LABEL,
+      ModuleStrings.OPT_REMOVE_HOME_SERVICES_DESC, false, Category.DISPLAY);
+
   public Item preventMarkAsRead = new Item(
       "prevent_mark_as_read", ModuleStrings.OPT_PREVENT_MARK_AS_READ_LABEL,
       ModuleStrings.OPT_PREVENT_MARK_AS_READ_DESC, false, Category.CHAT);
@@ -149,6 +153,7 @@ public class KnotConfig {
                          extendTabClickArea,
                          hideTabText,
                          removeHomeRecommendations,
+                         removeHomeServices,
                          useCustomFont,
                          customFontPath,
                          preventMarkAsRead,

@@ -118,6 +118,10 @@ public class ModuleStrings {
       "ホームのおすすめを非表示";
   public static final String OPT_REMOVE_HOME_RECOMMENDATIONS_DESC =
       "ホーム画面に表示されるおすすめコンテンツを非表示にします。";
+  public static final String OPT_REMOVE_HOME_SERVICES_LABEL =
+      "ホームのサービスを非表示";
+  public static final String OPT_REMOVE_HOME_SERVICES_DESC =
+      "ホーム画面に表示されるサービス一覧を非表示にします。";
   public static final String OPT_REMOVE_TAB_VOOM_LABEL = "VOOMタブを非表示";
   public static final String OPT_REMOVE_TAB_VOOM_DESC =
       "下部のVOOMタブを隠します。";

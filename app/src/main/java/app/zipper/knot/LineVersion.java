@@ -193,6 +193,9 @@ public class LineVersion {
 
     public static class Home {
       public String resRecommendation = "";
+      public String resServiceCarouselId = "";
+      public String resServiceTitleId = "";
+      public String resNoServicesId = "";
     }
 
     public static class Chat {
