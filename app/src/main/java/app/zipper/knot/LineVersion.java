@@ -287,6 +287,7 @@ public class LineVersion {
   private static final Map<String, Config> VERSION_TABLE = new HashMap<>();
   static {
     VERSION_TABLE.put("26.5.", app.zipper.knot.versions.Version265.create());
+    VERSION_TABLE.put("26.6.", app.zipper.knot.versions.Version266.create());
   }
 
   private static volatile Config cachedConfig = null;
