@@ -451,6 +451,7 @@ public class SettingsUIInjector implements BaseHook {
       SettingsStore.init(host);
       SettingsStore.load(Main.options);
       pendingRestart = false;
+      boolean isDark = ThemeUtils.isContextDarkTheme(host);
 
       Dialog dialog =
           new Dialog(host, android.R.style.Theme_DeviceDefault_NoActionBar) {
@@ -481,9 +482,17 @@ public class SettingsUIInjector implements BaseHook {
         win.addFlags(
             WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         win.setStatusBarColor(Color.TRANSPARENT);
-        win.getDecorView().setSystemUiVisibility(
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        int visibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                         View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+        if (!isDark && android.os.Build.VERSION.SDK_INT >=
+                           android.os.Build.VERSION_CODES.M) {
+          visibility |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        }
+        if (!isDark && android.os.Build.VERSION.SDK_INT >=
+                           android.os.Build.VERSION_CODES.O) {
+          visibility |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+        }
+        win.getDecorView().setSystemUiVisibility(visibility);
         win.getDecorView().setPadding(0, 0, 0, 0);
         win.getDecorView().requestApplyInsets();
       }
@@ -557,8 +566,6 @@ public class SettingsUIInjector implements BaseHook {
       hostContainer.setFocusable(true);
       hostContainer.setPadding(0, 0, 0, 0);
 
-      // Remove Compose header to prevent ViewTreeLifecycleOwner crash in
-      // Dialogs
       try {
         int composeHeaderId = host.getResources().getIdentifier(
             "compose_header", "id", "jp.naver.line.android");
@@ -802,8 +809,6 @@ public class SettingsUIInjector implements BaseHook {
                              Object statusEnum) {
     try {
       final String settingKey = i.key;
-      // Temporarily hide this option until a solution is found for
-      // notification issues when app is frozen by freezer.
       if (settingKey.equals("fix_notifications"))
         return;
 
@@ -878,7 +883,9 @@ public class SettingsUIInjector implements BaseHook {
                                  Object toggleType, Object statusEnum) {
     try {
       LineVersion.Config currentCfg = LineVersion.get();
+      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
       View cRow = infl.inflate(currentCfg.res.typeRow, parent, false);
+      applyNativeHighlight(cRow, isDark);
       applyVisibility(cRow, currentCfg.res.idIcon, View.GONE);
       applyVisibility(cRow, currentCfg.res.idDesc, View.GONE);
       applyVisibility(cRow, currentCfg.res.idMark, View.GONE);
@@ -890,6 +897,8 @@ public class SettingsUIInjector implements BaseHook {
       TextView titleLabel = cRow.findViewById(currentCfg.res.idTitle);
       if (titleLabel != null) {
         titleLabel.setText(category.label);
+        titleLabel.setTextColor(isDark ? Color.WHITE
+                                       : Color.parseColor("#111111"));
       }
       cRow.setTag(category.label.toLowerCase());
       cRow.setOnClickListener(
@@ -964,7 +973,9 @@ public class SettingsUIInjector implements BaseHook {
                                      Context ctx, String description) {
     try {
       LineVersion.Config currentCfg = LineVersion.get();
+      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
       View pRow = infl.inflate(currentCfg.res.typeRow, parent, false);
+      applyNativeHighlight(pRow, isDark);
       applyVisibility(pRow, currentCfg.res.idIcon, View.GONE);
       applyVisibility(pRow, currentCfg.res.idMark, View.GONE);
       applyVisibility(pRow, currentCfg.res.idSeparator, View.GONE);
@@ -990,7 +1001,9 @@ public class SettingsUIInjector implements BaseHook {
                               String description) {
     try {
       LineVersion.Config currentCfg = LineVersion.get();
+      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
       View rRow = infl.inflate(currentCfg.res.typeRow, parent, false);
+      applyNativeHighlight(rRow, isDark);
       applyVisibility(rRow, currentCfg.res.idIcon, View.GONE);
       applyVisibility(rRow, currentCfg.res.idMark, View.GONE);
       applyVisibility(rRow, currentCfg.res.idSeparator, View.GONE);
@@ -1037,12 +1050,16 @@ public class SettingsUIInjector implements BaseHook {
                                Context ctx) {
     try {
       LineVersion.Config currentCfg = LineVersion.get();
+      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
       View bRow = infl.inflate(currentCfg.res.typeRow, parent, false);
+      applyNativeHighlight(bRow, isDark);
       applyVisibility(bRow, currentCfg.res.idIcon, View.GONE);
       applyVisibility(bRow, currentCfg.res.idArrow, View.VISIBLE);
 
       TextView titleLabel = bRow.findViewById(currentCfg.res.idTitle);
       titleLabel.setText(ModuleStrings.OPT_BACKUP_LABEL);
+      titleLabel.setTextColor(isDark ? Color.WHITE
+                                     : Color.parseColor("#111111"));
       TextView descLabel = bRow.findViewById(currentCfg.res.idDesc);
       descLabel.setText(ModuleStrings.OPT_BACKUP_DESC);
       descLabel.setVisibility(View.VISIBLE);
@@ -1057,12 +1074,16 @@ public class SettingsUIInjector implements BaseHook {
                                 Context ctx) {
     try {
       LineVersion.Config currentCfg = LineVersion.get();
+      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
       View rRow = infl.inflate(currentCfg.res.typeRow, parent, false);
+      applyNativeHighlight(rRow, isDark);
       applyVisibility(rRow, currentCfg.res.idIcon, View.GONE);
       applyVisibility(rRow, currentCfg.res.idArrow, View.VISIBLE);
 
       TextView titleLabel = rRow.findViewById(currentCfg.res.idTitle);
       titleLabel.setText(ModuleStrings.OPT_RESTORE_LABEL);
+      titleLabel.setTextColor(isDark ? Color.WHITE
+                                     : Color.parseColor("#111111"));
       TextView descLabel = rRow.findViewById(currentCfg.res.idDesc);
       descLabel.setText(ModuleStrings.OPT_RESTORE_DESC);
       descLabel.setVisibility(View.VISIBLE);
@@ -1116,12 +1137,16 @@ public class SettingsUIInjector implements BaseHook {
                               Context ctx) {
     try {
       LineVersion.Config currentCfg = LineVersion.get();
+      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
       View aRow = infl.inflate(currentCfg.res.typeRow, parent, false);
+      applyNativeHighlight(aRow, isDark);
       applyVisibility(aRow, currentCfg.res.idIcon, View.GONE);
       applyVisibility(aRow, currentCfg.res.idArrow, View.VISIBLE);
 
       TextView titleLabel = aRow.findViewById(currentCfg.res.idTitle);
       titleLabel.setText(ModuleStrings.OPT_ABOUT_LABEL);
+      titleLabel.setTextColor(isDark ? Color.WHITE
+                                     : Color.parseColor("#111111"));
       TextView descLabel = aRow.findViewById(currentCfg.res.idDesc);
       descLabel.setText(ModuleStrings.OPT_ABOUT_DESC);
       descLabel.setVisibility(View.VISIBLE);
@@ -1132,7 +1157,7 @@ public class SettingsUIInjector implements BaseHook {
         int themeId = ThemeUtils.isContextDarkTheme(activeCtx)
                           ? android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK
                           : android.app.AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
-        boolean isDark = ThemeUtils.isContextDarkTheme(activeCtx);
+        boolean isDarkDialog = ThemeUtils.isContextDarkTheme(activeCtx);
 
         LinearLayout layout = new LinearLayout(activeCtx);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -1171,14 +1196,15 @@ public class SettingsUIInjector implements BaseHook {
         title.setText(titleStr);
         title.setTextSize(20);
         title.setTypeface(null, Typeface.BOLD);
-        title.setTextColor(isDark ? Color.WHITE : Color.BLACK);
+        title.setTextColor(isDarkDialog ? Color.WHITE
+                                        : Color.parseColor("#111111"));
         title.setGravity(Gravity.CENTER_HORIZONTAL);
         layout.addView(title);
 
         TextView ver = new TextView(activeCtx);
         ver.setText(verStr);
         ver.setTextSize(12);
-        ver.setTextColor(isDark ? Color.GRAY : Color.DKGRAY);
+        ver.setTextColor(isDarkDialog ? Color.GRAY : Color.DKGRAY);
         ver.setGravity(Gravity.CENTER_HORIZONTAL);
         LinearLayout.LayoutParams verLp = new LinearLayout.LayoutParams(-2, -2);
         verLp.bottomMargin = (int)(24 * density);
@@ -1188,13 +1214,14 @@ public class SettingsUIInjector implements BaseHook {
         TextView content = new TextView(activeCtx);
         content.setText(bodyText);
         content.setTextSize(14);
-        content.setTextColor(isDark ? Color.LTGRAY : Color.BLACK);
+        content.setTextColor(isDarkDialog ? Color.LTGRAY
+                                          : Color.parseColor("#111111"));
         content.setGravity(Gravity.CENTER_HORIZONTAL);
         content.setLineSpacing(0, 1.2f);
         content.setAutoLinkMask(Linkify.WEB_URLS);
         content.setMovementMethod(LinkMovementMethod.getInstance());
-        content.setLinkTextColor(isDark ? Color.parseColor("#4dabf7")
-                                        : Color.parseColor("#1971c2"));
+        content.setLinkTextColor(isDarkDialog ? Color.parseColor("#4dabf7")
+                                              : Color.parseColor("#1971c2"));
         layout.addView(content);
 
         new AlertDialog.Builder(activeCtx, themeId)
@@ -1311,7 +1338,7 @@ public class SettingsUIInjector implements BaseHook {
     searchBg.setCornerRadius(20 * density);
     searchBox.setBackground(searchBg);
 
-    searchBox.setTextColor(isDark ? Color.WHITE : Color.BLACK);
+    searchBox.setTextColor(isDark ? Color.WHITE : Color.parseColor("#111111"));
     searchBox.setHintTextColor(isDark ? Color.parseColor("#888888")
                                       : Color.GRAY);
 
@@ -1392,5 +1419,23 @@ public class SettingsUIInjector implements BaseHook {
           filterSettings(newList, query);
         });
     };
+  }
+
+  private void applyNativeHighlight(View v, boolean isDark) {
+    if (v == null)
+      return;
+    android.graphics.drawable.StateListDrawable states =
+        new android.graphics.drawable.StateListDrawable();
+    int pressedColor =
+        isDark ? Color.parseColor("#1F1F1F") : Color.parseColor("#F5F5F5");
+    int normalColor =
+        isDark ? Color.parseColor("#111111") : Color.parseColor("#FFFFFF");
+
+    states.addState(new int[] {android.R.attr.state_pressed},
+                    new ColorDrawable(pressedColor));
+    states.addState(new int[] {android.R.attr.state_focused},
+                    new ColorDrawable(pressedColor));
+    states.addState(new int[] {}, new ColorDrawable(normalColor));
+    v.setBackground(states);
   }
 }
