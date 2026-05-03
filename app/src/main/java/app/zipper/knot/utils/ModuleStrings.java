@@ -205,6 +205,10 @@ public class ModuleStrings {
       "AI Friendsボタンを非表示";
   public static final String OPT_REMOVE_AI_FRIENDS_BUTTON_DESC =
       "トークタブ右上の「AI Friends」ボタンを非表示にします。";
+  public static final String OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_LABEL =
+      "検索バーのAgent iボタンを非表示";
+  public static final String OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_DESC =
+      "トークタブ/ホームタブの検索バー右側にある「Agent i」ボタンを非表示にします。";
   public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_LABEL =
       "オープンチャットボタンを非表示";
   public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_DESC =
