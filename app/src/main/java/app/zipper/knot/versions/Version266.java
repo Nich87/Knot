@@ -253,6 +253,18 @@ public class Version266 {
     v.talkTabHeader.iconTypeClass = "yu0.n";
     v.talkTabHeader.iconTypeFieldInButton = "a";
 
+    v.searchBarAgentI.talkVisibleMethod = "w";
+    v.searchBarAgentI.talkClickMethod = "r";
+    v.searchBarAgentI.homeSearchBarClass = "ni4.h";
+    v.searchBarAgentI.homeRefreshMethod = "e";
+    v.searchBarAgentI.homeRootViewField = "c";
+    v.searchBarAgentI.homeTabTypeField = "b";
+    v.searchBarAgentI.homeTabName = "HOME";
+    v.searchBarAgentI.homeTabV2Name = "HOME_V2";
+    v.searchBarAgentI.homeAiContainerId = 0x7f0b16db;
+    v.searchBarAgentI.homeGuidelineId = 0x7f0b16dd;
+    v.searchBarAgentI.homeGuidelineEndDp = 55;
+
     v.aiIcon.repoClass = "yw0.c";
     v.aiIcon.methodGetShownAfterMillis = "i";
 
