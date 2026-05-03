@@ -3,7 +3,6 @@ package app.zipper.knot.hooks;
 import android.content.res.Resources;
 import android.text.SpannedString;
 import app.zipper.knot.KnotConfig;
-import app.zipper.knot.LineVersion;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
@@ -16,32 +15,13 @@ public class SafeResourceFix implements BaseHook {
     if (!config.safeSettingsResources.enabled)
       return;
 
-    LineVersion.Config lineCfg = LineVersion.get();
-    if (lineCfg == null || lineCfg.settings.viewHolderSwitch.isEmpty())
-      return;
-
-    final String targetClass = lineCfg.settings.viewHolderSwitch;
-    final String targetMethod = lineCfg.settings.methodBindDescription;
-
     try {
       XposedHelpers.findAndHookMethod(
           Resources.class, "getText", int.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param)
                 throws Throwable {
-              StackTraceElement[] stackTrace =
-                  Thread.currentThread().getStackTrace();
-              boolean found = false;
-              for (int i = 0; i < Math.min(stackTrace.length, 15); i++) {
-                StackTraceElement element = stackTrace[i];
-                if (element.getClassName().equals(targetClass) &&
-                    element.getMethodName().equals(targetMethod)) {
-                  found = true;
-                  break;
-                }
-              }
-
-              if (found && param.getResult() instanceof String) {
+              if (param.getResult() instanceof String) {
                 param.setResult(new SpannedString((String)param.getResult()));
               }
             }

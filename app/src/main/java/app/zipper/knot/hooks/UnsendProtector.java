@@ -66,6 +66,51 @@ public class UnsendProtector implements BaseHook {
       XposedBridge.log("Knot: Unsend op hook failed: " + t);
     }
 
+    if (cfg.unsend.unsendDestroyHandlerClass != null &&
+        !cfg.unsend.unsendDestroyHandlerClass.isEmpty()) {
+      try {
+        XposedBridge.hookAllMethods(
+            XposedHelpers.findClass(cfg.unsend.unsendDestroyHandlerClass,
+                                    lpparam.classLoader),
+            "b", new XC_MethodHook() {
+              @Override
+              protected void beforeHookedMethod(MethodHookParam param)
+                  throws Throwable {
+                if (!Main.options.preventUnsendMessage.enabled)
+                  return;
+                // Signature: b(hf8.q0, fh8.ae, Continuation)
+                java.lang.reflect.Method m =
+                    (java.lang.reflect.Method)param.method;
+                Class<?>[] types = m.getParameterTypes();
+                if (types.length != 3 || !types[1].getName().equals("fh8.ae"))
+                  return;
+
+                Object aeVar = param.args[1];
+                if (aeVar == null)
+                  return;
+
+                String msgId = (String)XposedHelpers.getObjectField(aeVar, "h");
+                if (msgId == null || msgId.isEmpty())
+                  return;
+
+                if (!unsendEvents.containsKey(msgId)) {
+                  XposedBridge.log("Knot: Blocked unsend (handler), id=" +
+                                   msgId);
+                  persistUnsendEvent(msgId, getFormattedTime());
+                }
+
+                XposedHelpers.setObjectField(aeVar, "h", "");
+
+                TextView tsView = timestampViews.get(msgId);
+                if (tsView != null)
+                  applyUnsendIndicator(tsView, tsView.getContext(), msgId);
+              }
+            });
+      } catch (Throwable t) {
+        XposedBridge.log("Knot: Destroy handler hook failed: " + t);
+      }
+    }
+
     try {
       XposedBridge.hookAllMethods(
           XposedHelpers.findClass(cfg.unsend.chatMessageViewHolderClass,

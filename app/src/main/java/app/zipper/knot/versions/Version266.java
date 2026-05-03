@@ -24,18 +24,18 @@ public class Version266 {
     v.main.methodRefreshNavHeader = "a";
     v.main.methodHeaderSetTitle = "setTitle";
     v.main.methodHeaderSetButtonVisibility =
-        "setUpButtonVisibility$common_libs_release";
+        "setUpButtonVisibility$common_libs";
     v.main.methodHeaderSetButtonListener =
-        "setUpButtonOnClickListener$common_libs_release";
+        "setUpButtonOnClickListener$common_libs";
     v.main.fieldNavHeader = "i";
 
     v.settings.mainSettingsFragmentClass =
         "com.linecorp.line.settings.main.LineUserMainSettingsFragment";
-    v.settings.settingsAdapterClass = "x58.f";
-    v.settings.settingsItemClass = "x58.f$c";
-    v.settings.settingsBaseAdapterClass = "x58.f$b";
+    v.settings.settingsAdapterClass = "v68.f";
+    v.settings.settingsItemClass = "v68.f$c";
+    v.settings.settingsBaseAdapterClass = "v68.f$b";
     v.settings.settingsSearchHelperClass = "pp4.b";
-    v.settings.settingsAdapterWrapperClass = "ak4.a";
+    v.settings.settingsAdapterWrapperClass = "jl4.a";
     v.settings.settingsHeaderItemClass = "kl4.q";
     v.settings.settingsRowItemClass = "kl4.s";
     v.settings.settingsHandlerBaseClass = "kl4.z";
@@ -43,7 +43,7 @@ public class Version266 {
     v.settings.methodBindViewHolder = "r";
     v.settings.methodGetItem = "q";
     v.settings.viewHolderSwitch = "pl4.o2";
-    v.settings.methodBindDescription = "D0";
+    v.settings.methodBindDescription = "M0";
     v.settings.fieldItemModel = "a";
     v.settings.fieldModelTag = "a";
     v.settings.fieldViewHolderView = "a";
@@ -83,19 +83,21 @@ public class Version266 {
     v.plusMenu.methodExecuteAction = "X";
     v.plusMenu.editChatDrawable = "chat_tab_ui_header_plusmenu_edit_chat";
     v.plusMenu.isSwapModifierCallback = true;
+    v.plusMenu.isNewMenuItemSignature = true;
 
-    v.readReceipt.readReceiptManagerClass = "qr2.e";
+    v.readReceipt.readReceiptManagerClass = "at2.e";
     v.readReceipt.readReceiptQueueClass = "he8.b";
     v.readReceipt.methodEnqueueReadReceipt = "c";
     v.readReceipt.methodSendReadReceipt = "d";
     v.readReceipt.methodExecuteReadReceiptAsync = "e";
     v.readReceipt.methodReadAll = "c";
     v.readReceipt.operationNotifiedReadName = "NOTIFIED_READ_MESSAGE";
+    v.readReceipt.badgeClearClass = "dc8.b";
 
     v.unsend.talkServiceHookClass = "fh8.ae$a";
     v.unsend.chatMessageViewHolderClass = "nd1.f";
     v.unsend.chatMessageViewDataClass = "g21.h";
-    v.unsend.methodReadBuffer = "b";
+    v.unsend.methodReadBuffer = "a";
     v.unsend.methodBind = "N";
     v.unsend.methodOperationTypeValueOf = "a";
     v.unsend.methodBindIndex = 1;
@@ -122,15 +124,16 @@ public class Version266 {
     v.unsend.isOpReadScheme = true;
     v.unsend.operationUnsendName = "DESTROY_MESSAGE";
     v.unsend.operationNotifiedUnsendName = "NOTIFIED_DESTROY_MESSAGE";
+    v.unsend.unsendDestroyHandlerClass = "if8.y0";
 
     v.thrift.talkServiceClientImplClass =
-        "jp.naver.line.android.thrift.client.impl.TalkServiceClientImpl";
+        "jp.naver.line.android.thrift.client.impl.LegacyTalkServiceClientImpl";
     v.thrift.talkServiceClientInterface =
         "jp.naver.line.android.thrift.client.TalkServiceClient";
     v.thrift.chatSearchActivityClass =
         "com.linecorp.line.chat.search.ChatSearchActivity";
-    v.thrift.sendMessage = "w2";
-    v.thrift.v1 = "v1";
+    v.thrift.sendMessage = "u0";
+    v.thrift.v1 = "r1";
     v.thrift.v2 = "v2";
     v.thrift.protocolClass = "org.apache.thrift.p";
     v.thrift.messageClass = "org.apache.thrift.e";
@@ -164,41 +167,41 @@ public class Version266 {
     v.chat.headerController = "h81.m1";
     v.chat.headerHelper = "jp.naver.line.android.common.view.header.b";
     v.chat.chatIdField = "j";
-    v.chat.methodGetChatId = "O";
+    v.chat.methodGetChatId = "Q";
 
     v.chatHeader.chatHistoryActivity =
         "jp.naver.line.android.activity.chathistory.ChatHistoryActivity";
-    v.chatHeader.fieldChatConfigChatId = "k31.a";
-    v.chatHeader.fieldChatConfigIsMuted = "i31.a";
-    v.chatHeader.fieldChatConfigCategory = "qz0.a";
+    v.chatHeader.fieldChatConfigChatId = "b41.a";
+    v.chatHeader.fieldChatConfigIsMuted = "z31.a";
+    v.chatHeader.fieldChatConfigCategory = "h01.g";
     v.chatHeader.fieldChatConfigType = "h81.y0";
-    v.chatHeader.fieldAppInfoVersion = "bh1.n";
-    v.chatHeader.fieldAppInfoPkg = "qz0.a";
-    v.chatHeader.fieldAppInfoId = "b35.b";
+    v.chatHeader.fieldAppInfoVersion = "hi1.n";
+    v.chatHeader.fieldAppInfoPkg = "h01.a";
+    v.chatHeader.fieldAppInfoId = "wl0.d";
 
     v.font.fontConfigClass = "k6.n";
     v.font.fontManagerClass = "k6.m";
     v.font.fontSettingsClass = "v74.e";
     v.font.fontCallbackClass = "k6.n$c";
-    v.font.fontInjectedClass = "x74.i";
+    v.font.fontInjectedClass = "x74.g";
     v.font.methodGetFontConfig = "a";
     v.font.methodInitializeFont = "b";
-    v.font.methodGetFontSettings = "e";
+    v.font.methodGetFontSettings = "g";
     v.font.methodOnFontChanged = "b";
     v.font.fieldTypeface = "f197160a";
 
     v.themeFree.productDataClass = "r25.f";
-    v.themeFree.themeRepositoryClass = "l57.n";
+    v.themeFree.themeRepositoryClass = "i67.m";
     v.themeFree.methodSetOwnership = "r";
     v.themeFree.fieldThemeProduct = "u";
-    v.themeFree.methodIsThemeOwned = "b";
+    v.themeFree.methodIsThemeOwned = "a";
     v.themeFree.fieldIsOwnedA = "A";
     v.themeFree.fieldIsOwnedB = "B";
     v.themeFree.fieldIsOwnedC = "C";
     v.themeFree.fieldIsOwnedD = "D";
     v.themeFree.fieldIsOwned = "s";
     v.themeFree.fieldProductType = "q";
-    v.themeFree.methodGetProductTypeName = "d";
+    v.themeFree.methodGetProductTypeName = "e";
     v.themeFree.themeDetailActivityClass =
         "com.linecorp.shop.impl.theme.endpage.ShopThemeDetailActivity";
     v.themeFree.methodThemeDetailUpdates =
@@ -206,7 +209,7 @@ public class Version266 {
 
     v.stickerTrial.freeTrialStatusCheckerClass = "d15.e0";
     v.stickerTrial.stickerDatabaseHelperClass = "e35.e";
-    v.stickerTrial.stickerContentValueDataClass = "e35.d";
+    v.stickerTrial.stickerContentValueDataClass = "f35.d";
     v.stickerTrial.methodGetContentValues = "a";
     v.stickerTrial.methodGetLimitCount = "d";
     v.stickerTrial.methodGetLimitRemaining = "e";
@@ -218,20 +221,20 @@ public class Version266 {
     v.res.idPersonalInfo = 0x7f15365b;
     v.res.typeSection = 0x7f0e0559;
     v.res.typeRow = 0x7f0e055c;
-    v.res.idIcon = 0x7f0b128e;
-    v.res.idDesc = 0x7f0b0c90;
-    v.res.idMark = 0x7f0b1707;
-    v.res.idSeparator = 0x7f0b231d;
-    v.res.idArrow = 0x7f0b0263;
+    v.res.idIcon = 0x7f0b2364;
+    v.res.idDesc = 0x7f0b2356;
+    v.res.idMark = 0x7f0b2377;
+    v.res.idSeparator = 0x7f0b239d;
+    v.res.idArrow = 0x7f0b233e;
     v.res.idNewMark = 0x7f0b19c9;
     v.res.idNoticeDot = 0x7f0b1a36;
-    v.res.idTitle = 0x7f0b28c8;
+    v.res.idTitle = 0x7f0b23a5;
     v.res.layoutCheckbox = 0x7f0e054e;
     v.res.layoutSectionHeader = 0x7f0e0559;
     v.res.layoutSettingsMain = 0x7f0e0553;
     v.res.idHeader = 0x7f0b1161;
     v.res.idStatusBarGuide = 0x7f0b2616;
-    v.res.idTimestamp = 0x7f0b28c7;
+    v.res.idTimestamp = 0x7f0b08b3;
     v.res.resSettingsHeaderBtn = "settings_header_button";
     v.res.resSettingsBtn = "settings_button";
 

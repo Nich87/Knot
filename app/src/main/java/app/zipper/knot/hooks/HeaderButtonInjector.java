@@ -117,8 +117,13 @@ public class HeaderButtonInjector implements BaseHook {
       if (icon == null)
         return;
 
-      XposedHelpers.callMethod(headerHelper, config.main.methodSetHeaderIcon,
-                               slot, icon);
+      // Use stable setButtonImageViewDrawable API to avoid per-version config
+      Object headerButton = XposedHelpers.callMethod(
+          headerHelper, config.main.methodGetHeaderButtonView, slot);
+      if (headerButton == null)
+        return;
+      XposedHelpers.callMethod(headerButton, "setButtonImageViewDrawable",
+                               icon);
 
       XposedHelpers.callMethod(headerHelper, config.main.methodSetHeaderLabel,
                                slot, ModuleStrings.READ_RECEIPT_VIEWER);
@@ -127,21 +132,17 @@ public class HeaderButtonInjector implements BaseHook {
           headerHelper, config.main.methodSetHeaderButtonVisibility, slot, 0);
 
       try {
-        View buttonView = (View)XposedHelpers.callMethod(
-            headerHelper, config.main.methodGetHeaderButtonView, slot);
-        if (buttonView != null) {
-          if (buttonView instanceof LinearLayout) {
-            LinearLayout layout = (LinearLayout)buttonView;
-            layout.setGravity(android.view.Gravity.CENTER);
-            int padding =
-                (int)(7 * context.getResources().getDisplayMetrics().density);
-            layout.setPadding(padding, 0, padding, 0);
+        if (headerButton instanceof LinearLayout) {
+          LinearLayout layout = (LinearLayout)headerButton;
+          layout.setGravity(android.view.Gravity.CENTER);
+          int padding =
+              (int)(7 * context.getResources().getDisplayMetrics().density);
+          layout.setPadding(padding, 0, padding, 0);
 
-            android.view.ViewGroup.LayoutParams lp = layout.getLayoutParams();
-            if (lp != null) {
-              lp.width = android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-              layout.setLayoutParams(lp);
-            }
+          android.view.ViewGroup.LayoutParams lp = layout.getLayoutParams();
+          if (lp != null) {
+            lp.width = android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+            layout.setLayoutParams(lp);
           }
         }
       } catch (Throwable t) {

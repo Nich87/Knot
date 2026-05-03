@@ -18,6 +18,7 @@ import org.json.JSONObject;
 public class ReadReceiptHandler implements BaseHook {
 
   private static volatile long bypassExpiry = 0L;
+  private static volatile Object cachedAt2eInstance = null;
 
   @Override
   public void hook(final KnotConfig config,
@@ -103,6 +104,88 @@ public class ReadReceiptHandler implements BaseHook {
     } catch (Throwable t) {
       XposedBridge.log("Knot: Failed to hook Operation for read history: " + t);
     }
+
+    // Hook queue path for NOTIFIED_READ_MESSAGE (26.6.0+)
+    // Signature: c(long createdTime, String chatId, String senderMid, long
+    // lastMsgId, Enum)
+    if (cfg.readReceipt.readReceiptQueueClass != null &&
+        !cfg.readReceipt.readReceiptQueueClass.isEmpty() &&
+        cfg.readReceipt.methodEnqueueReadReceipt != null &&
+        !cfg.readReceipt.methodEnqueueReadReceipt.isEmpty()) {
+      try {
+        Class<?> queueCls = XposedHelpers.findClass(
+            cfg.readReceipt.readReceiptQueueClass, lpparam.classLoader);
+        XposedBridge.hookAllMethods(
+            queueCls, cfg.readReceipt.methodEnqueueReadReceipt,
+            new XC_MethodHook() {
+              @Override
+              protected void afterHookedMethod(MethodHookParam param) {
+                try {
+                  if (!SettingsStore.get("record_read_history", false))
+                    return;
+
+                  java.lang.reflect.Method m =
+                      (java.lang.reflect.Method)param.method;
+                  Class<?>[] types = m.getParameterTypes();
+                  if (types.length != 5 || types[0] != long.class ||
+                      types[1] != String.class || types[2] != String.class ||
+                      types[3] != long.class)
+                    return;
+
+                  long createdTime = (long)param.args[0];
+                  String chatId = (String)param.args[1];
+                  String senderMid = (String)param.args[2];
+                  String lastMsgId = String.valueOf((long)param.args[3]);
+
+                  if (chatId == null || senderMid == null)
+                    return;
+
+                  String myMid = app.zipper.knot.utils.LineDBUtils.getMyMid();
+
+                  JSONObject historyJson = SettingsStore.loadReadHistory();
+                  JSONObject chats = historyJson.optJSONObject("c");
+                  long maxId = -1;
+                  if (chats != null) {
+                    JSONObject chat = chats.optJSONObject(chatId);
+                    if (chat != null) {
+                      JSONObject messages = chat.optJSONObject("m");
+                      if (messages != null) {
+                        java.util.Iterator<String> keys = messages.keys();
+                        while (keys.hasNext()) {
+                          try {
+                            long sid = Long.parseLong(keys.next());
+                            if (sid > maxId)
+                              maxId = sid;
+                          } catch (NumberFormatException ignored) {
+                          }
+                        }
+                      }
+                    }
+                  }
+
+                  java.util.List<
+                      app.zipper.knot.utils.LineDBUtils.MessageRecord> records =
+                      app.zipper.knot.utils.LineDBUtils
+                          .fetchMessagesForRecording(chatId, lastMsgId, myMid,
+                                                     false, maxId);
+
+                  if (!records.isEmpty()) {
+                    saveReadEvents(chatId, senderMid, records, createdTime,
+                                   historyJson);
+                  }
+                } catch (Throwable t) {
+                  XposedBridge.log("Knot: ReadQueue hook error: " +
+                                   t.getMessage());
+                }
+              }
+            });
+      } catch (Throwable t) {
+        XposedBridge.log("Knot: Failed to hook read receipt queue: " + t);
+      }
+    }
+
+    // Block read receipt sending (handles both Thrift writer and direct wrapper
+    // styles)
     try {
       Class<?> thriftCls =
           lpparam.classLoader.loadClass(cfg.thrift.talkServiceClientImplClass);
@@ -112,13 +195,16 @@ public class ReadReceiptHandler implements BaseHook {
             protected void beforeHookedMethod(MethodHookParam param) {
               if (param.args == null || param.args[0] == null)
                 return;
-              String method = param.args[0].toString();
 
-              boolean isTarget = method.contains("sendChatChecked") ||
-                                 method.contains("Checked") ||
-                                 method.contains("ReadReceipt");
-              if (!isTarget)
-                return;
+              if (param.args[0] instanceof String) {
+                // Old style: args[0] is the Thrift RPC method name.
+                String method = (String)param.args[0];
+                boolean isTarget = method.contains("sendChatChecked") ||
+                                   method.contains("Checked") ||
+                                   method.contains("ReadReceipt");
+                if (!isTarget)
+                  return;
+              }
 
               if (!config.preventMarkAsRead.enabled ||
                   !SettingsStore.get("prevent_read_state", true))
@@ -127,7 +213,10 @@ public class ReadReceiptHandler implements BaseHook {
                   bypassExpiry > System.currentTimeMillis())
                 return;
 
-              param.args[0] = "KNOT_NOP";
+              if (param.args[0] instanceof String)
+                param.args[0] = "KNOT_NOP";
+              else
+                param.setResult(null);
             }
           });
     } catch (Throwable ignored) {
@@ -164,16 +253,18 @@ public class ReadReceiptHandler implements BaseHook {
             new XC_MethodHook() {
               @Override
               protected void beforeHookedMethod(MethodHookParam param) {
-                if (!config.preventMarkAsRead.enabled ||
-                    !SettingsStore.get("prevent_read_state", true))
-                  return;
-
                 java.lang.reflect.Method m =
                     (java.lang.reflect.Method)param.method;
                 Class<?>[] params = m.getParameterTypes();
                 if (params.length == 3 &&
                     params[0] == long.class &&params[1] == String.class &&
                     params[2] == boolean.class) {
+                  if (cachedAt2eInstance == null)
+                    cachedAt2eInstance = param.thisObject;
+
+                  if (!config.preventMarkAsRead.enabled ||
+                      !SettingsStore.get("prevent_read_state", true))
+                    return;
                   if (SettingsStore.get("send_mark_state", false) &&
                       bypassExpiry > System.currentTimeMillis())
                     return;
@@ -230,10 +321,59 @@ public class ReadReceiptHandler implements BaseHook {
             bypassExpiry = System.currentTimeMillis() + 2000;
           }
         }
+
+        @Override
+        protected void afterHookedMethod(MethodHookParam param) {
+          if (!config.preventMarkAsRead.enabled ||
+              !SettingsStore.get("prevent_read_state", true) ||
+              !SettingsStore.get("send_mark_state", false))
+            return;
+          try {
+            Object md = param.args[1];
+            if (md == null)
+              return;
+            String chatId = (String)XposedHelpers.getObjectField(md, "b");
+            if (chatId == null || chatId.isEmpty())
+              return;
+            Object inst = cachedAt2eInstance;
+            if (inst == null)
+              return;
+
+            XposedHelpers.callMethod(
+                inst, cfg.readReceipt.methodSendReadReceipt, 0L, chatId, true);
+          } catch (Throwable t) {
+            XposedBridge.log("Knot: sendMark error: " + t);
+          }
+        }
       };
-      XposedBridge.hookAllMethods(talkClient, cfg.thrift.v1, sendHook);
       XposedBridge.hookAllMethods(talkClient, cfg.thrift.sendMessage, sendHook);
     } catch (Throwable ignored) {
+    }
+
+    if (cfg.readReceipt.badgeClearClass != null &&
+        !cfg.readReceipt.badgeClearClass.isEmpty()) {
+      try {
+        Class<?> dcCls = XposedHelpers.findClass(
+            cfg.readReceipt.badgeClearClass, lpparam.classLoader);
+        XposedBridge.hookAllMethods(dcCls, "e", new XC_MethodHook() {
+          @Override
+          protected void beforeHookedMethod(MethodHookParam param) {
+            if (!config.preventMarkAsRead.enabled ||
+                !SettingsStore.get("prevent_read_state", true))
+              return;
+            Class<?>[] params =
+                ((java.lang.reflect.Method)param.method).getParameterTypes();
+            if (params.length == 1 && params[0] == String.class) {
+              if (SettingsStore.get("send_mark_state", false) &&
+                  bypassExpiry > System.currentTimeMillis())
+                return;
+              param.setResult(null);
+            }
+          }
+        });
+      } catch (Throwable t) {
+        XposedBridge.log("Knot: Badge clear hook error: " + t);
+      }
     }
   }
 

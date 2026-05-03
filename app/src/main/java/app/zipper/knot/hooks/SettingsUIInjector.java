@@ -228,7 +228,7 @@ public class SettingsUIInjector implements BaseHook {
         cfg.settings.methodBindViewHolder, itemBindingClass, int.class,
         new XC_MethodHook() {
           @Override
-          protected void afterHookedMethod(MethodHookParam param) {
+          protected void beforeHookedMethod(MethodHookParam param) {
             if (param.thisObject != targetAdapter)
               return;
             LineVersion.Config c = LineVersion.get();
@@ -238,8 +238,7 @@ public class SettingsUIInjector implements BaseHook {
                   param.thisObject, c.settings.methodGetItem, currentPos);
               if (currentItem == null)
                 return;
-              if (currentItem != null &&
-                  currentItem.getClass().getName().equals(
+              if (currentItem.getClass().getName().equals(
                       c.settings.settingsAdapterWrapperClass)) {
                 currentItem = XposedHelpers.getObjectField(
                     currentItem, c.settings.fieldItemModel);
@@ -252,11 +251,12 @@ public class SettingsUIInjector implements BaseHook {
               if (!BRAND_TAG.equals(sourceTag))
                 return;
 
+              param.setResult(null);
+
               int entryType = XposedHelpers.getIntField(
                   currentItem, cfg.settings.fieldLayoutId);
               View itemView = (View)XposedHelpers.getObjectField(
                   param.args[0], c.settings.fieldViewHolderView);
-              param.setResult(null);
               if (entryType == c.res.typeSection) {
                 if (itemView instanceof TextView)
                   ((TextView)itemView).setText(BRAND_TAG);
@@ -539,6 +539,20 @@ public class SettingsUIInjector implements BaseHook {
       hostContainer.setClickable(true);
       hostContainer.setFocusable(true);
       hostContainer.setPadding(0, 0, 0, 0);
+
+      // Remove Compose header to prevent ViewTreeLifecycleOwner crash in
+      // Dialogs
+      try {
+        int composeHeaderId = host.getResources().getIdentifier(
+            "compose_header", "id", "jp.naver.line.android");
+        if (composeHeaderId != 0) {
+          View composeHeader = hostContainer.findViewById(composeHeaderId);
+          if (composeHeader != null && composeHeader.getParent() instanceof
+                                           ViewGroup)
+            ((ViewGroup)composeHeader.getParent()).removeView(composeHeader);
+        }
+      } catch (Throwable ignored) {
+      }
 
       View navHeader = hostContainer.findViewById(currentCfg.res.idHeader);
       if (navHeader != null) {

@@ -109,6 +109,7 @@ public class LineVersion {
 
       public String editChatDrawable = "";
       public boolean isSwapModifierCallback = false;
+      public boolean isNewMenuItemSignature = false;
       public String moduleId = "app.zipper.knot";
       public String targetPkg = "jp.naver.line.android";
     }
@@ -121,6 +122,7 @@ public class LineVersion {
       public String methodExecuteReadReceiptAsync = "";
       public String methodReadAll = "";
       public String operationNotifiedReadName = "NOTIFIED_READ_MESSAGE";
+      public String badgeClearClass = "";
     }
 
     public static class Unsend {
@@ -157,6 +159,7 @@ public class LineVersion {
 
       public String operationUnsendName = "DESTROY_MESSAGE";
       public String operationNotifiedUnsendName = "NOTIFIED_DESTROY_MESSAGE";
+      public String unsendDestroyHandlerClass = "";
     }
 
     public static class Thrift {
