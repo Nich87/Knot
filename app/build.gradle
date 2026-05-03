@@ -10,8 +10,8 @@ android {
         applicationId 'app.zipper.knot'
         minSdk 26
         targetSdk 35
-        versionCode 3
-        versionName "1.2.0"
+        versionCode 4
+        versionName "1.2.1"
         multiDexEnabled true
 
         // LINE 26.5.0 info
