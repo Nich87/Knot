@@ -229,6 +229,7 @@ public class Version265 {
     v.res.idHeader = 0x7f0b11b5;
     v.res.idStatusBarGuide = 0x7f0b2694;
     v.res.idTimestamp = 0x7f0b08f7;
+    v.res.idChatMessageText = 0x7f0b07ed;
     v.res.resSettingsHeaderBtn = "settings_header_button";
     v.res.resSettingsBtn = "settings_button";
 

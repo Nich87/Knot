@@ -1,6 +1,9 @@
 package app.zipper.knot.hooks;
 
+import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.widget.EditText;
+import android.widget.TextView;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
 import app.zipper.knot.SettingsStore;
@@ -22,19 +25,29 @@ public class FontUnlockHook implements BaseHook {
       return;
 
     initTypeface();
-
     if (!overrideActive || customTypeface == null)
       return;
 
     XposedBridge.log("Knot: Initializing Font hooks");
 
+    try {
+      XposedHelpers.findAndHookMethod(TextView.class, "setIncludeFontPadding",
+                                      boolean.class, new XC_MethodHook() {
+                                        @Override
+                                        protected void beforeHookedMethod(
+                                            MethodHookParam param) {
+                                          param.args[0] = false;
+                                        }
+                                      });
+    } catch (Throwable ignored) {
+    }
+
     XC_MethodHook globalHook = new XC_MethodHook() {
       @Override
-      protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+      protected void afterHookedMethod(MethodHookParam param) {
         param.setResult(customTypeface);
       }
     };
-
     XposedHelpers.findAndHookMethod(Typeface.class, "create", String.class,
                                     int.class, globalHook);
     XposedHelpers.findAndHookMethod(Typeface.class, "create", Typeface.class,
@@ -44,94 +57,134 @@ public class FontUnlockHook implements BaseHook {
 
     XC_MethodHook textViewHook = new XC_MethodHook() {
       @Override
-      protected void beforeHookedMethod(MethodHookParam param)
-          throws Throwable {
-        if (overrideActive && customTypeface != null) {
-          if (param.args.length > 0 && param.args[0] instanceof Typeface) {
-            param.args[0] = customTypeface;
-          }
-          try {
-            if (param.thisObject instanceof android.widget.EditText) {
-              XposedHelpers.callMethod(param.thisObject, "setPadding", 0, 0, 0,
-                                       0);
-            }
-          } catch (Throwable ignored) {
+      protected void beforeHookedMethod(MethodHookParam param) {
+        if (!overrideActive || customTypeface == null)
+          return;
+        if (param.args.length > 0 && param.args[0] instanceof Typeface)
+          param.args[0] = customTypeface;
+        if (param.thisObject instanceof TextView) {
+          TextView tv = (TextView)param.thisObject;
+          tv.setIncludeFontPadding(false);
+          if (tv instanceof EditText ||
+              (cfg.res.idChatMessageText != 0 &&
+               tv.getId() == cfg.res.idChatMessageText)) {
+            tv.setPadding(tv.getPaddingLeft(), 0, tv.getPaddingRight(), 0);
           }
         }
       }
     };
 
     try {
-      XposedHelpers.findAndHookMethod("android.widget.TextView",
-                                      lpparam.classLoader, "setTypeface",
+      XposedHelpers.findAndHookMethod(TextView.class, "setTypeface",
                                       Typeface.class, int.class, textViewHook);
-      XposedHelpers.findAndHookMethod("android.widget.TextView",
-                                      lpparam.classLoader, "setTypeface",
+      XposedHelpers.findAndHookMethod(TextView.class, "setTypeface",
                                       Typeface.class, textViewHook);
-
-      XC_MethodHook textViewConstructHook = new XC_MethodHook() {
+      XC_MethodHook constructHook = new XC_MethodHook() {
         @Override
-        protected void afterHookedMethod(MethodHookParam param)
-            throws Throwable {
-          if (overrideActive && customTypeface != null) {
-            try {
-              if (param.thisObject instanceof android.widget.EditText) {
-                XposedHelpers.callMethod(param.thisObject, "setPadding", 0, 0,
-                                         0, 0);
-              }
-            } catch (Throwable ignored) {
-            }
-          }
+        protected void afterHookedMethod(MethodHookParam param) {
+          if (overrideActive && customTypeface != null &&
+              param.thisObject instanceof TextView)
+            ((TextView)param.thisObject).setIncludeFontPadding(false);
         }
       };
       XposedHelpers.findAndHookConstructor(
-          "android.widget.TextView", lpparam.classLoader,
-          android.content.Context.class, android.util.AttributeSet.class,
-          textViewConstructHook);
+          TextView.class, android.content.Context.class,
+          android.util.AttributeSet.class, constructHook);
       XposedHelpers.findAndHookConstructor(
-          "android.widget.TextView", lpparam.classLoader,
-          android.content.Context.class, android.util.AttributeSet.class,
-          int.class, textViewConstructHook);
-    } catch (Throwable t) {
+          TextView.class, android.content.Context.class,
+          android.util.AttributeSet.class, int.class, constructHook);
+    } catch (Throwable ignored) {
     }
 
     XC_MethodHook metricsHook = new XC_MethodHook() {
       @Override
-      protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+      protected void afterHookedMethod(MethodHookParam param) {
         if (!overrideActive || customTypeface == null)
           return;
-
-        android.graphics.Paint paint = (android.graphics.Paint)param.thisObject;
-        Typeface tf = paint.getTypeface();
-
-        if (tf != null && tf != customTypeface &&
-            !(paint instanceof android.text.TextPaint))
+        Paint paint = (Paint)param.thisObject;
+        float textSize = paint.getTextSize();
+        if (textSize <= 0)
           return;
-
-        Object metrics =
-            (param.args.length > 0) ? param.args[0] : param.getResult();
-        if (metrics instanceof android.graphics.Paint.FontMetricsInt) {
-          android.graphics.Paint.FontMetricsInt fmi =
-              (android.graphics.Paint.FontMetricsInt)metrics;
-          float textSize = paint.getTextSize();
-          if (textSize > 0) {
-            fmi.ascent = Math.round(-textSize * 0.92f);
-            fmi.descent = Math.round(textSize * 0.22f);
-            fmi.top = fmi.ascent;
-            fmi.bottom = fmi.descent;
-            fmi.leading = 0;
-          }
-        }
+        Object m =
+            (param.args.length > 0 &&
+             (param.args[param.args.length - 1] instanceof
+                  Paint.FontMetricsInt ||
+              param.args[param.args.length - 1] instanceof Paint.FontMetrics))
+                ? param.args[param.args.length - 1]
+                : param.getResult();
+        if (m instanceof Paint.FontMetricsInt) {
+          Paint.FontMetricsInt fmi = (Paint.FontMetricsInt)m;
+          fmi.ascent = Math.round(-textSize * 0.95f);
+          fmi.descent = Math.round(textSize * 0.20f);
+          fmi.top = fmi.ascent;
+          fmi.bottom = fmi.descent;
+          fmi.leading = 0;
+        } else if (m instanceof Paint.FontMetrics) {
+          Paint.FontMetrics fm = (Paint.FontMetrics)m;
+          fm.ascent = -textSize * 0.95f;
+          fm.descent = textSize * 0.20f;
+          fm.top = fm.ascent;
+          fm.bottom = fm.descent;
+          fm.leading = 0;
+        } else if ("getFontSpacing".equals(param.method.getName()))
+          param.setResult(textSize * 1.15f);
       }
     };
 
     try {
+      XposedHelpers.findAndHookMethod(Paint.class, "getFontMetricsInt",
+                                      Paint.FontMetricsInt.class, metricsHook);
+      XposedHelpers.findAndHookMethod(Paint.class, "getFontMetricsInt",
+                                      metricsHook);
+      XposedHelpers.findAndHookMethod(Paint.class, "getFontMetrics",
+                                      Paint.FontMetrics.class, metricsHook);
+      XposedHelpers.findAndHookMethod(Paint.class, "getFontMetrics",
+                                      metricsHook);
+      XposedHelpers.findAndHookMethod(Paint.class, "getFontSpacing",
+                                      metricsHook);
+      try {
+        XposedHelpers.findAndHookMethod(
+            Paint.class, "getFontMetricsInt", CharSequence.class, int.class,
+            int.class, int.class, int.class, boolean.class,
+            Paint.FontMetricsInt.class, metricsHook);
+      } catch (Throwable ignored) {
+      }
+    } catch (Throwable ignored) {
+    }
+
+    try {
       XposedHelpers.findAndHookMethod(
-          android.graphics.Paint.class, "getFontMetricsInt",
-          android.graphics.Paint.FontMetricsInt.class, metricsHook);
-      XposedHelpers.findAndHookMethod(android.graphics.Paint.class,
-                                      "getFontMetricsInt", metricsHook);
-    } catch (Throwable t) {
+          TextView.class, "onMeasure", int.class, int.class,
+          new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+              if (overrideActive && customTypeface != null) {
+                TextView tv = (TextView)param.thisObject;
+                tv.setIncludeFontPadding(false);
+                if (tv instanceof EditText)
+                  tv.setPadding(tv.getPaddingLeft(), 0, tv.getPaddingRight(),
+                                0);
+                try {
+                  XposedHelpers.callMethod(tv, "setFallbackLineSpacing", false);
+                } catch (Throwable ignored) {
+                }
+              }
+            }
+          });
+    } catch (Throwable ignored) {
+    }
+
+    try {
+      XposedHelpers.findAndHookMethod(
+          Paint.class, "setElegantTextHeight", boolean.class,
+          new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+              if (overrideActive && customTypeface != null)
+                param.args[0] = false;
+            }
+          });
+    } catch (Throwable ignored) {
     }
 
     XposedHelpers.findAndHookMethod(
@@ -141,27 +194,37 @@ public class FontUnlockHook implements BaseHook {
         android.os.Handler.class, cfg.font.fontCallbackClass,
         new XC_MethodHook() {
           @Override
-          protected void beforeHookedMethod(MethodHookParam param)
-              throws Throwable {
+          protected void beforeHookedMethod(MethodHookParam param) {
             Object callback = param.args[6];
-            if (callback != null) {
+            if (callback != null)
               try {
                 XposedHelpers.callMethod(callback, cfg.font.methodOnFontChanged,
                                          customTypeface);
-              } catch (Throwable t) {
+              } catch (Throwable ignored) {
               }
-            }
             param.setResult(customTypeface);
           }
         });
 
+    try {
+      XposedHelpers.findAndHookMethod(
+          cfg.font.fontCallbackClass, lpparam.classLoader,
+          cfg.font.methodOnFontChanged, Typeface.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+              param.args[0] = customTypeface;
+            }
+          });
+    } catch (Throwable ignored) {
+    }
+
     XposedHelpers.findAndHookMethod(
-        cfg.font.fontCallbackClass, lpparam.classLoader,
-        cfg.font.methodOnFontChanged, Typeface.class, new XC_MethodHook() {
+        cfg.font.fontManagerClass, lpparam.classLoader, "c",
+        android.content.Context.class, java.util.List.class, int.class, "k6.p",
+        "k6.c", new XC_MethodHook() {
           @Override
-          protected void beforeHookedMethod(MethodHookParam param)
-              throws Throwable {
-            param.args[0] = customTypeface;
+          protected void beforeHookedMethod(MethodHookParam param) {
+            param.setResult(customTypeface);
           }
         });
 
@@ -171,13 +234,11 @@ public class FontUnlockHook implements BaseHook {
         android.content.Context.class, java.util.List.class, int.class,
         new XC_MethodHook() {
           @Override
-          protected void afterHookedMethod(MethodHookParam param)
-              throws Throwable {
-            Object result = param.getResult();
-            if (result != null) {
-              XposedHelpers.setObjectField(result, cfg.font.fieldTypeface,
+          protected void afterHookedMethod(MethodHookParam param) {
+            Object res = param.getResult();
+            if (res != null)
+              XposedHelpers.setObjectField(res, cfg.font.fieldTypeface,
                                            customTypeface);
-            }
           }
         });
 
@@ -187,12 +248,11 @@ public class FontUnlockHook implements BaseHook {
           cfg.font.methodGetFontSettings, int.class, cfg.font.fontInjectedClass,
           new XC_MethodHook() {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param)
-                throws Throwable {
+            protected void beforeHookedMethod(MethodHookParam param) {
               param.setResult(customTypeface);
             }
           });
-    } catch (Throwable t) {
+    } catch (Throwable ignored) {
     }
   }
 
@@ -201,13 +261,12 @@ public class FontUnlockHook implements BaseHook {
       overrideActive = false;
       return;
     }
-
     String path = SettingsStore.getString("custom_font_path", "");
     if (!path.isEmpty()) {
-      File file = new File(path);
-      if (file.exists() && file.canRead()) {
+      File f = new File(path);
+      if (f.exists()) {
         try {
-          customTypeface = Typeface.createFromFile(file);
+          customTypeface = Typeface.createFromFile(f);
           if (customTypeface != null) {
             overrideActive = true;
             XposedBridge.log("Knot: Custom font loaded: " + path);
