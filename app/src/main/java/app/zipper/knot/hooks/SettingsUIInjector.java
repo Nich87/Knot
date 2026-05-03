@@ -727,6 +727,8 @@ public class SettingsUIInjector implements BaseHook {
 
     if (targetCategory == null) {
       if (showAll) {
+        injectStorageSection(infl, mainList, ctx);
+
         KnotConfig activeConfig = Main.options;
         for (KnotConfig.Category cat : DISPLAY_CATEGORIES) {
           injectSectionHeader(infl, mainList, cat.label);
@@ -737,6 +739,9 @@ public class SettingsUIInjector implements BaseHook {
             }
           }
         }
+
+        injectBackupSection(infl, mainList, ctx);
+        injectOtherSection(infl, mainList, ctx, Main.options);
       } else {
         injectStorageSection(infl, mainList, ctx);
         injectSectionHeader(infl, mainList, ModuleStrings.SETTINGS_TITLE);
@@ -869,6 +874,7 @@ public class SettingsUIInjector implements BaseHook {
           }
           SettingsStore.save(settingKey, newState);
           pendingRestart = true;
+          cachedSearchView = null;
         });
       }
       row.setTag((i.label + " " + i.description).toLowerCase());
@@ -922,11 +928,19 @@ public class SettingsUIInjector implements BaseHook {
   }
 
   private void filterSettings(View settingsList, String query) {
-    if (!(settingsList instanceof ViewGroup))
+    ViewGroup list;
+    if (settingsList instanceof ScrollView) {
+      list = (ViewGroup)((ScrollView)settingsList).getChildAt(0);
+    } else if (settingsList instanceof ViewGroup) {
+      list = (ViewGroup)settingsList;
+    } else {
       return;
-    ViewGroup list = (ViewGroup)settingsList;
-    boolean isSearching = query.length() > 0;
+    }
 
+    if (list == null)
+      return;
+
+    boolean isSearching = query.length() > 0;
     int childCount = list.getChildCount();
     View lastHeader = null;
     int itemsInCurrentSection = 0;
@@ -1409,6 +1423,7 @@ public class SettingsUIInjector implements BaseHook {
       Activity a = resolveActivity(ctx);
       if (a != null)
         a.runOnUiThread(() -> {
+          cachedSearchView = null;
           itemHost.removeAllViews();
           String query = searchBox.getText().toString().toLowerCase();
           boolean isSearching = query.length() > 0;
