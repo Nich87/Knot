@@ -258,6 +258,8 @@ public class Version265 {
     v.searchBarAgentI.homeAiContainerId = 0x7f0b174d;
     v.searchBarAgentI.homeGuidelineId = 0x7f0b174f;
     v.searchBarAgentI.homeGuidelineEndDp = 55;
+    v.searchBarAgentI.homeGuidelineClass =
+        "androidx.constraintlayout.widget.Guideline";
 
     v.aiIcon.repoClass = "gw0.c";
     v.aiIcon.methodGetShownAfterMillis = "j";

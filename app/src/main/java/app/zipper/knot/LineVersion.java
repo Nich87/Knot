@@ -313,6 +313,7 @@ public class LineVersion {
       public int homeAiContainerId = 0;
       public int homeGuidelineId = 0;
       public int homeGuidelineEndDp = 0;
+      public String homeGuidelineClass = "";
     }
 
     public static class AiIcon {

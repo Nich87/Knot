@@ -2,7 +2,6 @@ package app.zipper.knot.hooks;
 
 import android.content.Context;
 import android.view.View;
-import androidx.constraintlayout.widget.Guideline;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
 import app.zipper.knot.Main;
@@ -144,8 +143,7 @@ public class RemoveHeaderButtons implements BaseHook {
     }
   }
 
-  private static Object firstAvailableValueOf(Class<?> cls,
-                                              String... names) {
+  private static Object firstAvailableValueOf(Class<?> cls, String... names) {
     for (String name : names) {
       Object value = safeValueOf(cls, name);
       if (value != null)
@@ -158,8 +156,8 @@ public class RemoveHeaderButtons implements BaseHook {
                                             Class<?> cls) {
     Method searchBarAiVisible = findZeroArgMethod(
         cls, cfg.searchBarAgentI.talkVisibleMethod, boolean.class);
-    Method searchBarAiClick = findZeroArgMethod(
-        cls, cfg.searchBarAgentI.talkClickMethod, void.class);
+    Method searchBarAiClick =
+        findZeroArgMethod(cls, cfg.searchBarAgentI.talkClickMethod, void.class);
 
     if (searchBarAiVisible != null) {
       XposedBridge.hookMethod(searchBarAiVisible, new XC_MethodHook() {
@@ -171,9 +169,8 @@ public class RemoveHeaderButtons implements BaseHook {
         }
       });
     } else {
-      XposedBridge.log(
-          "Knot: RemoveHeaderButtons could not find search bar AI "
-          + "visibility method.");
+      XposedBridge.log("Knot: RemoveHeaderButtons could not find search bar AI "
+                       + "visibility method.");
     }
 
     if (searchBarAiClick != null) {
@@ -214,8 +211,8 @@ public class RemoveHeaderButtons implements BaseHook {
 
     Class<?> cls;
     try {
-      cls = XposedHelpers.findClass(
-          cfg.searchBarAgentI.homeSearchBarClass, classLoader);
+      cls = XposedHelpers.findClass(cfg.searchBarAgentI.homeSearchBarClass,
+                                    classLoader);
     } catch (Throwable t) {
       XposedBridge.log(
           "Knot: RemoveHeaderButtons could not find Home search bar class.");
@@ -224,22 +221,21 @@ public class RemoveHeaderButtons implements BaseHook {
 
     XC_MethodHook patchHook = new XC_MethodHook() {
       @Override
-      protected void afterHookedMethod(MethodHookParam param)
-          throws Throwable {
+      protected void afterHookedMethod(MethodHookParam param) throws Throwable {
         if (!Main.options.removeSearchBarAgentIButton.enabled)
           return;
         try {
           patchHomeSearchBarAiButton(cfg, param.thisObject);
         } catch (Exception e) {
-          XposedBridge.log(
-              "Knot: RemoveHeaderButtons Home search bar error: " + e);
+          XposedBridge.log("Knot: RemoveHeaderButtons Home search bar error: " +
+                           e);
         }
       }
     };
 
     XposedBridge.hookAllConstructors(cls, patchHook);
-    XposedBridge.hookAllMethods(
-        cls, cfg.searchBarAgentI.homeRefreshMethod, patchHook);
+    XposedBridge.hookAllMethods(cls, cfg.searchBarAgentI.homeRefreshMethod,
+                                patchHook);
     XposedBridge.log(
         "Knot: RemoveHeaderButtons hooked Home search bar Agent i button.");
   }
@@ -270,10 +266,18 @@ public class RemoveHeaderButtons implements BaseHook {
     int guidelineId = cfg.searchBarAgentI.homeGuidelineId;
     View guidelineView =
         guidelineId != 0 ? rootView.findViewById(guidelineId) : null;
-    if (guidelineView instanceof Guideline &&
-        cfg.searchBarAgentI.homeGuidelineEndDp > 0)
-      ((Guideline)guidelineView).setGuidelineEnd(
-          dpToPx(context, cfg.searchBarAgentI.homeGuidelineEndDp));
+    if (guidelineView != null && cfg.searchBarAgentI.homeGuidelineEndDp > 0) {
+      if (cfg.searchBarAgentI.homeGuidelineClass.equals(
+              guidelineView.getClass().getName())) {
+        try {
+          XposedHelpers.callMethod(
+              guidelineView, "setGuidelineEnd",
+              dpToPx(context, cfg.searchBarAgentI.homeGuidelineEndDp));
+        } catch (Throwable t) {
+          XposedBridge.log("Knot: RemoveHeaderButtons guideline error: " + t);
+        }
+      }
+    }
   }
 
   private static boolean isHomeSearchBar(LineVersion.Config cfg,

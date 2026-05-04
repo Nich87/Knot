@@ -264,6 +264,8 @@ public class Version266 {
     v.searchBarAgentI.homeAiContainerId = 0x7f0b16db;
     v.searchBarAgentI.homeGuidelineId = 0x7f0b16dd;
     v.searchBarAgentI.homeGuidelineEndDp = 55;
+    v.searchBarAgentI.homeGuidelineClass =
+        "androidx.constraintlayout.widget.Guideline";
 
     v.aiIcon.repoClass = "yw0.c";
     v.aiIcon.methodGetShownAfterMillis = "i";
