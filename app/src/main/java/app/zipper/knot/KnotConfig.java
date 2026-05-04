@@ -70,6 +70,11 @@ public class KnotConfig {
       "remove_home_services", ModuleStrings.OPT_REMOVE_HOME_SERVICES_LABEL,
       ModuleStrings.OPT_REMOVE_HOME_SERVICES_DESC, false, Category.DISPLAY);
 
+  public Item removeHomeAccordion = new Item(
+      "remove_home_accordion",
+      ModuleStrings.OPT_REMOVE_HOME_ACCORDION_LABEL,
+      ModuleStrings.OPT_REMOVE_HOME_ACCORDION_DESC, false, Category.DISPLAY);
+
   public Item preventMarkAsRead = new Item(
       "prevent_mark_as_read", ModuleStrings.OPT_PREVENT_MARK_AS_READ_LABEL,
       ModuleStrings.OPT_PREVENT_MARK_AS_READ_DESC, false, Category.CHAT);
@@ -157,6 +162,7 @@ public class KnotConfig {
                          hideTabText,
                          removeHomeRecommendations,
                          removeHomeServices,
+                         removeHomeAccordion,
                          useCustomFont,
                          customFontPath,
                          preventMarkAsRead,

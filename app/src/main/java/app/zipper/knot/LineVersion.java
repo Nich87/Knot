@@ -201,6 +201,11 @@ public class LineVersion {
       public String resServiceCarouselId = "";
       public String resServiceTitleId = "";
       public String resNoServicesId = "";
+      public String lypRecommendationModuleArgClass = "";
+      public String lypRecommendationContextClass = "";
+      public String lypRecommendationComposerClass = "";
+      public String lypRecommendationModuleClass = "";
+      public String lypRecommendationControllerClass = "";
     }
 
     public static class Chat {
