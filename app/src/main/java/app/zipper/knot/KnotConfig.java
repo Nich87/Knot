@@ -85,7 +85,7 @@ public class KnotConfig {
   public Item safeSettingsResources =
       new Item("safe_settings_resources",
                ModuleStrings.OPT_FIX_SETTINGS_TALK_CRASH_LABEL,
-               ModuleStrings.OPT_FIX_SETTINGS_TALK_CRASH_DESC, false,
+               ModuleStrings.OPT_FIX_SETTINGS_TALK_CRASH_DESC, true,
                Category.EXPERIMENTAL);
 
   public Item spoofVersionUnsendOnly = new Item(
