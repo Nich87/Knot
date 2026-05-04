@@ -27,6 +27,7 @@ public class LineVersion {
     public StickerTrial stickerTrial = new StickerTrial();
     public Notification notification = new Notification();
     public TalkTabHeader talkTabHeader = new TalkTabHeader();
+    public SearchBarAgentI searchBarAgentI = new SearchBarAgentI();
     public AiIcon aiIcon = new AiIcon();
 
     public static class Main {
@@ -298,6 +299,20 @@ public class LineVersion {
       public String buttonListStateField = "";
       public String iconTypeClass = "";
       public String iconTypeFieldInButton = "";
+    }
+
+    public static class SearchBarAgentI {
+      public String talkVisibleMethod = "";
+      public String talkClickMethod = "";
+      public String homeSearchBarClass = "";
+      public String homeRefreshMethod = "";
+      public String homeRootViewField = "";
+      public String homeTabTypeField = "";
+      public String homeTabName = "";
+      public String homeTabV2Name = "";
+      public int homeAiContainerId = 0;
+      public int homeGuidelineId = 0;
+      public int homeGuidelineEndDp = 0;
     }
 
     public static class AiIcon {

@@ -122,6 +122,12 @@ public class KnotConfig {
       ModuleStrings.OPT_REMOVE_AI_FRIENDS_BUTTON_LABEL,
       ModuleStrings.OPT_REMOVE_AI_FRIENDS_BUTTON_DESC, false, Category.DISPLAY);
 
+  public Item removeSearchBarAgentIButton = new Item(
+      "remove_search_bar_agent_i_button",
+      ModuleStrings.OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_LABEL,
+      ModuleStrings.OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_DESC, false,
+      Category.DISPLAY);
+
   public Item removeOpenChatButton = new Item(
       "remove_open_chat_button",
       ModuleStrings.OPT_REMOVE_OPEN_CHAT_BUTTON_LABEL,
@@ -141,6 +147,7 @@ public class KnotConfig {
       ModuleStrings.OPT_CUSTOM_FONT_PATH_DESC, false, Category.DISPLAY);
 
   public Item[] items = {removeAiFriendsButton,
+                         removeSearchBarAgentIButton,
                          removeOpenChatButton,
                          removeAds,
                          removeTabVoom,
