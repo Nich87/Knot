@@ -207,6 +207,7 @@ public class LineVersion {
       public String lypRecommendationComposerClass = "";
       public String lypRecommendationModuleClass = "";
       public String lypRecommendationControllerClass = "";
+      public String lypRecommendationSectionClass = "";
     }
 
     public static class Chat {

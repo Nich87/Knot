@@ -83,18 +83,17 @@ public class RemoveHomeContents implements BaseHook {
           }
         });
 
-    LineVersion.Config c = LineVersion.get();
-    if (c == null || c.home.lypRecommendationControllerClass.isEmpty() ||
-        c.home.lypRecommendationModuleArgClass.isEmpty() ||
-        c.home.lypRecommendationContextClass.isEmpty() ||
-        c.home.lypRecommendationComposerClass.isEmpty())
+    if (cfg == null || cfg.home.lypRecommendationControllerClass.isEmpty() ||
+        cfg.home.lypRecommendationModuleArgClass.isEmpty() ||
+        cfg.home.lypRecommendationContextClass.isEmpty() ||
+        cfg.home.lypRecommendationComposerClass.isEmpty())
       return;
 
     XposedHelpers.findAndHookMethod(
-        c.home.lypRecommendationControllerClass, lpparam.classLoader, "a",
-        String.class, c.home.lypRecommendationModuleArgClass,
-        c.home.lypRecommendationContextClass,
-        c.home.lypRecommendationComposerClass, new XC_MethodHook() {
+        cfg.home.lypRecommendationControllerClass, lpparam.classLoader, "a",
+        String.class, cfg.home.lypRecommendationModuleArgClass,
+        cfg.home.lypRecommendationContextClass,
+        cfg.home.lypRecommendationComposerClass, new XC_MethodHook() {
           @Override
           protected void beforeHookedMethod(MethodHookParam param)
               throws Throwable {
@@ -103,10 +102,8 @@ public class RemoveHomeContents implements BaseHook {
               return;
 
             Object module = param.args[1];
-            if (module == null ||
-                !module.getClass()
-                     .getName()
-                     .equals(c.home.lypRecommendationModuleClass))
+            if (module == null || !module.getClass().getName().equals(
+                                      cfg.home.lypRecommendationModuleClass))
               return;
 
             param.setResult(getEmptySectionInstance(lpparam.classLoader));
@@ -126,7 +123,13 @@ public class RemoveHomeContents implements BaseHook {
   private static Object getEmptySectionInstance(ClassLoader classLoader) {
     if (emptySectionInstance != null)
       return emptySectionInstance;
-    Class<?> sectionClass = XposedHelpers.findClass("l02.e", classLoader);
+    LineVersion.Config c = LineVersion.get();
+    String sectionClassName =
+        (c != null && !c.home.lypRecommendationSectionClass.isEmpty())
+            ? c.home.lypRecommendationSectionClass
+            : "l02.e";
+    Class<?> sectionClass =
+        XposedHelpers.findClass(sectionClassName, classLoader);
     emptySectionInstance =
         XposedHelpers.getStaticObjectField(sectionClass, "e");
     return emptySectionInstance;

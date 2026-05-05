@@ -168,6 +168,7 @@ public class Version266 {
     v.home.lypRecommendationComposerClass = "t2.k";
     v.home.lypRecommendationModuleClass = "my1.r$d0";
     v.home.lypRecommendationControllerClass = "p32.k";
+    v.home.lypRecommendationSectionClass = "l02.e";
 
     v.chat.headerController = "h81.m1";
     v.chat.headerHelper = "jp.naver.line.android.common.view.header.b";

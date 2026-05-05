@@ -161,6 +161,12 @@ public class Version265 {
     v.home.resServiceCarouselId = "home_tab_service_carousel";
     v.home.resServiceTitleId = "home_tab_service_title";
     v.home.resNoServicesId = "home_tab_no_services_title";
+    v.home.lypRecommendationModuleArgClass = "gx1.u";
+    v.home.lypRecommendationContextClass = "pz1.g";
+    v.home.lypRecommendationComposerClass = "t2.k";
+    v.home.lypRecommendationModuleClass = "gx1.u$d0";
+    v.home.lypRecommendationControllerClass = "j22.k";
+    v.home.lypRecommendationSectionClass = "fz1.e";
 
     v.chat.headerController = "q71.f1";
     v.chat.headerHelper = "jp.naver.line.android.common.view.header.b";
