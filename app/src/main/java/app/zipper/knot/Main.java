@@ -79,6 +79,7 @@ public class Main
                           new FontUnlockHook(),
                           new BackupRestoreHook(),
                           new FixNotificationHook(),
+                          new RemoveTalkRoomAgentIToggle(),
                           new HideAiIconPermanently()};
 
       for (BaseHook h : hooks) {

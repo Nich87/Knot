@@ -28,6 +28,7 @@ public class LineVersion {
     public Notification notification = new Notification();
     public TalkTabHeader talkTabHeader = new TalkTabHeader();
     public SearchBarAgentI searchBarAgentI = new SearchBarAgentI();
+    public AgentIInChat agentIInChat = new AgentIInChat();
     public AiIcon aiIcon = new AiIcon();
 
     public static class Main {
@@ -319,6 +320,10 @@ public class LineVersion {
       public int homeGuidelineId = 0;
       public int homeGuidelineEndDp = 0;
       public String homeGuidelineClass = "";
+    }
+
+    public static class AgentIInChat {
+      public String toggleComposableClass = "";
     }
 
     public static class AiIcon {
