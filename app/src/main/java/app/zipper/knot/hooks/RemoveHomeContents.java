@@ -17,6 +17,7 @@ public class RemoveHomeContents implements BaseHook {
   private static int svcTitleId = 0;
   private static int noServicesId = 0;
   private static boolean isSetupDone = false;
+  private static Object emptySectionInstance = null;
 
   @Override
   public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
@@ -81,6 +82,36 @@ public class RemoveHomeContents implements BaseHook {
             }
           }
         });
+
+    LineVersion.Config c = LineVersion.get();
+    if (c == null || c.home.lypRecommendationControllerClass.isEmpty() ||
+        c.home.lypRecommendationModuleArgClass.isEmpty() ||
+        c.home.lypRecommendationContextClass.isEmpty() ||
+        c.home.lypRecommendationComposerClass.isEmpty())
+      return;
+
+    XposedHelpers.findAndHookMethod(
+        c.home.lypRecommendationControllerClass, lpparam.classLoader, "a",
+        String.class, c.home.lypRecommendationModuleArgClass,
+        c.home.lypRecommendationContextClass,
+        c.home.lypRecommendationComposerClass, new XC_MethodHook() {
+          @Override
+          protected void beforeHookedMethod(MethodHookParam param)
+              throws Throwable {
+            if (!SettingsStore.get(config.removeHomeAccordion.key,
+                                   config.removeHomeAccordion.enabled))
+              return;
+
+            Object module = param.args[1];
+            if (module == null ||
+                !module.getClass()
+                     .getName()
+                     .equals(c.home.lypRecommendationModuleClass))
+              return;
+
+            param.setResult(getEmptySectionInstance(lpparam.classLoader));
+          }
+        });
   }
 
   private static void hideView(View target) {
@@ -90,5 +121,14 @@ public class RemoveHomeContents implements BaseHook {
       params.height = 0;
       target.setLayoutParams(params);
     }
+  }
+
+  private static Object getEmptySectionInstance(ClassLoader classLoader) {
+    if (emptySectionInstance != null)
+      return emptySectionInstance;
+    Class<?> sectionClass = XposedHelpers.findClass("l02.e", classLoader);
+    emptySectionInstance =
+        XposedHelpers.getStaticObjectField(sectionClass, "e");
+    return emptySectionInstance;
   }
 }

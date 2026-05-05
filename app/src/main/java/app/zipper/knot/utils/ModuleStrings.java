@@ -120,6 +120,11 @@ public class ModuleStrings {
       "ホームのサービスを非表示";
   public static final String OPT_REMOVE_HOME_SERVICES_DESC =
       "ホーム画面に表示されるサービス一覧を非表示にします。";
+  public static final String OPT_REMOVE_HOME_ACCORDION_LABEL =
+      "ホーム上部のアコーディオンを非表示";
+  public static final String OPT_REMOVE_HOME_ACCORDION_DESC =
+      "ホームタブ上部（検索バーと友達リストの間）に表示されるLYP特典などの"
+      + "アコーディオン枠を非表示にします。";
   public static final String OPT_REMOVE_TAB_VOOM_LABEL = "VOOMタブを非表示";
   public static final String OPT_REMOVE_TAB_VOOM_DESC =
       "下部のVOOMタブを隠します。";
