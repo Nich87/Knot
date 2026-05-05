@@ -190,33 +190,6 @@ public class Version265 {
     v.font.fontInjectedClass = "m64.i";
     v.font.fieldTypeface = "f201036a";
 
-    v.themeFree.productDataClass = "z05.f";
-    v.themeFree.themeRepositoryClass = "l57.n";
-    v.themeFree.methodSetOwnership = "r";
-    v.themeFree.fieldThemeProduct = "u";
-    v.themeFree.methodIsThemeOwned = "b";
-    v.themeFree.fieldIsOwnedA = "A";
-    v.themeFree.fieldIsOwnedB = "B";
-    v.themeFree.fieldIsOwnedC = "C";
-    v.themeFree.fieldIsOwnedD = "D";
-    v.themeFree.fieldIsOwned = "s";
-    v.themeFree.fieldProductType = "q";
-    v.themeFree.methodGetProductTypeName = "d";
-    v.themeFree.themeDetailActivityClass =
-        "com.linecorp.shop.impl.theme.endpage.ShopThemeDetailActivity";
-    v.themeFree.methodThemeDetailUpdates =
-        new String[] {"p5", "r5", "s5", "u5", "h5"};
-
-    v.stickerTrial.freeTrialStatusCheckerClass = "lz4.d0";
-    v.stickerTrial.stickerDatabaseHelperClass = "m15.e";
-    v.stickerTrial.stickerContentValueDataClass = "m15.d";
-    v.stickerTrial.methodGetContentValues = "a";
-    v.stickerTrial.methodGetLimitCount = "d";
-    v.stickerTrial.methodGetLimitRemaining = "e";
-    v.stickerTrial.methodCheckAvailability = "b";
-    v.stickerTrial.methodCheckStatus = "c";
-    v.stickerTrial.methodInsertSticker = "b";
-
     v.res.idSettingList = 0x7f0b23ed;
     v.res.idPersonalInfo = 0x7f1535e3;
     v.res.typeSection = 0x7f0e055a;
@@ -242,8 +215,8 @@ public class Version265 {
     v.notification.chatHistoryRequestClass =
         "com.linecorp.line.chat.request.ChatHistoryRequest";
     v.notification.chatHistoryActivityLaunchActivityClass =
-        "jp.naver.line.android.activity.chathistory." +
-        "ChatHistoryActivityLaunchActivity";
+        "jp.naver.line.android.activity.chathistory."
+        + "ChatHistoryActivityLaunchActivity";
     v.notification.lineAppVersionClass =
         "jp.naver.line.android.common.LineAppVersion";
 

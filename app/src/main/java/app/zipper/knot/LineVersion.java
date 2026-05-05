@@ -23,8 +23,6 @@ public class LineVersion {
     public ReadReceipt readReceipt = new ReadReceipt();
     public ChatHeader chatHeader = new ChatHeader();
     public Font font = new Font();
-    public ThemeFree themeFree = new ThemeFree();
-    public StickerTrial stickerTrial = new StickerTrial();
     public Notification notification = new Notification();
     public TalkTabHeader talkTabHeader = new TalkTabHeader();
     public SearchBarAgentI searchBarAgentI = new SearchBarAgentI();
@@ -226,35 +224,6 @@ public class LineVersion {
       public String fieldAppInfoVersion = "";
       public String fieldAppInfoPkg = "";
       public String fieldAppInfoId = "";
-    }
-
-    public static class ThemeFree {
-      public String productDataClass;
-      public String themeRepositoryClass;
-      public String methodSetOwnership;
-      public String fieldThemeProduct;
-      public String methodIsThemeOwned;
-      public String fieldIsOwnedA;
-      public String fieldIsOwnedB;
-      public String fieldIsOwnedC;
-      public String fieldIsOwnedD;
-      public String fieldIsOwned;
-      public String fieldProductType;
-      public String methodGetProductTypeName;
-      public String themeDetailActivityClass;
-      public String[] methodThemeDetailUpdates;
-    }
-
-    public static class StickerTrial {
-      public String freeTrialStatusCheckerClass;
-      public String stickerDatabaseHelperClass;
-      public String stickerContentValueDataClass;
-      public String methodGetContentValues = "";
-      public String methodGetLimitCount = "";
-      public String methodGetLimitRemaining = "";
-      public String methodCheckAvailability = "";
-      public String methodCheckStatus = "";
-      public String methodInsertSticker = "";
     }
 
     public static class Font {

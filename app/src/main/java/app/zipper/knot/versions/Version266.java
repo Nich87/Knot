@@ -196,33 +196,6 @@ public class Version266 {
     v.font.methodOnFontChanged = "b";
     v.font.fieldTypeface = "f197160a";
 
-    v.themeFree.productDataClass = "r25.f";
-    v.themeFree.themeRepositoryClass = "i67.m";
-    v.themeFree.methodSetOwnership = "r";
-    v.themeFree.fieldThemeProduct = "u";
-    v.themeFree.methodIsThemeOwned = "a";
-    v.themeFree.fieldIsOwnedA = "A";
-    v.themeFree.fieldIsOwnedB = "B";
-    v.themeFree.fieldIsOwnedC = "C";
-    v.themeFree.fieldIsOwnedD = "D";
-    v.themeFree.fieldIsOwned = "s";
-    v.themeFree.fieldProductType = "q";
-    v.themeFree.methodGetProductTypeName = "e";
-    v.themeFree.themeDetailActivityClass =
-        "com.linecorp.shop.impl.theme.endpage.ShopThemeDetailActivity";
-    v.themeFree.methodThemeDetailUpdates =
-        new String[] {"A5", "B5", "E5", "i5", "q5", "r5", "y5"};
-
-    v.stickerTrial.freeTrialStatusCheckerClass = "d15.e0";
-    v.stickerTrial.stickerDatabaseHelperClass = "e35.e";
-    v.stickerTrial.stickerContentValueDataClass = "f35.d";
-    v.stickerTrial.methodGetContentValues = "a";
-    v.stickerTrial.methodGetLimitCount = "d";
-    v.stickerTrial.methodGetLimitRemaining = "e";
-    v.stickerTrial.methodCheckAvailability = "b";
-    v.stickerTrial.methodCheckStatus = "c";
-    v.stickerTrial.methodInsertSticker = "b";
-
     v.res.idSettingList = 0x7f0b2373;
     v.res.idPersonalInfo = 0x7f15365b;
     v.res.typeSection = 0x7f0e0559;
