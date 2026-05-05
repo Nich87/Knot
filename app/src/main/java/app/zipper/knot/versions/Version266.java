@@ -272,6 +272,8 @@ public class Version266 {
     v.searchBarAgentI.homeGuidelineClass =
         "androidx.constraintlayout.widget.Guideline";
 
+    v.agentIInChat.toggleComposableClass = "za1.h";
+
     v.aiIcon.repoClass = "yw0.c";
     v.aiIcon.methodGetShownAfterMillis = "i";
 
