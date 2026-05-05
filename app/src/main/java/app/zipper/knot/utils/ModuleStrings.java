@@ -152,14 +152,11 @@ public class ModuleStrings {
       "メッセージについたリアクションを通知します。※アプリを開くと送信されま"
       + "す。";
 
-  // Hidden as it breaks notifications when app is frozen; pending a better
-  // solution.
-  public static final String OPT_FIX_NOTIFICATIONS_LABEL =
-      "通知のバックグラウンド切断を阻止";
-  public static final String OPT_FIX_NOTIFICATIONS_DESC =
-      "バックグラウンド移行後30秒で切断される通信ソケットを強制的に維持し、通"
-      + "知が届かない問題を修正します。非rootのパッチ済LINE等でも通知の受信が可"
-      + "能になりますが、常に接続を維持するためバッテリー消費が増加します。";
+  public static final String OPT_EXPERIMENTAL_FCM_FIX_LABEL =
+      "FCM Fix";
+  public static final String OPT_EXPERIMENTAL_FCM_FIX_DESC =
+      "非root環境で通知が1分程度で届かなくなる問題を回避するため、"
+      + "LINEのFCM通知受信処理を直接サービスに引き渡す挙動を有効にします。";
 
   public static final String OPT_OPEN_URL_IN_DEFAULT_BROWSER_LABEL =
       "URLをデフォルトブラウザで開く";

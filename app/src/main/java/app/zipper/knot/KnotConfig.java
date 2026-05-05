@@ -113,9 +113,11 @@ public class KnotConfig {
                ModuleStrings.OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_DESC, false,
                Category.NOTIFICATION);
 
-  public Item fixNotifications = new Item(
-      "fix_notifications", ModuleStrings.OPT_FIX_NOTIFICATIONS_LABEL,
-      ModuleStrings.OPT_FIX_NOTIFICATIONS_DESC, false, Category.NOTIFICATION);
+  public Item experimentalFcmFix =
+      new Item("experimental_fcm_fix",
+               ModuleStrings.OPT_EXPERIMENTAL_FCM_FIX_LABEL,
+               ModuleStrings.OPT_EXPERIMENTAL_FCM_FIX_DESC, false,
+               Category.EXPERIMENTAL);
 
   public Item reactionNotification = new Item(
       "reaction_notification", ModuleStrings.OPT_REACTION_NOTIFICATION_LABEL,
@@ -172,8 +174,8 @@ public class KnotConfig {
                          recordReadHistory,
                          openUrlInDefaultBrowser,
                          removeNotificationMuteButton,
-                         fixNotifications,
                          reactionNotification,
+                         experimentalFcmFix,
                          spoofVersion,
                          safeSettingsResources};
 }

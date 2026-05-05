@@ -220,6 +220,55 @@ public class Version265 {
     v.notification.lineAppVersionClass =
         "jp.naver.line.android.common.LineAppVersion";
 
+    v.notificationFix.lineFcmServiceClass =
+        "jp.naver.line.android.service.fcm.LineFirebaseMessagingService";
+    v.notificationFix.lineFcmDispatchMethod = "d";
+    v.notificationFix.lineFcmOwnershipMethod = "f";
+    v.notificationFix.lineFcmTokenMethod = "e";
+    v.notificationFix.lineFcmServiceBaseClass = "cs.i";
+    v.notificationFix.firebaseRemoteMessageClass = "cs.j0";
+    v.notificationFix.firebaseReceiverClass =
+        "com.google.firebase.iid.FirebaseInstanceIdReceiver";
+    v.notificationFix.firebaseReceiverMethod = "a";
+    v.notificationFix.firebaseReceiverEnvelopeClass = "ck.a";
+    v.notificationFix.firebaseReceiverIntentField = "f33900a";
+    v.notificationFix.firebaseDispatcherClass = "cs.m";
+    v.notificationFix.firebaseDispatcherAccessorMethod = "a";
+    v.notificationFix.firebaseDispatcherMethod = "b";
+    v.notificationFix.firebaseDispatcherContextField = "f96572a";
+    v.notificationFix.firebaseDispatcherQueueField = "f96582d";
+    v.notificationFix.firebaseBindDeliveryClass = "cs.d1";
+    v.notificationFix.firebaseBindDeliveryMethod = "b";
+    v.notificationFix.firebaseMessagingServiceClass =
+        "com.google.firebase.messaging.FirebaseMessagingService";
+    v.notificationFix.firebaseMessagingHandleMethod = "c";
+    v.notificationFix.firebaseWakefulStartClass = "cs.y0";
+    v.notificationFix.firebaseWakefulStartMethod = "c";
+    v.notificationFix.firebaseCompletedTaskClass = "lm.n";
+    v.notificationFix.firebaseCompletedTaskMethod = "e";
+    v.notificationFix.lineLifecycleObserverClass =
+        "jp.naver.line.android.common.lifecycle.LineLifecycleObserver";
+    v.notificationFix.lineLifecycleObserverMethod = "onStateChanged";
+    v.notificationFix.legyStreamingStateClass =
+        "com.linecorp.legy.streaming.h$a";
+    v.notificationFix.legyStreamingLifecycleClass =
+        "com.linecorp.legy.streaming.h$d";
+    v.notificationFix.legyStreamingLifecycleMethod = "Z0";
+    v.notificationFix.legyLifecycleOwnerClass = "androidx.lifecycle.u0";
+    v.notificationFix.legyLifecycleEventClass = "androidx.lifecycle.e0$a";
+    v.notificationFix.legyBackgroundStateField = "BACKGROUND";
+    v.notificationFix.legyDisconnectRunnableClass = "n30.j";
+    v.notificationFix.legyStateFieldCandidates =
+        new String[] {"q", "f55430q"};
+    v.notificationFix.legyTimeoutFieldCandidates =
+        new String[] {"s", "f55432s"};
+    v.notificationFix.legyBackgroundWorkerFlagFieldCandidates =
+        new String[] {"u", "f55434u"};
+    v.notificationFix.legyHandlerFieldCandidates =
+        new String[] {"c", "f55417c"};
+    v.notificationFix.legyRunnableFieldCandidates =
+        new String[] {"t", "f55433t"};
+
     v.talkTabHeader.chatTabHeaderStateClass = "jo1.f";
     v.talkTabHeader.iconListStateField = "w";
     v.talkTabHeader.buttonListStateField = "C";

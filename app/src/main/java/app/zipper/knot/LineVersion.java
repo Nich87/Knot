@@ -24,6 +24,7 @@ public class LineVersion {
     public ChatHeader chatHeader = new ChatHeader();
     public Font font = new Font();
     public Notification notification = new Notification();
+    public NotificationFix notificationFix = new NotificationFix();
     public TalkTabHeader talkTabHeader = new TalkTabHeader();
     public SearchBarAgentI searchBarAgentI = new SearchBarAgentI();
     public AgentIInChat agentIInChat = new AgentIInChat();
@@ -267,6 +268,47 @@ public class LineVersion {
       public String chatHistoryRequestClass = "";
       public String chatHistoryActivityLaunchActivityClass = "";
       public String lineAppVersionClass = "";
+    }
+
+    public static class NotificationFix {
+      public String lineFcmServiceClass = "";
+      public String lineFcmDispatchMethod = "";
+      public String lineFcmOwnershipMethod = "";
+      public String lineFcmTokenMethod = "";
+      public String lineFcmServiceBaseClass = "";
+      public String firebaseRemoteMessageClass = "";
+      public String firebaseReceiverClass = "";
+      public String firebaseReceiverMethod = "";
+      public String firebaseReceiverEnvelopeClass = "";
+      public String firebaseReceiverIntentField = "";
+      public String firebaseDispatcherClass = "";
+      public String firebaseDispatcherAccessorMethod = "";
+      public String firebaseDispatcherMethod = "";
+      public String firebaseDispatcherContextField = "";
+      public String firebaseDispatcherQueueField = "";
+      public String firebaseBindDeliveryClass = "";
+      public String firebaseBindDeliveryMethod = "";
+      public String firebaseMessagingServiceClass = "";
+      public String firebaseMessagingHandleMethod = "";
+      public String firebaseWakefulStartClass = "";
+      public String firebaseWakefulStartMethod = "";
+      public String firebaseCompletedTaskClass = "";
+      public String firebaseCompletedTaskMethod = "";
+      public String lineLifecycleObserverClass = "";
+      public String lineLifecycleObserverMethod = "";
+      public String legyStreamingStateClass = "";
+      public String legyStreamingLifecycleClass = "";
+      public String legyStreamingLifecycleMethod = "";
+      public String legyLifecycleOwnerClass = "";
+      public String legyLifecycleEventClass = "";
+      public String legyBackgroundStateField = "";
+      public String legyDisconnectRunnableClass = "";
+      public String[] legyStateFieldCandidates = new String[0];
+      public String[] legyTimeoutFieldCandidates = new String[0];
+      public String[] legyBackgroundWorkerFlagFieldCandidates =
+          new String[0];
+      public String[] legyHandlerFieldCandidates = new String[0];
+      public String[] legyRunnableFieldCandidates = new String[0];
     }
 
     public static class TalkTabHeader {
