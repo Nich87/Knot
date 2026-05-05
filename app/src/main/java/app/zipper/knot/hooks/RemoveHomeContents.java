@@ -33,16 +33,15 @@ public class RemoveHomeContents implements BaseHook {
             if (isSetupDone)
               return;
             android.app.Activity host = (android.app.Activity)param.thisObject;
-            LineVersion.Config c = LineVersion.get();
-            String pkg = c.linePkg;
-            recId = host.getResources().getIdentifier(c.home.resRecommendation,
-                                                      "id", pkg);
+            String pkg = cfg.linePkg;
+            recId = host.getResources().getIdentifier(
+                cfg.home.resRecommendation, "id", pkg);
             svcCarouselId = host.getResources().getIdentifier(
-                c.home.resServiceCarouselId, "id", pkg);
+                cfg.home.resServiceCarouselId, "id", pkg);
             svcTitleId = host.getResources().getIdentifier(
-                c.home.resServiceTitleId, "id", pkg);
+                cfg.home.resServiceTitleId, "id", pkg);
             noServicesId = host.getResources().getIdentifier(
-                c.home.resNoServicesId, "id", pkg);
+                cfg.home.resNoServicesId, "id", pkg);
             isSetupDone = true;
           }
         });
