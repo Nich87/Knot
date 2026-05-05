@@ -220,6 +220,9 @@ public class ModuleStrings {
   public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_DESC =
       "トークタブ右上の「オープンチャット」ボタンを非表示にします。";
 
+  public static final String TOOLTIP_SETTINGS_LONG_PRESS =
+      "長押しでKnotの設定を開けます";
+
   public static final String OPT_ABOUT_LABEL = "Knotについて";
   public static final String OPT_ABOUT_DESC = "バージョン情報など";
   public static final String ABOUT_TITLE = "Knotについて";

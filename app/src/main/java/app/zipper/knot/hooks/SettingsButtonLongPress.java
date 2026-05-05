@@ -81,6 +81,7 @@ public class SettingsButtonLongPress implements BaseHook {
     try {
       Activity host = findHostActivity(v.getContext());
       if (host != null) {
+        HomeSettingsTooltip.markShown();
         SettingsUIInjector.openSettings(host);
         return true;
       }

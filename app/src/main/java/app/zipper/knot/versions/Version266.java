@@ -217,6 +217,8 @@ public class Version266 {
     v.res.idChatMessageText = 0x7f0b07a9;
     v.res.resSettingsHeaderBtn = "settings_header_button";
     v.res.resSettingsBtn = "settings_button";
+    v.res.resTooltipBackground = "home_tooltip_background";
+    v.res.resTooltipArrowUp = "home_tooltip_arrow_up";
 
     v.notification.chatHistoryRequestClass =
         "com.linecorp.line.chat.request.ChatHistoryRequest";
