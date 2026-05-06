@@ -78,7 +78,7 @@ public class Main
                           new OpenInExternalBrowserHook(),
                           new FontUnlockHook(),
                           new BackupRestoreHook(),
-                          new FixNotificationHook(),
+                          new FcmFixHook(),
                           new RemoveTalkRoomAgentIToggle(),
                           new HideAiIconPermanently(),
                           new HomeSettingsTooltip()};

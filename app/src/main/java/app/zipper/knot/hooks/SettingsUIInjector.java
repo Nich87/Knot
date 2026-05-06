@@ -813,9 +813,6 @@ public class SettingsUIInjector implements BaseHook {
                              Object statusEnum) {
     try {
       final String settingKey = i.key;
-      if (settingKey.equals("fix_notifications"))
-        return;
-
       View row;
       if (settingKey.equals("custom_font_path")) {
         row = infl.inflate(currentCfg.res.typeRow, parent, false);
