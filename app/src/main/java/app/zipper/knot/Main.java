@@ -80,7 +80,8 @@ public class Main
                           new BackupRestoreHook(),
                           new FcmFixHook(),
                           new RemoveTalkRoomAgentIToggle(),
-                          new HideAiIconPermanently()};
+                          new HideAiIconPermanently(),
+                          new HomeSettingsTooltip()};
 
       for (BaseHook h : hooks) {
         try {

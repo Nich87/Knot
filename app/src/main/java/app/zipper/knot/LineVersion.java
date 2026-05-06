@@ -262,6 +262,8 @@ public class LineVersion {
       public int idChatMessageText = 0;
       public String resSettingsHeaderBtn = "";
       public String resSettingsBtn = "";
+      public String resTooltipBackground = "";
+      public String resTooltipArrowUp = "";
     }
 
     public static class Notification {
