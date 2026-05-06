@@ -117,7 +117,7 @@ public class ReactionNotification implements BaseHook {
   private void processOperation(XC_MethodHook.MethodHookParam param)
       throws Exception {
     LineVersion.Config cfg = LineVersion.get();
-    Object op = cfg.unsend.isOpReadScheme ? param.args[1] : param.thisObject;
+    Object op = param.args[1];
     if (op == null || op.getClass().getName().startsWith("java."))
       return;
 
@@ -253,7 +253,7 @@ public class ReactionNotification implements BaseHook {
   }
 
   private Bitmap downloadBitmap(Context context, String[] urls) {
-    String ua = "Line/26.5.0";
+    String ua = "Line/26.6.0";
     try {
       Class<?> verCls = context.getClassLoader().loadClass(
           LineVersion.get().notification.lineAppVersionClass);

@@ -82,8 +82,6 @@ public class Version266 {
     v.plusMenu.methodCreateMenu = "c";
     v.plusMenu.methodExecuteAction = "X";
     v.plusMenu.editChatDrawable = "chat_tab_ui_header_plusmenu_edit_chat";
-    v.plusMenu.isSwapModifierCallback = true;
-    v.plusMenu.isNewMenuItemSignature = true;
 
     v.readReceipt.readReceiptManagerClass = "at2.e";
     v.readReceipt.readReceiptQueueClass = "he8.b";
@@ -121,7 +119,6 @@ public class Version266 {
     v.unsend.operationParam3Field = "i";
     v.unsend.operationCreatedTimeField = "b";
     v.unsend.chatMessageIdField = "d";
-    v.unsend.isOpReadScheme = true;
     v.unsend.operationUnsendName = "DESTROY_MESSAGE";
     v.unsend.operationNotifiedUnsendName = "NOTIFIED_DESTROY_MESSAGE";
     v.unsend.unsendDestroyHandlerClass = "if8.y0";

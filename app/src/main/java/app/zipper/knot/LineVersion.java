@@ -109,8 +109,6 @@ public class LineVersion {
       public String methodExecuteAction = "";
 
       public String editChatDrawable = "";
-      public boolean isSwapModifierCallback = false;
-      public boolean isNewMenuItemSignature = false;
       public String moduleId = "app.zipper.knot";
       public String targetPkg = "jp.naver.line.android";
     }
@@ -156,7 +154,6 @@ public class LineVersion {
       public String operationParam3Field = "";
       public String operationCreatedTimeField = "";
       public String chatMessageIdField = "";
-      public boolean isOpReadScheme = false;
 
       public String operationUnsendName = "DESTROY_MESSAGE";
       public String operationNotifiedUnsendName = "NOTIFIED_DESTROY_MESSAGE";
@@ -348,7 +345,6 @@ public class LineVersion {
 
   private static final Map<String, Config> VERSION_TABLE = new HashMap<>();
   static {
-    VERSION_TABLE.put("26.5.", app.zipper.knot.versions.Version265.create());
     VERSION_TABLE.put("26.6.", app.zipper.knot.versions.Version266.create());
   }
 

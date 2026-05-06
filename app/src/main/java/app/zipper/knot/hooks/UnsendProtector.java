@@ -167,8 +167,7 @@ public class UnsendProtector implements BaseHook {
   handleIncomingOperation(XC_MethodHook.MethodHookParam param)
       throws Exception {
     LineVersion.Config cfg = LineVersion.get();
-    Object operation =
-        cfg.unsend.isOpReadScheme ? param.args[1] : param.thisObject;
+    Object operation = param.args[1];
     if (operation == null || operation instanceof String)
       return;
     if (operation.getClass().getName().startsWith("java."))

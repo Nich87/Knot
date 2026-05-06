@@ -39,8 +39,7 @@ public class ReadReceiptHandler implements BaseHook {
                 if (!SettingsStore.get("record_read_history", false))
                   return;
 
-                Object op = cfg.unsend.isOpReadScheme ? param.args[1]
-                                                      : param.thisObject;
+                Object op = param.args[1];
                 if (op == null || op instanceof String)
                   return;
 
@@ -198,16 +197,6 @@ public class ReadReceiptHandler implements BaseHook {
             protected void beforeHookedMethod(MethodHookParam param) {
               if (param.args == null || param.args[0] == null)
                 return;
-
-              if (param.args[0] instanceof String) {
-                // Old style: args[0] is the Thrift RPC method name.
-                String method = (String)param.args[0];
-                boolean isTarget = method.contains("sendChatChecked") ||
-                                   method.contains("Checked") ||
-                                   method.contains("ReadReceipt");
-                if (!isTarget)
-                  return;
-              }
 
               if (!config.preventMarkAsRead.enabled ||
                   !SettingsStore.get("prevent_read_state", true))

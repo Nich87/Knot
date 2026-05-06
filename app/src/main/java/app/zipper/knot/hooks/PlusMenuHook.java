@@ -68,31 +68,13 @@ public class PlusMenuHook implements BaseHook {
       return;
     }
 
-    final Method mainEntry;
-    if (cfg.plusMenu.isNewMenuItemSignature) {
-      mainEntry = XposedHelpers.findMethodExact(
-          pCls, cfg.plusMenu.methodAddMenuItem, int.class, modifierCls,
-          composerCls, clickItemCls, boolean.class);
-    } else {
-      mainEntry = XposedHelpers.findMethodExact(
-          pCls, cfg.plusMenu.methodAddMenuItem, boolean.class, boolean.class,
-          clickItemCls, modifierCls, composerCls, int.class);
-    }
+    final Method mainEntry = XposedHelpers.findMethodExact(
+        pCls, cfg.plusMenu.methodAddMenuItem, int.class, modifierCls,
+        composerCls, clickItemCls, boolean.class);
 
-    final Method itemEntry;
-    if (cfg.plusMenu.isNewMenuItemSignature) {
-      itemEntry = XposedHelpers.findMethodExact(
-          pCls, cfg.plusMenu.methodCreateMenu, int.class, int.class,
-          modifierCls, String.class, composerCls, callbackCls);
-    } else if (cfg.plusMenu.isSwapModifierCallback) {
-      itemEntry = XposedHelpers.findMethodExact(
-          pCls, cfg.plusMenu.methodCreateMenu, int.class, int.class,
-          callbackCls, modifierCls, String.class, composerCls);
-    } else {
-      itemEntry = XposedHelpers.findMethodExact(
-          pCls, cfg.plusMenu.methodCreateMenu, int.class, int.class,
-          modifierCls, callbackCls, String.class, composerCls);
-    }
+    final Method itemEntry = XposedHelpers.findMethodExact(
+        pCls, cfg.plusMenu.methodCreateMenu, int.class, int.class, modifierCls,
+        String.class, composerCls, callbackCls);
 
     final Object readToggleCallback = generateToggleHandler(
         lpparam.classLoader, callbackCls, "prevent_read_state",
@@ -149,8 +131,7 @@ public class PlusMenuHook implements BaseHook {
         if (iconId != targetDrawableId)
           return;
 
-        Object composer =
-            c.plusMenu.isNewMenuItemSignature ? param.args[4] : param.args[5];
+        Object composer = param.args[4];
         injectionActive = true;
         try {
           if (Main.options.preventMarkAsRead.enabled) {
@@ -158,33 +139,16 @@ public class PlusMenuHook implements BaseHook {
             String labelR = ModuleStrings.LABEL_PREVENT_READ + ": " +
                             (readOn ? "ON" : "OFF");
 
-            if (c.plusMenu.isNewMenuItemSignature) {
-
-              itemEntry.invoke(null, readOn ? ID_READ_ON : ID_READ_OFF, 0, null,
-                               labelR, composer, readToggleCallback);
-            } else if (c.plusMenu.isSwapModifierCallback) {
-              itemEntry.invoke(null, readOn ? ID_READ_ON : ID_READ_OFF, 0,
-                               readToggleCallback, null, labelR, composer);
-            } else {
-              itemEntry.invoke(null, readOn ? ID_READ_ON : ID_READ_OFF, 0, null,
-                               readToggleCallback, labelR, composer);
-            }
+            itemEntry.invoke(null, readOn ? ID_READ_ON : ID_READ_OFF, 0, null,
+                             labelR, composer, readToggleCallback);
 
             if (readOn) {
               boolean markOn = currentSendMarkState;
               String labelM = ModuleStrings.LABEL_SEND_MARK_READ + ": " +
                               (markOn ? "ON" : "OFF");
 
-              if (c.plusMenu.isNewMenuItemSignature) {
-                itemEntry.invoke(null, markOn ? ID_MARK_ON : ID_MARK_OFF, 0,
-                                 null, labelM, composer, markToggleCallback);
-              } else if (c.plusMenu.isSwapModifierCallback) {
-                itemEntry.invoke(null, markOn ? ID_MARK_ON : ID_MARK_OFF, 0,
-                                 markToggleCallback, null, labelM, composer);
-              } else {
-                itemEntry.invoke(null, markOn ? ID_MARK_ON : ID_MARK_OFF, 0,
-                                 null, markToggleCallback, labelM, composer);
-              }
+              itemEntry.invoke(null, markOn ? ID_MARK_ON : ID_MARK_OFF, 0, null,
+                               labelM, composer, markToggleCallback);
             }
           }
         } catch (Throwable t) {
