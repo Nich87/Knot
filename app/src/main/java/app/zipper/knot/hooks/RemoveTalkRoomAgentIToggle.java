@@ -16,54 +16,47 @@ public class RemoveTalkRoomAgentIToggle implements BaseHook {
   private static final String LEGACY_KEY = "remove_talkroom_agent_i_toggle";
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
-      throws Throwable {
-    if (!isEnabled(config))
-      return;
+  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    if (!isEnabled(config)) return;
 
     LineVersion.Config cfg = LineVersion.get();
-    if (cfg == null || cfg.agentIInChat.toggleComposableClass.isEmpty())
-      return;
+    if (cfg == null || cfg.agentIInChat.toggleComposableClass.isEmpty()) return;
 
     final Class<?> cls;
     try {
-      cls = XposedHelpers.findClass(cfg.agentIInChat.toggleComposableClass,
-          lpparam.classLoader);
+      cls = XposedHelpers.findClass(cfg.agentIInChat.toggleComposableClass, lpparam.classLoader);
     } catch (Throwable t) {
       return;
     }
 
-    XC_MethodHook noOp = new XC_MethodHook() {
-      @Override
-      protected void beforeHookedMethod(MethodHookParam param) {
-        if (!isEnabled(Main.options))
-          return;
-        param.setResult(null);
-      }
-    };
+    XC_MethodHook noOp =
+        new XC_MethodHook() {
+          @Override
+          protected void beforeHookedMethod(MethodHookParam param) {
+            if (!isEnabled(Main.options)) return;
+            param.setResult(null);
+          }
+        };
 
     int hookCount = 0;
     for (Method method : cls.getDeclaredMethods()) {
-      if (!isComposeRenderMethod(method))
-        continue;
+      if (!isComposeRenderMethod(method)) continue;
       XposedBridge.hookMethod(method, noOp);
       hookCount++;
     }
 
     if (hookCount > 0) {
-      XposedBridge.log("Knot: RemoveTalkRoomAgentIToggle hooked " + hookCount +
-          " compose methods.");
+      XposedBridge.log(
+          "Knot: RemoveTalkRoomAgentIToggle hooked " + hookCount + " compose methods.");
     }
   }
 
   private static boolean isEnabled(KnotConfig config) {
-    return config.removeSearchBarAgentIButton.enabled ||
-        SettingsStore.get(LEGACY_KEY, false);
+    return config.removeSearchBarAgentIButton.enabled || SettingsStore.get(LEGACY_KEY, false);
   }
 
   private static boolean isComposeRenderMethod(Method method) {
-    if (!Modifier.isStatic(method.getModifiers()) ||
-        method.getReturnType() != Void.TYPE) {
+    if (!Modifier.isStatic(method.getModifiers()) || method.getReturnType() != Void.TYPE) {
       return false;
     }
 

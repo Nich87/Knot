@@ -20,17 +20,18 @@ public class VersionSpoof implements BaseHook {
   private static final Set<String> targetUnsendMethods = new HashSet<>();
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
-      throws Throwable {
+  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
-    if (cfg == null)
-      return;
+    if (cfg == null) return;
 
     if (targetUnsendMethods.isEmpty()) {
-      targetUnsendMethods.addAll(Arrays.asList(
-          cfg.unsend.methodUnsendThrift, cfg.unsend.methodUnsendThriftSilent,
-          cfg.unsend.methodUnsendAnnouncement, cfg.thrift.methodDestroyMessage,
-          cfg.thrift.methodDestroyMessages));
+      targetUnsendMethods.addAll(
+          Arrays.asList(
+              cfg.unsend.methodUnsendThrift,
+              cfg.unsend.methodUnsendThriftSilent,
+              cfg.unsend.methodUnsendAnnouncement,
+              cfg.thrift.methodDestroyMessage,
+              cfg.thrift.methodDestroyMessages));
     }
 
     if (config.spoofVersion.enabled || config.spoofVersionUnsendOnly.enabled) {
@@ -42,77 +43,73 @@ public class VersionSpoof implements BaseHook {
     }
   }
 
-  private void applyUiLimitPatch(LineVersion.Config cfg,
-                                 XC_LoadPackage.LoadPackageParam lpparam) {
-    if (cfg.unsend.chatServiceConfigClass.isEmpty() ||
-        cfg.unsend.methodUnsendLimit.isEmpty())
+  private void applyUiLimitPatch(LineVersion.Config cfg, XC_LoadPackage.LoadPackageParam lpparam) {
+    if (cfg.unsend.chatServiceConfigClass.isEmpty() || cfg.unsend.methodUnsendLimit.isEmpty())
       return;
     try {
-      Class<?> configCls = XposedHelpers.findClass(
-          cfg.unsend.chatServiceConfigClass, lpparam.classLoader);
-      XC_MethodReplacement patch = new XC_MethodReplacement() {
-        @Override
-        protected Object replaceHookedMethod(MethodHookParam param)
-            throws Throwable {
-          return 86400000;
-        }
-      };
-      XposedHelpers.findAndHookMethod(configCls, cfg.unsend.methodUnsendLimit,
-                                      patch);
-      XposedHelpers.findAndHookMethod(
-          configCls, cfg.unsend.methodUnsendPremiumLimit, patch);
+      Class<?> configCls =
+          XposedHelpers.findClass(cfg.unsend.chatServiceConfigClass, lpparam.classLoader);
+      XC_MethodReplacement patch =
+          new XC_MethodReplacement() {
+            @Override
+            protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+              return 86400000;
+            }
+          };
+      XposedHelpers.findAndHookMethod(configCls, cfg.unsend.methodUnsendLimit, patch);
+      XposedHelpers.findAndHookMethod(configCls, cfg.unsend.methodUnsendPremiumLimit, patch);
     } catch (Throwable t) {
       XposedBridge.log("Knot: UI limit patch failed: " + t.getMessage());
     }
   }
 
-  private void applyVersionPatch(KnotConfig config, LineVersion.Config cfg,
-                                 XC_LoadPackage.LoadPackageParam lpparam) {
-    if (cfg.unsend.appInfoProviderClass.isEmpty())
-      return;
+  private void applyVersionPatch(
+      KnotConfig config, LineVersion.Config cfg, XC_LoadPackage.LoadPackageParam lpparam) {
+    if (cfg.unsend.appInfoProviderClass.isEmpty()) return;
 
     initializeThriftInterception(lpparam.classLoader);
 
     try {
-      Class<?> infoCls = XposedHelpers.findClass(
-          cfg.unsend.appInfoProviderClass, lpparam.classLoader);
+      Class<?> infoCls =
+          XposedHelpers.findClass(cfg.unsend.appInfoProviderClass, lpparam.classLoader);
 
-      XC_MethodHook stringPatchHook = new XC_MethodHook() {
-        @Override
-        protected void afterHookedMethod(MethodHookParam param)
-            throws Throwable {
-          if (!(param.getResult() instanceof String))
-            return;
-          String raw = (String)param.getResult();
+      XC_MethodHook stringPatchHook =
+          new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+              if (!(param.getResult() instanceof String)) return;
+              String raw = (String) param.getResult();
 
-          if (config.spoofVersion.enabled) {
-            String patched = patchVersionString(raw);
-            XposedBridge.log("Knot: Global patch " + raw.replace("\t", " ") +
-                             " -> " + patched.replace("\t", " "));
-            param.setResult(patched);
-            return;
-          }
+              if (config.spoofVersion.enabled) {
+                String patched = patchVersionString(raw);
+                XposedBridge.log(
+                    "Knot: Global patch "
+                        + raw.replace("\t", " ")
+                        + " -> "
+                        + patched.replace("\t", " "));
+                param.setResult(patched);
+                return;
+              }
 
-          if (config.spoofVersionUnsendOnly.enabled && isUnsendActionActive()) {
-            String patched = patchVersionString(raw);
-            XposedBridge.log("Knot: Contextual patch " +
-                             raw.replace("\t", " ") + " -> " +
-                             patched.replace("\t", " "));
-            param.setResult(patched);
-          }
-        }
-      };
+              if (config.spoofVersionUnsendOnly.enabled && isUnsendActionActive()) {
+                String patched = patchVersionString(raw);
+                XposedBridge.log(
+                    "Knot: Contextual patch "
+                        + raw.replace("\t", " ")
+                        + " -> "
+                        + patched.replace("\t", " "));
+                param.setResult(patched);
+              }
+            }
+          };
 
-      XposedHelpers.findAndHookMethod(
-          infoCls, cfg.unsend.methodGetFullUserAgent, stringPatchHook);
+      XposedHelpers.findAndHookMethod(infoCls, cfg.unsend.methodGetFullUserAgent, stringPatchHook);
       XposedHelpers.findAndHookMethod(
           infoCls, cfg.unsend.methodGetSimpleUserAgent, stringPatchHook);
       XposedHelpers.findAndHookMethod(
-          infoCls, cfg.unsend.methodGetFullUserAgentWithContext, Context.class,
-          stringPatchHook);
+          infoCls, cfg.unsend.methodGetFullUserAgentWithContext, Context.class, stringPatchHook);
       XposedHelpers.findAndHookMethod(
-          infoCls, cfg.unsend.methodGetSimpleUserAgentWithContext,
-          Context.class, stringPatchHook);
+          infoCls, cfg.unsend.methodGetSimpleUserAgentWithContext, Context.class, stringPatchHook);
 
     } catch (Throwable t) {
       XposedBridge.log("Knot: Version patch failed: " + t.getMessage());
@@ -122,23 +119,23 @@ public class VersionSpoof implements BaseHook {
   private void initializeThriftInterception(ClassLoader cl) {
     LineVersion.Config cfg = LineVersion.get();
     try {
-      Class<?> protocolCls =
-          XposedHelpers.findClass(cfg.thrift.protocolClass, cl);
+      Class<?> protocolCls = XposedHelpers.findClass(cfg.thrift.protocolClass, cl);
       XposedHelpers.findAndHookMethod(
-          protocolCls, cfg.thrift.methodWriteMessageBegin, String.class,
-          cfg.thrift.messageClass, new XC_MethodHook() {
+          protocolCls,
+          cfg.thrift.methodWriteMessageBegin,
+          String.class,
+          cfg.thrift.messageClass,
+          new XC_MethodHook() {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param)
-                throws Throwable {
-              String method = (String)param.args[0];
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+              String method = (String) param.args[0];
               if (targetUnsendMethods.contains(method)) {
                 unsendProcessingFlag.set(true);
               }
             }
 
             @Override
-            protected void afterHookedMethod(MethodHookParam param)
-                throws Throwable {
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
               unsendProcessingFlag.set(false);
             }
           });
@@ -148,10 +145,11 @@ public class VersionSpoof implements BaseHook {
   }
 
   private String patchVersionString(String input) {
-    if (input == null || input.isEmpty())
-      return input;
+    if (input == null || input.isEmpty()) return input;
     return input.replaceAll("(\\d+\\.\\d+\\.\\d+)", TARGET_VERSION);
   }
 
-  private boolean isUnsendActionActive() { return unsendProcessingFlag.get(); }
+  private boolean isUnsendActionActive() {
+    return unsendProcessingFlag.get();
+  }
 }

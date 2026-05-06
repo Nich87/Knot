@@ -7,8 +7,7 @@ public class Version266 {
     LineVersion.Config v = new LineVersion.Config();
 
     v.main.mainActivity = "jp.naver.line.android.activity.main.MainActivity";
-    v.main.headerButton =
-        "jp.naver.line.android.common.view.header.HeaderButton";
+    v.main.headerButton = "jp.naver.line.android.common.view.header.HeaderButton";
     v.main.headerButtonInnerField = "f190567a";
     v.main.headerButtonTypeClass = "ra8.d";
     v.main.slotFarLeft = "FAR_LEFT";
@@ -23,10 +22,8 @@ public class Version266 {
     v.main.methodSetHeaderOnClickListener = "r";
     v.main.methodRefreshNavHeader = "a";
     v.main.methodHeaderSetTitle = "setTitle";
-    v.main.methodHeaderSetButtonVisibility =
-        "setUpButtonVisibility$common_libs";
-    v.main.methodHeaderSetButtonListener =
-        "setUpButtonOnClickListener$common_libs";
+    v.main.methodHeaderSetButtonVisibility = "setUpButtonVisibility$common_libs";
+    v.main.methodHeaderSetButtonListener = "setUpButtonOnClickListener$common_libs";
     v.main.fieldNavHeader = "i";
 
     v.settings.mainSettingsFragmentClass =
@@ -125,10 +122,8 @@ public class Version266 {
 
     v.thrift.talkServiceClientImplClass =
         "jp.naver.line.android.thrift.client.impl.LegacyTalkServiceClientImpl";
-    v.thrift.talkServiceClientInterface =
-        "jp.naver.line.android.thrift.client.TalkServiceClient";
-    v.thrift.chatSearchActivityClass =
-        "com.linecorp.line.chat.search.ChatSearchActivity";
+    v.thrift.talkServiceClientInterface = "jp.naver.line.android.thrift.client.TalkServiceClient";
+    v.thrift.chatSearchActivityClass = "com.linecorp.line.chat.search.ChatSearchActivity";
     v.thrift.sendMessage = "u0";
     v.thrift.v1 = "r1";
     v.thrift.v2 = "v2";
@@ -139,8 +134,7 @@ public class Version266 {
     v.thrift.methodDestroyMessages = "destroyMessages";
 
     v.tabs.bottomNavigationBarTextViewClass =
-        "jp.naver.line.android.activity.main.bottomnavigationbar."
-        + "BottomNavigationBarTextView";
+        "jp.naver.line.android.activity.main.bottomnavigationbar.BottomNavigationBarTextView";
     v.tabs.resVoom = "bnb_timeline";
     v.tabs.resNews = "bnb_news";
     v.tabs.resMini = "bnb_mini";
@@ -151,10 +145,8 @@ public class Version266 {
 
     v.ads.classAdSdkBase = "com.linecorp.line.ladsdk";
     v.ads.classAdMolinBase = "com.linecorp.line.admolin";
-    v.ads.ladAdView =
-        v.ads.classAdSdkBase + ".ui.common.view.lifecycle.LadAdView";
-    v.ads.smartChannel =
-        v.ads.classAdMolinBase + ".smartch.v2.view.SmartChannelViewLayout";
+    v.ads.ladAdView = v.ads.classAdSdkBase + ".ui.common.view.lifecycle.LadAdView";
+    v.ads.smartChannel = v.ads.classAdMolinBase + ".smartch.v2.view.SmartChannelViewLayout";
 
     v.home.resRecommendation = "home_tab_contents_recommendation_placement";
     v.home.resServiceCarouselId = "home_tab_service_carousel";
@@ -217,13 +209,10 @@ public class Version266 {
     v.res.resTooltipBackground = "home_tooltip_background";
     v.res.resTooltipArrowUp = "home_tooltip_arrow_up";
 
-    v.notification.chatHistoryRequestClass =
-        "com.linecorp.line.chat.request.ChatHistoryRequest";
+    v.notification.chatHistoryRequestClass = "com.linecorp.line.chat.request.ChatHistoryRequest";
     v.notification.chatHistoryActivityLaunchActivityClass =
-        "jp.naver.line.android.activity.chathistory."
-        + "ChatHistoryActivityLaunchActivity";
-    v.notification.lineAppVersionClass =
-        "jp.naver.line.android.common.LineAppVersion";
+        "jp.naver.line.android.activity.chathistory.ChatHistoryActivityLaunchActivity";
+    v.notification.lineAppVersionClass = "jp.naver.line.android.common.LineAppVersion";
 
     v.notificationFix.lineFcmServiceClass =
         "jp.naver.line.android.service.fcm.LineFirebaseMessagingService";
@@ -232,8 +221,7 @@ public class Version266 {
     v.notificationFix.lineFcmTokenMethod = "e";
     v.notificationFix.lineFcmServiceBaseClass = "cs.i";
     v.notificationFix.firebaseRemoteMessageClass = "cs.j0";
-    v.notificationFix.firebaseReceiverClass =
-        "com.google.firebase.iid.FirebaseInstanceIdReceiver";
+    v.notificationFix.firebaseReceiverClass = "com.google.firebase.iid.FirebaseInstanceIdReceiver";
     v.notificationFix.firebaseReceiverMethod = "a";
     v.notificationFix.firebaseReceiverEnvelopeClass = "ck.a";
     v.notificationFix.firebaseReceiverIntentField = "f33900a";
@@ -254,25 +242,18 @@ public class Version266 {
     v.notificationFix.lineLifecycleObserverClass =
         "jp.naver.line.android.common.lifecycle.LineLifecycleObserver";
     v.notificationFix.lineLifecycleObserverMethod = "onStateChanged";
-    v.notificationFix.legyStreamingStateClass =
-        "com.linecorp.legy.streaming.h$a";
-    v.notificationFix.legyStreamingLifecycleClass =
-        "com.linecorp.legy.streaming.h$d";
+    v.notificationFix.legyStreamingStateClass = "com.linecorp.legy.streaming.h$a";
+    v.notificationFix.legyStreamingLifecycleClass = "com.linecorp.legy.streaming.h$d";
     v.notificationFix.legyStreamingLifecycleMethod = "Z0";
     v.notificationFix.legyLifecycleOwnerClass = "androidx.lifecycle.u0";
     v.notificationFix.legyLifecycleEventClass = "androidx.lifecycle.e0$a";
     v.notificationFix.legyBackgroundStateField = "BACKGROUND";
     v.notificationFix.legyDisconnectRunnableClass = "n30.j";
-    v.notificationFix.legyStateFieldCandidates =
-        new String[] {"q", "f55430q"};
-    v.notificationFix.legyTimeoutFieldCandidates =
-        new String[] {"s", "f55432s"};
-    v.notificationFix.legyBackgroundWorkerFlagFieldCandidates =
-        new String[] {"u", "f55434u"};
-    v.notificationFix.legyHandlerFieldCandidates =
-        new String[] {"c", "f55417c"};
-    v.notificationFix.legyRunnableFieldCandidates =
-        new String[] {"t", "f55433t"};
+    v.notificationFix.legyStateFieldCandidates = new String[] {"q", "f55430q"};
+    v.notificationFix.legyTimeoutFieldCandidates = new String[] {"s", "f55432s"};
+    v.notificationFix.legyBackgroundWorkerFlagFieldCandidates = new String[] {"u", "f55434u"};
+    v.notificationFix.legyHandlerFieldCandidates = new String[] {"c", "f55417c"};
+    v.notificationFix.legyRunnableFieldCandidates = new String[] {"t", "f55433t"};
 
     v.talkTabHeader.chatTabHeaderStateClass = "pp1.e";
     v.talkTabHeader.iconListStateField = "x";
@@ -291,8 +272,7 @@ public class Version266 {
     v.searchBarAgentI.homeAiContainerId = 0x7f0b16db;
     v.searchBarAgentI.homeGuidelineId = 0x7f0b16dd;
     v.searchBarAgentI.homeGuidelineEndDp = 55;
-    v.searchBarAgentI.homeGuidelineClass =
-        "androidx.constraintlayout.widget.Guideline";
+    v.searchBarAgentI.homeGuidelineClass = "androidx.constraintlayout.widget.Guideline";
 
     v.agentIInChat.toggleComposableClass = "za1.h";
 

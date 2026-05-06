@@ -4,13 +4,11 @@ public class ModuleStrings {
 
   public static final String SETTINGS_TITLE = "モジュール設定";
   public static final String SETTINGS_RESET = "設定のリセット";
-  public static final String SETTINGS_RESET_CONFIRM =
-      "すべての設定をデフォルトに戻しますか？";
+  public static final String SETTINGS_RESET_CONFIRM = "すべての設定をデフォルトに戻しますか？";
   public static final String SETTINGS_RESET_OK = "リセット";
   public static final String SETTINGS_YES = "はい";
   public static final String SETTINGS_CANCEL = "キャンセル";
-  public static final String SETTINGS_PATH_PICKER_HINT =
-      "保存先を選択してください";
+  public static final String SETTINGS_PATH_PICKER_HINT = "保存先を選択してください";
   public static final String SETTINGS_UNSET = "未設定";
   public static final String SETTINGS_PATH_LABEL = "保存先: ";
   public static final String SETTINGS_SEARCH_HINT = "設定を検索...";
@@ -29,38 +27,29 @@ public class ModuleStrings {
   public static final String MANAGER_STORAGE_SETTING = "データ保存先の設定";
   public static final String MANAGER_HINT_BROWSE = "フォルダ選択";
   public static final String MANAGER_HINT_MANUAL = "手動入力";
-  public static final String MANAGER_DESC_STORAGE =
-      "機能の設定や履歴データの保存場所を指定します。";
-  public static final String MANAGER_RESTART_REQUIRED =
-      "LINEの再起動が必要です";
+  public static final String MANAGER_DESC_STORAGE = "機能の設定や履歴データの保存場所を指定します。";
+  public static final String MANAGER_RESTART_REQUIRED = "LINEの再起動が必要です";
   public static final String MANAGER_RESTART_CONFIRM_TITLE = "リセットの確認";
-  public static final String MANAGER_RESET_DESC =
-      "全設定をデフォルトに戻します。保存先の設定も削除されます。";
+  public static final String MANAGER_RESET_DESC = "全設定をデフォルトに戻します。保存先の設定も削除されます。";
   public static final String MANAGER_MANUAL_INPUT_TITLE = "直接指定";
   public static final String MANAGER_MANUAL_INPUT_CONFIRM = "確定";
 
   public static final String RESTART_TITLE = "再起動の確認";
-  public static final String RESTART_MESSAGE =
-      "設定を反映させるにはLINEの再起動が必要です。今すぐ再起動しますか？";
+  public static final String RESTART_MESSAGE = "設定を反映させるにはLINEの再起動が必要です。今すぐ再起動しますか？";
   public static final String RESTART_OK = "再起動";
   public static final String RESTART_LATER = "後で";
 
-  public static final String WARN_STORAGE_UNSET =
-      "⚠ Knot: 保存先が未設定です。タップして設定してください。";
-  public static final String UNSUPPORTED_VERSION_TITLE =
-      "Knot: Unsupported Version";
-  public static final String UNSUPPORTED_VERSION_MSG =
-      "このバージョンのLINEはサポートされていません。";
+  public static final String WARN_STORAGE_UNSET = "⚠ Knot: 保存先が未設定です。タップして設定してください。";
+  public static final String UNSUPPORTED_VERSION_TITLE = "Knot: Unsupported Version";
+  public static final String UNSUPPORTED_VERSION_MSG = "このバージョンのLINEはサポートされていません。";
 
   public static final String BACKUP_SUCCESS = "バックアップが完了しました。";
   public static final String BACKUP_ERROR = "バックアップに失敗しました。";
   public static final String RESTORE_SUCCESS = "復元が完了しました。";
-  public static final String RESTORE_ERROR =
-      "復元の実行中にエラーが発生しました。";
+  public static final String RESTORE_ERROR = "復元の実行中にエラーが発生しました。";
   public static final String RESTORE_CONFIRM_TITLE = "復元の確認";
   public static final String RESTORE_CONFIRM_MSG =
-      "バックアップからトーク履歴を復元しますか？現在のデータはすべて上書きさ"
-      + "れ、完了後にアプリが再起動されます。";
+      "バックアップからトーク履歴を復元しますか？現在のデータはすべて上書きされ、完了後にアプリが再起動されます。";
   public static final String RESTORE_PROCESSING = "復元処理中...";
   public static final String RESTORE_PREPARING = "準備中...";
 
@@ -74,10 +63,8 @@ public class ModuleStrings {
   public static final String READ_HISTORY_CLOSE = "閉じる";
   public static final String READ_HISTORY_DELETE = "履歴を削除";
   public static final String READ_HISTORY_DELETE_CONFIRM_TITLE = "履歴の削除";
-  public static final String READ_HISTORY_DELETE_CONFIRM_MSG =
-      "このチャットの既読履歴をすべて削除しますか？";
-  public static final String READ_HISTORY_UNKNOWN_MSG =
-      "(メディアまたは不明なメッセージ)";
+  public static final String READ_HISTORY_DELETE_CONFIRM_MSG = "このチャットの既読履歴をすべて削除しますか？";
+  public static final String READ_HISTORY_UNKNOWN_MSG = "(メディアまたは不明なメッセージ)";
 
   public static final String MSG_STICKER = "[スタンプ]";
   public static final String MSG_IMAGE = "[画像]";
@@ -85,149 +72,98 @@ public class ModuleStrings {
   public static final String MSG_FILE = "[ファイル]";
   public static final String MSG_LOCATION = "[位置情報]";
 
-  public static final String OPT_PREVENT_MARK_AS_READ_LABEL =
-      "プラスメニューに「既読回避」を追加";
+  public static final String OPT_PREVENT_MARK_AS_READ_LABEL = "プラスメニューに「既読回避」を追加";
   public static final String OPT_PREVENT_MARK_AS_READ_DESC =
-      "トークタブ右上の「+」メニューから既読回避をON/"
-      + "OFFできるようになります。ONにすると「送信後既読」オプションも表示され"
-      + "ます。";
-  public static final String OPT_PREVENT_UNSEND_MESSAGE_LABEL =
-      "送信取り消し無効化";
+      "トークタブ右上の「+」メニューから既読回避をON/OFFできるようになります。ONにすると「送信後既読」オプションも表示されます。";
+  public static final String OPT_PREVENT_UNSEND_MESSAGE_LABEL = "送信取り消し無効化";
   public static final String OPT_PREVENT_UNSEND_MESSAGE_DESC =
-      "相手がメッセージの送信を取り消しても、自分の端末には残るようにします。"
-      + "取り消されたメッセージにはアイコンが表示され、タップすることで取消日時"
-      + "を確認できます。";
+      "相手がメッセージの送信を取り消しても、自分の端末には残るようにします。取り消されたメッセージにはアイコンが表示され、タップすることで取消日時を確認できます。";
   public static final String OPT_RECORD_READ_HISTORY_LABEL = "既読履歴を記録";
   public static final String OPT_RECORD_READ_HISTORY_DESC =
-      "誰がいつメッセージを既読にしたかを記録します。チャット画面上部の本アイ"
-      + "コンから確認できます。";
+      "誰がいつメッセージを既読にしたかを記録します。チャット画面上部の本アイコンから確認できます。";
 
-  public static final String OPT_HIDE_AI_ICON_PERMANENTLY_LABEL =
-      "AIアイコンを永久に非表示";
+  public static final String OPT_HIDE_AI_ICON_PERMANENTLY_LABEL = "AIアイコンを永久に非表示";
   public static final String OPT_HIDE_AI_ICON_PERMANENTLY_DESC =
       "チャット画面のテキストボックス内にあるAIアイコンを常に非表示に"
-      + "します。通常は30日間のみ非表示にできますが、このオプションを有効にする"
-      + "と設定に関わらず永続的に非表示になります。";
+          + "します。通常は30日間のみ非表示にできますが、このオプションを有効にする"
+          + "と設定に関わらず永続的に非表示になります。";
   public static final String OPT_REMOVE_ADS_LABEL = "広告を非表示";
-  public static final String OPT_REMOVE_ADS_DESC =
-      "トークリスト上部やホーム画面などに表示される広告を非表示にします。";
-  public static final String OPT_REMOVE_HOME_RECOMMENDATIONS_LABEL =
-      "ホームのおすすめを非表示";
-  public static final String OPT_REMOVE_HOME_RECOMMENDATIONS_DESC =
-      "ホーム画面に表示されるおすすめコンテンツを非表示にします。";
-  public static final String OPT_REMOVE_HOME_SERVICES_LABEL =
-      "ホームのサービスを非表示";
-  public static final String OPT_REMOVE_HOME_SERVICES_DESC =
-      "ホーム画面に表示されるサービス一覧を非表示にします。";
-  public static final String OPT_REMOVE_HOME_ACCORDION_LABEL =
-      "ホーム上部のアコーディオンを非表示";
+  public static final String OPT_REMOVE_ADS_DESC = "トークリスト上部やホーム画面などに表示される広告を非表示にします。";
+  public static final String OPT_REMOVE_HOME_RECOMMENDATIONS_LABEL = "ホームのおすすめを非表示";
+  public static final String OPT_REMOVE_HOME_RECOMMENDATIONS_DESC = "ホーム画面に表示されるおすすめコンテンツを非表示にします。";
+  public static final String OPT_REMOVE_HOME_SERVICES_LABEL = "ホームのサービスを非表示";
+  public static final String OPT_REMOVE_HOME_SERVICES_DESC = "ホーム画面に表示されるサービス一覧を非表示にします。";
+  public static final String OPT_REMOVE_HOME_ACCORDION_LABEL = "ホーム上部のアコーディオンを非表示";
   public static final String OPT_REMOVE_HOME_ACCORDION_DESC =
-      "ホームタブ上部（検索バーと友達リストの間）に表示されるLYP特典などの"
-      + "アコーディオン枠を非表示にします。";
+      "ホームタブ上部（検索バーと友達リストの間）に表示されるLYP特典などのアコーディオン枠を非表示にします。";
   public static final String OPT_REMOVE_TAB_VOOM_LABEL = "VOOMタブを非表示";
-  public static final String OPT_REMOVE_TAB_VOOM_DESC =
-      "下部のVOOMタブを隠します。";
+  public static final String OPT_REMOVE_TAB_VOOM_DESC = "下部のVOOMタブを隠します。";
   public static final String OPT_REMOVE_TAB_NEWS_LABEL = "ニュースタブを非表示";
-  public static final String OPT_REMOVE_TAB_NEWS_DESC =
-      "下部のニュースタブを隠します。";
+  public static final String OPT_REMOVE_TAB_NEWS_DESC = "下部のニュースタブを隠します。";
   public static final String OPT_REMOVE_TAB_MINI_LABEL = "MINIタブを非表示";
-  public static final String OPT_REMOVE_TAB_MINI_DESC =
-      "下部のMINIタブを隠します。";
-  public static final String OPT_EXTEND_TAB_CLICK_AREA_LABEL =
-      "タブのタップ範囲を拡張";
-  public static final String OPT_EXTEND_TAB_CLICK_AREA_DESC =
-      "下部タブの反応範囲を広げ、押しやすくします。";
+  public static final String OPT_REMOVE_TAB_MINI_DESC = "下部のMINIタブを隠します。";
+  public static final String OPT_EXTEND_TAB_CLICK_AREA_LABEL = "タブのタップ範囲を拡張";
+  public static final String OPT_EXTEND_TAB_CLICK_AREA_DESC = "下部タブの反応範囲を広げ、押しやすくします。";
   public static final String OPT_HIDE_TAB_TEXT_LABEL = "タブラベルを非表示";
-  public static final String OPT_HIDE_TAB_TEXT_DESC =
-      "下部タブのアイコン下のテキストを非表示にします。※通知アイコンがズレる"
-      + "場合があります。";
+  public static final String OPT_HIDE_TAB_TEXT_DESC = "下部タブのアイコン下のテキストを非表示にします。※通知アイコンがズレる場合があります。";
 
-  public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_LABEL =
-      "「通知をオフ」ボタンを非表示";
+  public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_LABEL = "「通知をオフ」ボタンを非表示";
   public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_DESC =
       "LINEの通知に表示される「通知をオフ」ボタンを削除します。";
-  public static final String OPT_REACTION_NOTIFICATION_LABEL =
-      "リアクション通知";
+  public static final String OPT_REACTION_NOTIFICATION_LABEL = "リアクション通知";
   public static final String OPT_REACTION_NOTIFICATION_DESC =
-      "メッセージについたリアクションを通知します。※アプリを開くと送信されま"
-      + "す。";
+      "メッセージについたリアクションを通知します。※アプリを開くと送信されます。";
 
-  public static final String OPT_EXPERIMENTAL_FCM_FIX_LABEL =
-      "FCM Fix";
+  public static final String OPT_EXPERIMENTAL_FCM_FIX_LABEL = "FCM Fix";
   public static final String OPT_EXPERIMENTAL_FCM_FIX_DESC =
-      "非root環境で通知が1分程度で届かなくなる問題を回避するため、"
-      + "LINEのFCM通知受信処理を直接サービスに引き渡す挙動を有効にします。";
+      "非root環境で通知が1分程度で届かなくなる問題を回避するため、LINEのFCM通知受信処理を直接サービスに引き渡す挙動を有効にします。";
 
-  public static final String OPT_OPEN_URL_IN_DEFAULT_BROWSER_LABEL =
-      "URLをデフォルトブラウザで開く";
+  public static final String OPT_OPEN_URL_IN_DEFAULT_BROWSER_LABEL = "URLをデフォルトブラウザで開く";
   public static final String OPT_OPEN_URL_IN_DEFAULT_BROWSER_DESC =
-      "URLをアプリ内ブラウザではなく、システムのデフォルトブラウザで開くよう"
-      + "にします。";
-  public static final String OPT_USE_CUSTOM_FONT_LABEL =
-      "カスタムフォントを有効にする";
+      "URLをアプリ内ブラウザではなく、システムのデフォルトブラウザで開くようにします。";
+  public static final String OPT_USE_CUSTOM_FONT_LABEL = "カスタムフォントを有効にする";
   public static final String OPT_USE_CUSTOM_FONT_DESC =
-      "選択したフォントファイルをアプリ全体に適用します。反映にはアプリの再起"
-      + "動が必要です。";
-  public static final String OPT_CUSTOM_FONT_PATH_LABEL =
-      "フォントファイルを選択";
-  public static final String OPT_CUSTOM_FONT_PATH_DESC =
-      "使用するフォントファイル (.ttf / .otf) を選択します。";
-  public static final String OPT_SPOOF_VERSION_UNSEND_ONLY_LABEL =
-      "送信取り消しの時間制限を延長";
+      "選択したフォントファイルをアプリ全体に適用します。反映にはアプリの再起動が必要です。";
+  public static final String OPT_CUSTOM_FONT_PATH_LABEL = "フォントファイルを選択";
+  public static final String OPT_CUSTOM_FONT_PATH_DESC = "使用するフォントファイル (.ttf / .otf) を選択します。";
+  public static final String OPT_SPOOF_VERSION_UNSEND_ONLY_LABEL = "送信取り消しの時間制限を延長";
   public static final String OPT_SPOOF_VERSION_UNSEND_ONLY_DESC =
-      "送信取り消し時のみバージョンを15.12."
-      + "2に偽装し、1時間の時間制限を24時間に戻します。";
-  public static final String OPT_SPOOF_VERSION_LABEL =
-      "アプリバージョンの偽装 (常時)";
+      "送信取り消し時のみバージョンを15.12.2に偽装し、1時間の時間制限を24時間に戻します。";
+  public static final String OPT_SPOOF_VERSION_LABEL = "アプリバージョンの偽装 (常時)";
   public static final String OPT_SPOOF_VERSION_DESC =
-      "常にアプリバージョンを15.12."
-      + "2に偽装します。なにか特別な目的がない限り使用しないでください。";
-  public static final String OPT_FIX_SETTINGS_TALK_CRASH_LABEL =
-      "トーク設定のクラッシュを修正";
-  public static final String OPT_FIX_SETTINGS_TALK_CRASH_DESC =
-      "公式設定の「トーク」を開くとクラッシュする問題を修正します。";
+      "常にアプリバージョンを15.12.2に偽装します。なにか特別な目的がない限り使用しないでください。";
+  public static final String OPT_FIX_SETTINGS_TALK_CRASH_LABEL = "トーク設定のクラッシュを修正";
+  public static final String OPT_FIX_SETTINGS_TALK_CRASH_DESC = "公式設定の「トーク」を開くとクラッシュする問題を修正します。";
 
-  public static final String DESC_PATH_ROW =
-      "モジュールの設定ファイルなどが保存されるディレクトリを選択します。";
-  public static final String DESC_RESET_ROW =
-      "すべてのモジュール設定をデフォルト状態に戻します。";
+  public static final String DESC_PATH_ROW = "モジュールの設定ファイルなどが保存されるディレクトリを選択します。";
+  public static final String DESC_RESET_ROW = "すべてのモジュール設定をデフォルト状態に戻します。";
   public static final String OPT_BACKUP_LABEL = "トーク履歴のバックアップ";
-  public static final String OPT_BACKUP_DESC =
-      "現在のトーク履歴を保存先にバックアップします。";
+  public static final String OPT_BACKUP_DESC = "現在のトーク履歴を保存先にバックアップします。";
   public static final String OPT_RESTORE_LABEL = "トーク履歴の復元";
-  public static final String OPT_RESTORE_DESC =
-      "バックアップファイルからトーク履歴を復元します。現在の履歴が上書きされ"
-      + "ます。";
+  public static final String OPT_RESTORE_DESC = "バックアップファイルからトーク履歴を復元します。現在の履歴が上書きされます。";
 
-  public static final String REACTION_NOTIF_TITLE =
-      "%sが以下のメッセージにリアクションしました";
+  public static final String REACTION_NOTIF_TITLE = "%sが以下のメッセージにリアクションしました";
   public static final String REACTION_NOTIF_BODY = "%s";
-  public static final String OPT_REMOVE_AI_FRIENDS_BUTTON_LABEL =
-      "AI Friendsボタンを非表示";
-  public static final String OPT_REMOVE_AI_FRIENDS_BUTTON_DESC =
-      "トークタブ右上の「AI Friends」ボタンを非表示にします。";
-  public static final String OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_LABEL =
-      "Agent i関連のボタンを非表示";
+  public static final String OPT_REMOVE_AI_FRIENDS_BUTTON_LABEL = "AI Friendsボタンを非表示";
+  public static final String OPT_REMOVE_AI_FRIENDS_BUTTON_DESC = "トークタブ右上の「AI Friends」ボタンを非表示にします。";
+  public static final String OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_LABEL = "Agent i関連のボタンを非表示";
   public static final String OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_DESC =
       "トークタブ/ホームタブの検索バー右側にある「Agent i」ボタンと、"
-      + "トークルーム内の「+」メニューにある"
-      + "「トークルームのAgent iを表示」トグルをまとめて非表示にします。";
-  public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_LABEL =
-      "オープンチャットボタンを非表示";
-  public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_DESC =
-      "トークタブ右上の「オープンチャット」ボタンを非表示にします。";
+          + "トークルーム内の「+」メニューにある"
+          + "「トークルームのAgent iを表示」トグルをまとめて非表示にします。";
+  public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_LABEL = "オープンチャットボタンを非表示";
+  public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_DESC = "トークタブ右上の「オープンチャット」ボタンを非表示にします。";
 
-  public static final String TOOLTIP_SETTINGS_LONG_PRESS =
-      "長押しでKnotの設定を開けます";
+  public static final String TOOLTIP_SETTINGS_LONG_PRESS = "長押しでKnotの設定を開けます";
 
   public static final String OPT_ABOUT_LABEL = "Knotについて";
   public static final String OPT_ABOUT_DESC = "バージョン情報など";
   public static final String ABOUT_TITLE = "Knotについて";
   public static final String ABOUT_CONTENT =
       "Knot v%s\n"
-      + "A brand-new Xposed module for LINE\n\n"
-      + "Developed by 2b-zipper\n\n"
-      + "GitHub: https://github.com/2b-zipper/Knot\n"
-      + "License: GNU GPLv3\n\n"
-      + "⚠️ 使用は自己責任で行ってください。";
+          + "A brand-new Xposed module for LINE\n\n"
+          + "Developed by 2b-zipper\n\n"
+          + "GitHub: https://github.com/2b-zipper/Knot\n"
+          + "License: GNU GPLv3\n\n"
+          + "⚠️ 使用は自己責任で行ってください。";
 }

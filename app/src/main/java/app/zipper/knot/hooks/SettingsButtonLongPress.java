@@ -12,19 +12,19 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class SettingsButtonLongPress implements BaseHook {
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
-      throws Throwable {
+  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
 
     try {
       XposedHelpers.findAndHookMethod(
-          cfg.main.headerButton, lpparam.classLoader,
-          "setButtonOnClickListener", View.OnClickListener.class,
+          cfg.main.headerButton,
+          lpparam.classLoader,
+          "setButtonOnClickListener",
+          View.OnClickListener.class,
           new XC_MethodHook() {
             @Override
-            protected void afterHookedMethod(MethodHookParam param)
-                throws Throwable {
-              attachInteractionHandler((View)param.thisObject);
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+              attachInteractionHandler((View) param.thisObject);
             }
           });
     } catch (Throwable ignored) {
@@ -32,14 +32,14 @@ public class SettingsButtonLongPress implements BaseHook {
 
     try {
       XposedHelpers.findAndHookMethod(
-          View.class, "setOnClickListener", View.OnClickListener.class,
+          View.class,
+          "setOnClickListener",
+          View.OnClickListener.class,
           new XC_MethodHook() {
             @Override
-            protected void afterHookedMethod(MethodHookParam param)
-                throws Throwable {
-              View target = (View)param.thisObject;
-              if (target == null)
-                return;
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+              View target = (View) param.thisObject;
+              if (target == null) return;
               int id = target.getId();
               if (id != View.NO_ID) {
                 LineVersion.Config c = LineVersion.get();
@@ -48,8 +48,8 @@ public class SettingsButtonLongPress implements BaseHook {
                   entry = target.getResources().getResourceEntryName(id);
                 } catch (Throwable ignored) {
                 }
-                if (c.res.resSettingsHeaderBtn.equals(entry) ||
-                    c.res.resSettingsBtn.equals(entry)) {
+                if (c.res.resSettingsHeaderBtn.equals(entry)
+                    || c.res.resSettingsBtn.equals(entry)) {
                   attachInteractionHandler(target);
                 }
               }
@@ -60,13 +60,11 @@ public class SettingsButtonLongPress implements BaseHook {
   }
 
   private void attachInteractionHandler(View root) {
-    if (root == null)
-      return;
+    if (root == null) return;
     LineVersion.Config cfg = LineVersion.get();
     if (root.getClass().getName().contains("HeaderButton")) {
       try {
-        View inner = (View)XposedHelpers.getObjectField(
-            root, cfg.main.headerButtonInnerField);
+        View inner = (View) XposedHelpers.getObjectField(root, cfg.main.headerButtonInnerField);
         if (inner != null) {
           inner.setOnLongClickListener(interactionListener);
           return;
@@ -77,25 +75,25 @@ public class SettingsButtonLongPress implements BaseHook {
     root.setOnLongClickListener(interactionListener);
   }
 
-  private final View.OnLongClickListener interactionListener = v -> {
-    try {
-      Activity host = findHostActivity(v.getContext());
-      if (host != null) {
-        HomeSettingsTooltip.markShown();
-        SettingsUIInjector.openSettings(host);
-        return true;
-      }
-    } catch (Throwable t) {
-      XposedBridge.log("Knot: Interaction error: " + t);
-    }
-    return false;
-  };
+  private final View.OnLongClickListener interactionListener =
+      v -> {
+        try {
+          Activity host = findHostActivity(v.getContext());
+          if (host != null) {
+            HomeSettingsTooltip.markShown();
+            SettingsUIInjector.openSettings(host);
+            return true;
+          }
+        } catch (Throwable t) {
+          XposedBridge.log("Knot: Interaction error: " + t);
+        }
+        return false;
+      };
 
   private Activity findHostActivity(android.content.Context ctx) {
     while (ctx instanceof android.content.ContextWrapper) {
-      if (ctx instanceof Activity)
-        return (Activity)ctx;
-      ctx = ((android.content.ContextWrapper)ctx).getBaseContext();
+      if (ctx instanceof Activity) return (Activity) ctx;
+      ctx = ((android.content.ContextWrapper) ctx).getBaseContext();
     }
     return null;
   }

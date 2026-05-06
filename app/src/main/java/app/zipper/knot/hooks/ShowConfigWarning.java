@@ -22,24 +22,24 @@ public class ShowConfigWarning implements BaseHook {
   private static final int BROWSE_DIR_REQUEST = 0x4C5859;
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
-      throws Throwable {
-    Class<?> activityCls = lpparam.classLoader.loadClass(
-        "jp.naver.line.android.activity.main.MainActivity");
+  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    Class<?> activityCls =
+        lpparam.classLoader.loadClass("jp.naver.line.android.activity.main.MainActivity");
 
     XposedHelpers.findAndHookMethod(
-        activityCls, "onResume", new XC_MethodHook() {
+        activityCls,
+        "onResume",
+        new XC_MethodHook() {
           @Override
           protected void afterHookedMethod(MethodHookParam param) {
-            Activity host = (Activity)param.thisObject;
+            Activity host = (Activity) param.thisObject;
             SettingsStore.init(host);
             for (KnotConfig.Item item : config.items) {
               item.enabled = SettingsStore.get(item.key, item.enabled);
             }
 
             ViewGroup layoutRoot = host.findViewById(android.R.id.content);
-            if (layoutRoot == null)
-              return;
+            if (layoutRoot == null) return;
 
             if (SettingsStore.isConfigured()) {
               dismissBanner(layoutRoot);
@@ -52,46 +52,48 @@ public class ShowConfigWarning implements BaseHook {
         });
 
     XposedHelpers.findAndHookMethod(
-        activityCls, "onActivityResult", int.class, int.class, Intent.class,
+        activityCls,
+        "onActivityResult",
+        int.class,
+        int.class,
+        Intent.class,
         new XC_MethodHook() {
           @Override
           protected void beforeHookedMethod(MethodHookParam param) {
-            int code = (int)param.args[0];
-            int result = (int)param.args[1];
-            Intent data = (Intent)param.args[2];
+            int code = (int) param.args[0];
+            int result = (int) param.args[1];
+            Intent data = (Intent) param.args[2];
 
-            if (code != BROWSE_DIR_REQUEST)
-              return;
+            if (code != BROWSE_DIR_REQUEST) return;
             param.setResult(null);
 
-            if (result != Activity.RESULT_OK || data == null)
-              return;
+            if (result != Activity.RESULT_OK || data == null) return;
             Uri treeUri = data.getData();
-            if (treeUri == null)
-              return;
+            if (treeUri == null) return;
 
-            Activity host = (Activity)param.thisObject;
+            Activity host = (Activity) param.thisObject;
             try {
-              host.getContentResolver().takePersistableUriPermission(
-                  treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION |
-                               Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+              host.getContentResolver()
+                  .takePersistableUriPermission(
+                      treeUri,
+                      Intent.FLAG_GRANT_READ_URI_PERMISSION
+                          | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             } catch (Throwable ignored) {
             }
             SettingsStore.setSettingsDir(treeUri.toString());
 
-            host.runOnUiThread(() -> {
-              ViewGroup root = host.findViewById(android.R.id.content);
-              if (root != null)
-                dismissBanner(root);
-            });
+            host.runOnUiThread(
+                () -> {
+                  ViewGroup root = host.findViewById(android.R.id.content);
+                  if (root != null) dismissBanner(root);
+                });
           }
         });
   }
 
   private static void dismissBanner(ViewGroup root) {
     View banner = root.findViewWithTag(WARNING_BANNER_TAG);
-    if (banner != null)
-      root.removeView(banner);
+    if (banner != null) root.removeView(banner);
   }
 
   private View constructWarningBanner(Activity host) {
@@ -105,38 +107,37 @@ public class ShowConfigWarning implements BaseHook {
     label.setGravity(Gravity.CENTER);
 
     float scale = host.getResources().getDisplayMetrics().density;
-    int padding = (int)(10 * scale);
+    int padding = (int) (10 * scale);
     label.setPadding(padding, padding, padding, padding);
     label.setClickable(true);
-    label.setOnClickListener(v -> {
-      Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-      intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
-                      Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-      host.startActivityForResult(intent, BROWSE_DIR_REQUEST);
-    });
+    label.setOnClickListener(
+        v -> {
+          Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+          intent.addFlags(
+              Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+          host.startActivityForResult(intent, BROWSE_DIR_REQUEST);
+        });
 
     int statusH = 0, actionH = 0;
     try {
-      int id = host.getResources().getIdentifier("status_bar_height", "dimen",
-                                                 "android");
-      if (id > 0)
-        statusH = host.getResources().getDimensionPixelSize(id);
+      int id = host.getResources().getIdentifier("status_bar_height", "dimen", "android");
+      if (id > 0) statusH = host.getResources().getDimensionPixelSize(id);
     } catch (Throwable ignored) {
     }
 
     try {
       android.util.TypedValue val = new android.util.TypedValue();
-      if (host.getTheme().resolveAttribute(android.R.attr.actionBarSize, val,
-                                           true)) {
-        actionH = android.util.TypedValue.complexToDimensionPixelSize(
-            val.data, host.getResources().getDisplayMetrics());
+      if (host.getTheme().resolveAttribute(android.R.attr.actionBarSize, val, true)) {
+        actionH =
+            android.util.TypedValue.complexToDimensionPixelSize(
+                val.data, host.getResources().getDisplayMetrics());
       }
     } catch (Throwable ignored) {
     }
 
-    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.MATCH_PARENT, Gravity.TOP);
+    FrameLayout.LayoutParams params =
+        new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.TOP);
     params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
     params.topMargin = statusH + actionH;
     label.setLayoutParams(params);

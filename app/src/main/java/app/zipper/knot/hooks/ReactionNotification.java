@@ -42,67 +42,59 @@ public class ReactionNotification implements BaseHook {
   private static volatile String currentChatMid = null;
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
-      throws Throwable {
-    if (!config.reactionNotification.enabled)
-      return;
+  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    if (!config.reactionNotification.enabled) return;
 
     LineVersion.Config cfg = LineVersion.get();
 
-    XC_MethodHook activityTracker = new XC_MethodHook() {
-      @Override
-      protected void afterHookedMethod(MethodHookParam param) {
-        boolean isChat = param.thisObject.getClass().getName().equals(
-            cfg.chatHeader.chatHistoryActivity);
+    XC_MethodHook activityTracker =
+        new XC_MethodHook() {
+          @Override
+          protected void afterHookedMethod(MethodHookParam param) {
+            boolean isChat =
+                param.thisObject.getClass().getName().equals(cfg.chatHeader.chatHistoryActivity);
 
-        if (param.method.getName().equals("onResume")) {
-          if (isChat) {
-            try {
-              android.app.Activity activity =
-                  (android.app.Activity)param.thisObject;
-              String chatId = activity.getIntent().getStringExtra("chatId");
-              if (chatId == null)
-                chatId = activity.getIntent().getStringExtra("chat_id");
+            if (param.method.getName().equals("onResume")) {
+              if (isChat) {
+                try {
+                  android.app.Activity activity = (android.app.Activity) param.thisObject;
+                  String chatId = activity.getIntent().getStringExtra("chatId");
+                  if (chatId == null) chatId = activity.getIntent().getStringExtra("chat_id");
 
-              if (chatId == null) {
-                Object request = XposedHelpers.getObjectField(
-                    activity, cfg.chat.chatIdField);
-                if (request != null) {
-                  chatId = (String)XposedHelpers.callMethod(
-                      request, cfg.chat.methodGetChatId);
+                  if (chatId == null) {
+                    Object request = XposedHelpers.getObjectField(activity, cfg.chat.chatIdField);
+                    if (request != null) {
+                      chatId = (String) XposedHelpers.callMethod(request, cfg.chat.methodGetChatId);
+                    }
+                  }
+                  currentChatMid = chatId;
+                  clearChatNotifications(activity, chatId);
+                } catch (Throwable ignored) {
                 }
+              } else {
+                currentChatMid = null;
               }
-              currentChatMid = chatId;
-              clearChatNotifications(activity, chatId);
-            } catch (Throwable ignored) {
+            } else if (isChat) {
+              currentChatMid = null;
             }
-          } else {
-            currentChatMid = null;
           }
-        } else if (isChat) {
-          currentChatMid = null;
-        }
-      }
-    };
+        };
 
     try {
-      XposedHelpers.findAndHookMethod(android.app.Activity.class, "onResume",
-                                      activityTracker);
-      XposedHelpers.findAndHookMethod(android.app.Activity.class, "onPause",
-                                      activityTracker);
+      XposedHelpers.findAndHookMethod(android.app.Activity.class, "onResume", activityTracker);
+      XposedHelpers.findAndHookMethod(android.app.Activity.class, "onPause", activityTracker);
     } catch (Throwable t) {
       XposedBridge.log("Knot: Chat tracking hook failed: " + t.getMessage());
     }
 
     try {
       XposedBridge.hookAllMethods(
-          XposedHelpers.findClass(cfg.unsend.talkServiceHookClass,
-                                  lpparam.classLoader),
-          cfg.unsend.methodReadBuffer, new XC_MethodHook() {
+          XposedHelpers.findClass(cfg.unsend.talkServiceHookClass, lpparam.classLoader),
+          cfg.unsend.methodReadBuffer,
+          new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
-              if (!Main.options.reactionNotification.enabled)
-                return;
+              if (!Main.options.reactionNotification.enabled) return;
               try {
                 processOperation(param);
               } catch (Exception ignored) {
@@ -114,99 +106,78 @@ public class ReactionNotification implements BaseHook {
     }
   }
 
-  private void processOperation(XC_MethodHook.MethodHookParam param)
-      throws Exception {
+  private void processOperation(XC_MethodHook.MethodHookParam param) throws Exception {
     LineVersion.Config cfg = LineVersion.get();
     Object op = param.args[1];
-    if (op == null || op.getClass().getName().startsWith("java."))
-      return;
+    if (op == null || op.getClass().getName().startsWith("java.")) return;
 
-    Object type =
-        XposedHelpers.getObjectField(op, cfg.unsend.operationTypeField);
-    if (type == null || !OP_TYPE_REACTION.equals(type.toString()))
-      return;
+    Object type = XposedHelpers.getObjectField(op, cfg.unsend.operationTypeField);
+    if (type == null || !OP_TYPE_REACTION.equals(type.toString())) return;
 
-    String messageId = (String)XposedHelpers.getObjectField(
-        op, cfg.unsend.operationParam1Field);
-    String dataJson = (String)XposedHelpers.getObjectField(
-        op, cfg.unsend.operationParam2Field);
-    String reactorMid = (String)XposedHelpers.getObjectField(
-        op, cfg.unsend.operationParam3Field);
+    String messageId = (String) XposedHelpers.getObjectField(op, cfg.unsend.operationParam1Field);
+    String dataJson = (String) XposedHelpers.getObjectField(op, cfg.unsend.operationParam2Field);
+    String reactorMid = (String) XposedHelpers.getObjectField(op, cfg.unsend.operationParam3Field);
 
-    if (dataJson == null || reactorMid == null)
-      return;
+    if (dataJson == null || reactorMid == null) return;
 
     JSONObject json = new JSONObject(dataJson);
     String chatMid = json.optString("chatMid");
-    if (chatMid.isEmpty() || chatMid.equals(currentChatMid))
-      return;
+    if (chatMid.isEmpty() || chatMid.equals(currentChatMid)) return;
 
     JSONObject curr = json.optJSONObject("curr");
-    if (curr == null || curr.length() == 0)
-      return;
+    if (curr == null || curr.length() == 0) return;
 
-    boolean hasReaction = curr.optInt("predefinedReactionType") > 0 ||
-                          !curr.optString("externalReactionType").isEmpty() ||
-                          !curr.optString("productId").isEmpty() ||
-                          !curr.optString("sticonId").isEmpty() ||
-                          !curr.optString("emojiId").isEmpty() ||
-                          curr.has("paidReactionType") ||
-                          curr.has("paidReaction");
-    if (!hasReaction)
-      return;
+    boolean hasReaction =
+        curr.optInt("predefinedReactionType") > 0
+            || !curr.optString("externalReactionType").isEmpty()
+            || !curr.optString("productId").isEmpty()
+            || !curr.optString("sticonId").isEmpty()
+            || !curr.optString("emojiId").isEmpty()
+            || curr.has("paidReactionType")
+            || curr.has("paidReaction");
+    if (!hasReaction) return;
 
     Context context = android.app.AndroidAppHelper.currentApplication();
-    if (context == null)
-      return;
+    if (context == null) return;
 
     Bitmap reactionIcon = resolveReactionIcon(context, curr);
     if (reactionIcon == null) {
-      reactionIcon =
-          loadBitmapFromResource(context, "chat_ui_ic_reaction_fallback");
+      reactionIcon = loadBitmapFromResource(context, "chat_ui_ic_reaction_fallback");
     }
 
     String reactorName = LineDBUtils.resolveMemberName(reactorMid);
-    if (reactorName == null)
-      reactorName = reactorMid;
+    if (reactorName == null) reactorName = reactorMid;
 
     String messageSnippet = LineDBUtils.resolveMessageContent(messageId);
     if (messageSnippet == null || messageSnippet.isEmpty()) {
       messageSnippet = ModuleStrings.READ_HISTORY_UNKNOWN_MSG;
     }
 
-    long timestamp =
-        XposedHelpers.getLongField(op, cfg.unsend.operationCreatedTimeField);
-    int notifId =
-        NOTIFICATION_BASE_ID + (chatMid + messageId + reactorMid).hashCode();
+    long timestamp = XposedHelpers.getLongField(op, cfg.unsend.operationCreatedTimeField);
+    int notifId = NOTIFICATION_BASE_ID + (chatMid + messageId + reactorMid).hashCode();
 
     String title = String.format(ModuleStrings.REACTION_NOTIF_TITLE, reactorName);
 
-    issueNotification(context, title, messageSnippet, chatMid,
-                      reactionIcon, notifId, timestamp);
+    issueNotification(context, title, messageSnippet, chatMid, reactionIcon, notifId, timestamp);
   }
 
   private Bitmap resolveReactionIcon(Context context, JSONObject curr) {
-    if (curr == null)
-      return null;
+    if (curr == null) return null;
 
     int reactionType = curr.optInt("predefinedReactionType");
     String resName = getReactionResourceName(reactionType);
     Bitmap bitmap = loadBitmapFromResource(context, resName);
-    if (bitmap != null)
-      return bitmap;
+    if (bitmap != null) return bitmap;
 
     String productId = curr.optString("productId");
     String sticonId = curr.optString("sticonId", curr.optString("emojiId"));
 
     JSONObject paid = curr.optJSONObject("paidReactionType");
-    if (paid == null)
-      paid = curr.optJSONObject("paidReaction");
+    if (paid == null) paid = curr.optJSONObject("paidReaction");
 
     if (paid != null) {
-      if (productId.isEmpty())
-        productId = paid.optString("productId");
-      if (sticonId.isEmpty())
-        sticonId = paid.optString("sticonId", paid.optString("emojiId"));
+      if (productId.isEmpty()) productId = paid.optString("productId");
+      if (sticonId.isEmpty()) sticonId = paid.optString("sticonId", paid.optString("emojiId"));
     }
 
     if (!productId.isEmpty() && !sticonId.isEmpty()) {
@@ -216,38 +187,56 @@ public class ReactionNotification implements BaseHook {
     String external = curr.optString("externalReactionType");
     if (external != null && external.startsWith("PAID_")) {
       String[] parts = external.split("_");
-      if (parts.length >= 3)
-        return loadSticonBitmap(context, parts[1], parts[2]);
+      if (parts.length >= 3) return loadSticonBitmap(context, parts[1], parts[2]);
     }
 
     return null;
   }
 
-  private Bitmap loadSticonBitmap(Context context, String productId,
-                                  String sticonId) {
-    String[] paths = {"/sdcard/Android/data/" + PKG_LINE + "/files/sticon/" +
-                          productId + "/sticon/android/" + sticonId + ".png",
-                      "/sdcard/Android/data/" + PKG_LINE + "/files/sticon/" +
-                          productId + "/android/" + sticonId + ".png",
-                      context.getFilesDir().getParent() + "/app_sticon/" +
-                          productId + "/" + sticonId + ".png"};
+  private Bitmap loadSticonBitmap(Context context, String productId, String sticonId) {
+    String[] paths = {
+      "/sdcard/Android/data/"
+          + PKG_LINE
+          + "/files/sticon/"
+          + productId
+          + "/sticon/android/"
+          + sticonId
+          + ".png",
+      "/sdcard/Android/data/"
+          + PKG_LINE
+          + "/files/sticon/"
+          + productId
+          + "/android/"
+          + sticonId
+          + ".png",
+      context.getFilesDir().getParent() + "/app_sticon/" + productId + "/" + sticonId + ".png"
+    };
 
     for (String path : paths) {
       File f = new File(path);
       if (f.exists()) {
         Bitmap b = BitmapFactory.decodeFile(path);
-        if (b != null)
-          return b;
+        if (b != null) return b;
       }
     }
 
     String[] urls = {
-        "https://stickershop.line-scdn.net/sticonshop/v1/" + productId +
-            "/sticon/android/" + sticonId + ".png",
-        "https://stickershop.line-scdn.net/sticonshop/v1/product/android/" +
-            productId + "/" + sticonId + ".png",
-        "https://stickershop.line-scdn.net/sticon/" + productId +
-            "/ANDROID/sticon/" + sticonId + ".png"};
+      "https://stickershop.line-scdn.net/sticonshop/v1/"
+          + productId
+          + "/sticon/android/"
+          + sticonId
+          + ".png",
+      "https://stickershop.line-scdn.net/sticonshop/v1/product/android/"
+          + productId
+          + "/"
+          + sticonId
+          + ".png",
+      "https://stickershop.line-scdn.net/sticon/"
+          + productId
+          + "/ANDROID/sticon/"
+          + sticonId
+          + ".png"
+    };
 
     return downloadBitmap(context, urls);
   }
@@ -255,29 +244,24 @@ public class ReactionNotification implements BaseHook {
   private Bitmap downloadBitmap(Context context, String[] urls) {
     String ua = "Line/26.6.0";
     try {
-      Class<?> verCls = context.getClassLoader().loadClass(
-          LineVersion.get().notification.lineAppVersionClass);
-      String verName =
-          (String)XposedHelpers.callStaticMethod(verCls, "getVerName");
-      if (verName != null && !verName.isEmpty())
-        ua = "Line/" + verName;
+      Class<?> verCls =
+          context.getClassLoader().loadClass(LineVersion.get().notification.lineAppVersionClass);
+      String verName = (String) XposedHelpers.callStaticMethod(verCls, "getVerName");
+      if (verName != null && !verName.isEmpty()) ua = "Line/" + verName;
     } catch (Throwable ignored) {
     }
 
     for (String urlStr : urls) {
       try {
-        HttpURLConnection conn =
-            (HttpURLConnection) new URL(urlStr).openConnection();
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
         conn.setConnectTimeout(3000);
         conn.setReadTimeout(3000);
         conn.setRequestProperty("User-Agent", ua);
 
         if (conn.getResponseCode() == 200) {
-          try (InputStream is =
-                   new BufferedInputStream(conn.getInputStream())) {
+          try (InputStream is = new BufferedInputStream(conn.getInputStream())) {
             Bitmap b = BitmapFactory.decodeStream(is);
-            if (b != null)
-              return b;
+            if (b != null) return b;
           }
         }
       } catch (Exception ignored) {
@@ -287,15 +271,11 @@ public class ReactionNotification implements BaseHook {
   }
 
   private Bitmap loadBitmapFromResource(Context context, String resName) {
-    if (resName == null)
-      return null;
+    if (resName == null) return null;
     try {
-      Context lineCtx =
-          context.createPackageContext(PKG_LINE, Context.CONTEXT_RESTRICTED);
-      int resId =
-          lineCtx.getResources().getIdentifier(resName, "drawable", PKG_LINE);
-      if (resId != 0)
-        return BitmapFactory.decodeResource(lineCtx.getResources(), resId);
+      Context lineCtx = context.createPackageContext(PKG_LINE, Context.CONTEXT_RESTRICTED);
+      int resId = lineCtx.getResources().getIdentifier(resName, "drawable", PKG_LINE);
+      if (resId != 0) return BitmapFactory.decodeResource(lineCtx.getResources(), resId);
     } catch (Exception ignored) {
     }
     return null;
@@ -303,58 +283,59 @@ public class ReactionNotification implements BaseHook {
 
   private String getReactionResourceName(int type) {
     switch (type) {
-    case 2:
-      return "shop_predefined_reaction_nice";
-    case 3:
-      return "shop_predefined_reaction_love";
-    case 4:
-      return "shop_predefined_reaction_fun";
-    case 5:
-      return "shop_predefined_reaction_amazing";
-    case 6:
-      return "shop_predefined_reaction_sad";
-    case 7:
-      return "shop_predefined_reaction_omg";
-    default:
-      return null;
+      case 2:
+        return "shop_predefined_reaction_nice";
+      case 3:
+        return "shop_predefined_reaction_love";
+      case 4:
+        return "shop_predefined_reaction_fun";
+      case 5:
+        return "shop_predefined_reaction_amazing";
+      case 6:
+        return "shop_predefined_reaction_sad";
+      case 7:
+        return "shop_predefined_reaction_omg";
+      default:
+        return null;
     }
   }
 
-  private void issueNotification(Context context, String title, String body,
-                                 String chatMid, Bitmap icon, int notifId,
-                                 long timestamp) {
-    NotificationManager nm = (NotificationManager)context.getSystemService(
-        Context.NOTIFICATION_SERVICE);
-    if (nm == null)
-      return;
+  private void issueNotification(
+      Context context,
+      String title,
+      String body,
+      String chatMid,
+      Bitmap icon,
+      int notifId,
+      long timestamp) {
+    NotificationManager nm =
+        (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    if (nm == null) return;
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      nm.createNotificationChannel(new NotificationChannel(
-          CHANNEL_ID, "Reactions", NotificationManager.IMPORTANCE_DEFAULT));
+      nm.createNotificationChannel(
+          new NotificationChannel(CHANNEL_ID, "Reactions", NotificationManager.IMPORTANCE_DEFAULT));
     }
 
     Intent intent = new Intent();
     try {
       ClassLoader cl = context.getClassLoader();
-      Class<?> reqCls =
-          cl.loadClass(LineVersion.get().notification.chatHistoryRequestClass);
+      Class<?> reqCls = cl.loadClass(LineVersion.get().notification.chatHistoryRequestClass);
       boolean isGroup = chatMid.startsWith("g") || chatMid.startsWith("c");
       Object request = XposedHelpers.newInstance(reqCls, chatMid, isGroup);
 
       intent.setClassName(
-          PKG_LINE, LineVersion.get()
-                        .notification.chatHistoryActivityLaunchActivityClass);
-      intent.putExtra("chatHistoryRequest", (Parcelable)request);
+          PKG_LINE, LineVersion.get().notification.chatHistoryActivityLaunchActivityClass);
+      intent.putExtra("chatHistoryRequest", (Parcelable) request);
     } catch (Exception e) {
       intent.setClassName(PKG_LINE, LineVersion.get().main.mainActivity);
       intent.putExtra("chatId", chatMid);
     }
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-    PendingIntent pi = PendingIntent.getActivity(
-        context, 0, intent,
-        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    PendingIntent pi =
+        PendingIntent.getActivity(
+            context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
     Notification.Builder builder =
         (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -363,14 +344,14 @@ public class ReactionNotification implements BaseHook {
 
     try {
       Context knotCtx = context.createPackageContext("app.zipper.knot", 0);
-      int resId = knotCtx.getResources().getIdentifier("ic_knot", "drawable",
-                                                       "app.zipper.knot");
+      int resId = knotCtx.getResources().getIdentifier("ic_knot", "drawable", "app.zipper.knot");
       builder.setSmallIcon(Icon.createWithResource("app.zipper.knot", resId));
     } catch (Exception e) {
       builder.setSmallIcon(android.R.drawable.ic_dialog_info);
     }
 
-    builder.setContentTitle(title)
+    builder
+        .setContentTitle(title)
         .setContentText(body)
         .setStyle(new Notification.BigTextStyle().bigText(body))
         .setAutoCancel(true)
@@ -390,18 +371,15 @@ public class ReactionNotification implements BaseHook {
             .format(new Date(timestamp));
     builder.setSubText(timeStr);
 
-    if (icon != null)
-      builder.setLargeIcon(icon);
+    if (icon != null) builder.setLargeIcon(icon);
     nm.notify(notifId, builder.build());
   }
 
   private void clearChatNotifications(Context context, String chatMid) {
-    if (chatMid == null || chatMid.isEmpty())
-      return;
-    NotificationManager nm = (NotificationManager)context.getSystemService(
-        Context.NOTIFICATION_SERVICE);
-    if (nm == null)
-      return;
+    if (chatMid == null || chatMid.isEmpty()) return;
+    NotificationManager nm =
+        (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    if (nm == null) return;
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       try {

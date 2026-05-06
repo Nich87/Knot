@@ -13,34 +13,32 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class OpenInExternalBrowserHook implements BaseHook {
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
-      throws Throwable {
-    if (config == null || !config.openUrlInDefaultBrowser.enabled)
-      return;
+  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+    if (config == null || !config.openUrlInDefaultBrowser.enabled) return;
 
     try {
       XposedHelpers.findAndHookMethod(
           "jp.naver.line.android.activity.iab.InAppBrowserActivity",
-          lpparam.classLoader, "onCreate", Bundle.class, new XC_MethodHook() {
+          lpparam.classLoader,
+          "onCreate",
+          Bundle.class,
+          new XC_MethodHook() {
             @Override
-            protected void afterHookedMethod(MethodHookParam param)
-                throws Throwable {
-              Activity activity = (Activity)param.thisObject;
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+              Activity activity = (Activity) param.thisObject;
               Intent intent = activity.getIntent();
-              if (intent == null)
-                return;
+              if (intent == null) return;
 
               Uri uri = intent.getData();
-              if (uri == null)
-                return;
+              if (uri == null) return;
 
               String url = uri.toString();
 
               // URLs handled by IAB for functionality
-              if (url.startsWith("https://account-center.lylink.yahoo.co.jp") ||
-                  url.startsWith("https://access.line.me") ||
-                  url.startsWith("https://id.lylink.yahoo.co.jp/federation/" +
-                                 "ly/normal/callback/first")) {
+              if (url.startsWith("https://account-center.lylink.yahoo.co.jp")
+                  || url.startsWith("https://access.line.me")
+                  || url.startsWith(
+                      "https://id.lylink.yahoo.co.jp/federation/ly/normal/callback/first")) {
                 return;
               }
 
@@ -52,8 +50,7 @@ public class OpenInExternalBrowserHook implements BaseHook {
             }
           });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Failed to hook InAppBrowserActivity: " +
-                       t.getMessage());
+      XposedBridge.log("Knot: Failed to hook InAppBrowserActivity: " + t.getMessage());
     }
   }
 }

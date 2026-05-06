@@ -304,8 +304,7 @@ public class LineVersion {
       public String legyDisconnectRunnableClass = "";
       public String[] legyStateFieldCandidates = new String[0];
       public String[] legyTimeoutFieldCandidates = new String[0];
-      public String[] legyBackgroundWorkerFlagFieldCandidates =
-          new String[0];
+      public String[] legyBackgroundWorkerFlagFieldCandidates = new String[0];
       public String[] legyHandlerFieldCandidates = new String[0];
       public String[] legyRunnableFieldCandidates = new String[0];
     }
@@ -344,30 +343,28 @@ public class LineVersion {
   }
 
   private static final Map<String, Config> VERSION_TABLE = new HashMap<>();
+
   static {
     VERSION_TABLE.put("26.6.", app.zipper.knot.versions.Version266.create());
   }
 
   private static volatile Config cachedConfig = null;
 
-  public static Config get() { return cachedConfig; }
+  public static Config get() {
+    return cachedConfig;
+  }
 
   public static Config get(ClassLoader cl) {
-    if (cachedConfig != null)
-      return cachedConfig;
+    if (cachedConfig != null) return cachedConfig;
     return detect(cl);
   }
 
   public static Config detect(ClassLoader cl) {
-    if (cachedConfig != null)
-      return cachedConfig;
-    if (cl == null)
-      return null;
+    if (cachedConfig != null) return cachedConfig;
+    if (cl == null) return null;
     try {
-      Class<?> verCls =
-          cl.loadClass("jp.naver.line.android.common.LineAppVersion");
-      String verName =
-          (String)XposedHelpers.callStaticMethod(verCls, "getVerName");
+      Class<?> verCls = cl.loadClass("jp.naver.line.android.common.LineAppVersion");
+      String verName = (String) XposedHelpers.callStaticMethod(verCls, "getVerName");
       XposedBridge.log("Knot: Detected LINE version: " + verName);
 
       for (Map.Entry<String, Config> entry : VERSION_TABLE.entrySet()) {
@@ -377,24 +374,19 @@ public class LineVersion {
         }
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Version detection via class failed: " +
-                       t.getMessage());
+      XposedBridge.log("Knot: Version detection via class failed: " + t.getMessage());
     }
 
     return null;
   }
 
   public static Config detectWithContext(android.content.Context context) {
-    if (cachedConfig != null)
-      return cachedConfig;
-    if (context == null)
-      return null;
+    if (cachedConfig != null) return cachedConfig;
+    if (context == null) return null;
     try {
-      String verName = context.getPackageManager()
-                           .getPackageInfo(context.getPackageName(), 0)
-                           .versionName;
-      XposedBridge.log("Knot: Detected LINE version via PackageInfo: " +
-                       verName);
+      String verName =
+          context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+      XposedBridge.log("Knot: Detected LINE version via PackageInfo: " + verName);
       for (Map.Entry<String, Config> entry : VERSION_TABLE.entrySet()) {
         if (verName.startsWith(entry.getKey())) {
           cachedConfig = entry.getValue();
@@ -402,8 +394,7 @@ public class LineVersion {
         }
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Version detection via PackageInfo failed: " +
-                       t.getMessage());
+      XposedBridge.log("Knot: Version detection via PackageInfo failed: " + t.getMessage());
     }
     return null;
   }
@@ -412,8 +403,7 @@ public class LineVersion {
     StringBuilder sb = new StringBuilder();
     int count = 0;
     for (String key : VERSION_TABLE.keySet()) {
-      if (count > 0)
-        sb.append(", ");
+      if (count > 0) sb.append(", ");
       // Convert "26.5." -> "26.5.0" for display
       String ver = key.endsWith(".") ? key + "0" : key;
       sb.append(ver);

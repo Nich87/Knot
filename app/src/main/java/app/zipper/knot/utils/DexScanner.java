@@ -12,17 +12,14 @@ public class DexScanner {
   private static volatile List<String> sAllClasses = null;
 
   public static List<String> getAllClassNames(String apkPath) {
-    if (sAllClasses != null)
-      return sAllClasses;
+    if (sAllClasses != null) return sAllClasses;
     synchronized (DexScanner.class) {
-      if (sAllClasses != null)
-        return sAllClasses;
+      if (sAllClasses != null) return sAllClasses;
       List<String> names = new ArrayList<>(30000);
       try {
         dalvik.system.DexFile dex = new dalvik.system.DexFile(apkPath);
         Enumeration<String> entries = dex.entries();
-        while (entries.hasMoreElements())
-          names.add(entries.nextElement());
+        while (entries.hasMoreElements()) names.add(entries.nextElement());
         dex.close();
       } catch (Throwable t) {
         XposedBridge.log("Knot: failed to scan " + apkPath + ": " + t);
@@ -33,9 +30,8 @@ public class DexScanner {
     return sAllClasses;
   }
 
-  public static Class<?> findClass(ClassLoader cl, String apkPath,
-                                   ClassMatcher matcher,
-                                   String... pkgPrefixes) {
+  public static Class<?> findClass(
+      ClassLoader cl, String apkPath, ClassMatcher matcher, String... pkgPrefixes) {
     for (String name : getAllClassNames(apkPath)) {
       if (pkgPrefixes != null && pkgPrefixes.length > 0) {
         boolean ok = false;
@@ -45,13 +41,11 @@ public class DexScanner {
             break;
           }
         }
-        if (!ok)
-          continue;
+        if (!ok) continue;
       }
       try {
         Class<?> c = cl.loadClass(name);
-        if (matcher.matches(c))
-          return c;
+        if (matcher.matches(c)) return c;
       } catch (Throwable ignored) {
       }
     }

@@ -7,7 +7,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
@@ -15,7 +14,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -23,26 +21,21 @@ public class MainActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     requestWindowFeature(Window.FEATURE_NO_TITLE);
-    if (getActionBar() != null)
-      getActionBar().hide();
+    if (getActionBar() != null) getActionBar().hide();
 
     ScrollView mainScroll = new ScrollView(this);
     mainScroll.setBackgroundColor(Color.parseColor("#F5F6F8"));
 
     LinearLayout parentLayout = new LinearLayout(this);
     parentLayout.setOrientation(LinearLayout.VERTICAL);
-    parentLayout.setGravity(Gravity.CENTER_VERTICAL |
-                            Gravity.CENTER_HORIZONTAL);
+    parentLayout.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
     int margin = toPixels(24);
     parentLayout.setPadding(margin, toPixels(48), margin, margin);
 
     try {
       ImageView iconView = new ImageView(this);
-      int resId = getResources().getIdentifier("ic_launcher", "mipmap",
-                                               getPackageName());
-      if (resId == 0)
-        resId = getResources().getIdentifier("ic_knot", "drawable",
-                                             getPackageName());
+      int resId = getResources().getIdentifier("ic_launcher", "mipmap", getPackageName());
+      if (resId == 0) resId = getResources().getIdentifier("ic_knot", "drawable", getPackageName());
       if (resId != 0) {
         iconView.setImageResource(resId);
         LinearLayout.LayoutParams iconLp =
@@ -65,8 +58,7 @@ public class MainActivity extends Activity {
 
     LinearLayout cardLayout = new LinearLayout(this);
     cardLayout.setOrientation(LinearLayout.VERTICAL);
-    cardLayout.setPadding(toPixels(24), toPixels(32), toPixels(24),
-                          toPixels(32));
+    cardLayout.setPadding(toPixels(24), toPixels(32), toPixels(24), toPixels(32));
 
     GradientDrawable cardBg = new GradientDrawable();
     cardBg.setColor(Color.WHITE);
@@ -75,10 +67,11 @@ public class MainActivity extends Activity {
     cardLayout.setBackground(cardBg);
 
     TextView descLabel = new TextView(this);
-    descLabel.setText("モジュールを有効化し、LINEアプリを再起動してください。" +
-                      "\n\n各種機能の設定やデータ保存先の指定は、LINEのホーム" +
-                      "画面右上にある「設定（歯車）」アイコンを長押しするか、" +
-                      "LINE設定内の追加項目から行うことができます。");
+    descLabel.setText(
+        "モジュールを有効化し、LINEアプリを再起動してください。"
+            + "\n\n各種機能の設定やデータ保存先の指定は、LINEのホーム"
+            + "画面右上にある「設定（歯車）」アイコンを長押しするか、"
+            + "LINE設定内の追加項目から行うことができます。");
     descLabel.setTextSize(15);
     descLabel.setTextColor(Color.parseColor("#555555"));
     descLabel.setLineSpacing(0, 1.4f);
@@ -99,23 +92,23 @@ public class MainActivity extends Activity {
     btnBg.setCornerRadius(toPixels(30));
     openLineBtn.setBackground(btnBg);
 
-    LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT, toPixels(54));
+    LinearLayout.LayoutParams btnLp =
+        new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, toPixels(54));
     btnLp.topMargin = toPixels(40);
     openLineBtn.setLayoutParams(btnLp);
 
-    openLineBtn.setOnClickListener(v -> {
-      Intent launchIntent = getPackageManager().getLaunchIntentForPackage(
-          "jp.naver.line.android");
-      if (launchIntent != null) {
-        startActivity(launchIntent);
-      } else {
-        android.widget.Toast
-            .makeText(this, "LINEがインストールされていません",
-                      android.widget.Toast.LENGTH_SHORT)
-            .show();
-      }
-    });
+    openLineBtn.setOnClickListener(
+        v -> {
+          Intent launchIntent =
+              getPackageManager().getLaunchIntentForPackage("jp.naver.line.android");
+          if (launchIntent != null) {
+            startActivity(launchIntent);
+          } else {
+            android.widget.Toast.makeText(
+                    this, "LINEがインストールされていません", android.widget.Toast.LENGTH_SHORT)
+                .show();
+          }
+        });
 
     parentLayout.addView(openLineBtn);
 
@@ -124,6 +117,6 @@ public class MainActivity extends Activity {
   }
 
   private int toPixels(int dp) {
-    return (int)(dp * getResources().getDisplayMetrics().density);
+    return (int) (dp * getResources().getDisplayMetrics().density);
   }
 }

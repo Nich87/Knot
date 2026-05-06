@@ -20,8 +20,7 @@ import org.json.JSONObject;
 public class SettingsStore {
 
   private static final String SETTINGS_FILE = "knot_settings.json.gz";
-  private static final String UNSEND_HISTORY_FILE =
-      "knot_unsend_history.json.gz";
+  private static final String UNSEND_HISTORY_FILE = "knot_unsend_history.json.gz";
   private static final String READ_HISTORY_FILE = "knot_read_history.json.gz";
 
   private static volatile String pointerPath = null;
@@ -43,18 +42,15 @@ public class SettingsStore {
   }
 
   private static void ensurePointerPath(Context ctx) {
-    if (pointerPath != null)
-      return;
+    if (pointerPath != null) return;
     try {
       File extDir = ctx.getExternalFilesDir(null);
       if (extDir != null) {
         extDir.mkdirs();
         pointerPath = extDir.getAbsolutePath() + "/knot_ptr";
       } else {
-        String sdcard = android.os.Environment.getExternalStorageDirectory()
-                            .getAbsolutePath();
-        pointerPath =
-            sdcard + "/Android/data/jp.naver.line.android/files/knot_ptr";
+        String sdcard = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+        pointerPath = sdcard + "/Android/data/jp.naver.line.android/files/knot_ptr";
       }
     } catch (Throwable ignored) {
     }
@@ -67,10 +63,8 @@ public class SettingsStore {
       for (KnotConfig.Item item : config.items) {
         if (json.has(item.key)) {
           Object val = json.get(item.key);
-          if (val instanceof Boolean)
-            item.enabled = (Boolean)val;
-          else if (val instanceof String)
-            item.value = (String)val;
+          if (val instanceof Boolean) item.enabled = (Boolean) val;
+          else if (val instanceof String) item.value = (String) val;
         }
       }
     } catch (Throwable ignored) {
@@ -82,7 +76,9 @@ public class SettingsStore {
     ensurePointerPath(context);
   }
 
-  public static Context getContext() { return appContext; }
+  public static Context getContext() {
+    return appContext;
+  }
 
   public static String getSettingsDir() {
     Uri tree = ensureTreeUri();
@@ -96,8 +92,7 @@ public class SettingsStore {
 
   public static void setSettingsDir(String uriString) {
     ensurePointerPath(appContext);
-    if (pointerPath == null)
-      return;
+    if (pointerPath == null) return;
     try {
       try (FileWriter w = new FileWriter(pointerPath)) {
         w.write(uriString);
@@ -111,11 +106,17 @@ public class SettingsStore {
     }
   }
 
-  public static boolean isConfigured() { return ensureTreeUri() != null; }
+  public static boolean isConfigured() {
+    return ensureTreeUri() != null;
+  }
 
-  public static boolean isLoaded() { return isModuleLoaded; }
+  public static boolean isLoaded() {
+    return isModuleLoaded;
+  }
 
-  public static void setLoaded(boolean loaded) { isModuleLoaded = loaded; }
+  public static void setLoaded(boolean loaded) {
+    isModuleLoaded = loaded;
+  }
 
   public static void save(String key, boolean value) {
     try {
@@ -130,8 +131,7 @@ public class SettingsStore {
   public static boolean get(String key, boolean defaultValue) {
     try {
       JSONObject json = readJson(SETTINGS_FILE);
-      if (json.has(key))
-        return json.getBoolean(key);
+      if (json.has(key)) return json.getBoolean(key);
     } catch (Throwable ignored) {
     }
     return defaultValue;
@@ -150,8 +150,7 @@ public class SettingsStore {
   public static String getString(String key, String defaultValue) {
     try {
       JSONObject json = readJson(SETTINGS_FILE);
-      if (json.has(key))
-        return json.getString(key);
+      if (json.has(key)) return json.getString(key);
     } catch (Throwable ignored) {
     }
     return defaultValue;
@@ -174,8 +173,7 @@ public class SettingsStore {
       ensurePointerPath(appContext);
       if (pointerPath != null) {
         File f = new File(pointerPath);
-        if (f.exists())
-          f.delete();
+        if (f.exists()) f.delete();
       }
     } catch (Throwable ignored) {
     }
@@ -217,12 +215,10 @@ public class SettingsStore {
 
   private static String readPointer() {
     ensurePointerPath(appContext);
-    if (pointerPath == null)
-      return null;
+    if (pointerPath == null) return null;
     try {
       File f = new File(pointerPath);
-      if (!f.exists())
-        return null;
+      if (!f.exists()) return null;
       try (BufferedReader r = new BufferedReader(new FileReader(f))) {
         String line = r.readLine();
         return (line != null) ? line.trim() : null;
@@ -233,49 +229,43 @@ public class SettingsStore {
   }
 
   private static Uri ensureTreeUri() {
-    if (cachedTreeUri != null)
-      return cachedTreeUri;
+    if (cachedTreeUri != null) return cachedTreeUri;
     String saved = readPointer();
-    if (saved == null || !saved.startsWith("content://"))
-      return null;
+    if (saved == null || !saved.startsWith("content://")) return null;
     cachedTreeUri = Uri.parse(saved);
     return cachedTreeUri;
   }
 
-  private static Uri getDocUri(String fileName, boolean createIfMissing)
-      throws Throwable {
-    if (SETTINGS_FILE.equals(fileName) && cachedDocUri != null)
-      return cachedDocUri;
-    if (UNSEND_HISTORY_FILE.equals(fileName) && cachedHistoryUri != null)
-      return cachedHistoryUri;
+  private static Uri getDocUri(String fileName, boolean createIfMissing) throws Throwable {
+    if (SETTINGS_FILE.equals(fileName) && cachedDocUri != null) return cachedDocUri;
+    if (UNSEND_HISTORY_FILE.equals(fileName) && cachedHistoryUri != null) return cachedHistoryUri;
     if (READ_HISTORY_FILE.equals(fileName) && cachedReadHistoryUri != null)
       return cachedReadHistoryUri;
 
     Uri treeUri = ensureTreeUri();
-    if (treeUri == null || appContext == null)
-      return null;
+    if (treeUri == null || appContext == null) return null;
 
     ContentResolver resolver = appContext.getContentResolver();
     String treeDocId = DocumentsContract.getTreeDocumentId(treeUri);
-    Uri childrenUri =
-        DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, treeDocId);
+    Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, treeDocId);
 
-    try (Cursor cursor = resolver.query(
-             childrenUri,
-             new String[] {DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                           DocumentsContract.Document.COLUMN_DISPLAY_NAME},
-             null, null, null)) {
+    try (Cursor cursor =
+        resolver.query(
+            childrenUri,
+            new String[] {
+              DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+              DocumentsContract.Document.COLUMN_DISPLAY_NAME
+            },
+            null,
+            null,
+            null)) {
       if (cursor != null) {
         while (cursor.moveToNext()) {
           if (fileName.equals(cursor.getString(1))) {
-            Uri uri = DocumentsContract.buildDocumentUriUsingTree(
-                treeUri, cursor.getString(0));
-            if (SETTINGS_FILE.equals(fileName))
-              cachedDocUri = uri;
-            else if (UNSEND_HISTORY_FILE.equals(fileName))
-              cachedHistoryUri = uri;
-            else if (READ_HISTORY_FILE.equals(fileName))
-              cachedReadHistoryUri = uri;
+            Uri uri = DocumentsContract.buildDocumentUriUsingTree(treeUri, cursor.getString(0));
+            if (SETTINGS_FILE.equals(fileName)) cachedDocUri = uri;
+            else if (UNSEND_HISTORY_FILE.equals(fileName)) cachedHistoryUri = uri;
+            else if (READ_HISTORY_FILE.equals(fileName)) cachedReadHistoryUri = uri;
             return uri;
           }
         }
@@ -283,16 +273,13 @@ public class SettingsStore {
     }
 
     if (createIfMissing) {
-      Uri parentDocUri =
-          DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocId);
-      Uri newUri = DocumentsContract.createDocument(
-          resolver, parentDocUri, "application/octet-stream", fileName);
-      if (SETTINGS_FILE.equals(fileName))
-        cachedDocUri = newUri;
-      else if (UNSEND_HISTORY_FILE.equals(fileName))
-        cachedHistoryUri = newUri;
-      else if (READ_HISTORY_FILE.equals(fileName))
-        cachedReadHistoryUri = newUri;
+      Uri parentDocUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocId);
+      Uri newUri =
+          DocumentsContract.createDocument(
+              resolver, parentDocUri, "application/octet-stream", fileName);
+      if (SETTINGS_FILE.equals(fileName)) cachedDocUri = newUri;
+      else if (UNSEND_HISTORY_FILE.equals(fileName)) cachedHistoryUri = newUri;
+      else if (READ_HISTORY_FILE.equals(fileName)) cachedReadHistoryUri = newUri;
       return newUri;
     }
     return null;
@@ -300,19 +287,16 @@ public class SettingsStore {
 
   private static JSONObject readJson(String fileName) throws Throwable {
     Uri docUri = getDocUri(fileName, false);
-    if (docUri == null || appContext == null)
-      return new JSONObject();
+    if (docUri == null || appContext == null) return new JSONObject();
 
-    try (InputStream is =
-             appContext.getContentResolver().openInputStream(docUri);
-         GZIPInputStream gzis = new GZIPInputStream(is)) {
+    try (InputStream is = appContext.getContentResolver().openInputStream(docUri);
+        GZIPInputStream gzis = new GZIPInputStream(is)) {
       StringBuilder sb = new StringBuilder();
-      try (BufferedReader r = new BufferedReader(
-               new InputStreamReader(gzis, StandardCharsets.UTF_8))) {
+      try (BufferedReader r =
+          new BufferedReader(new InputStreamReader(gzis, StandardCharsets.UTF_8))) {
         char[] buf = new char[8192];
         int n;
-        while ((n = r.read(buf)) != -1)
-          sb.append(buf, 0, n);
+        while ((n = r.read(buf)) != -1) sb.append(buf, 0, n);
       }
       String text = sb.toString().trim();
       return text.isEmpty() ? new JSONObject() : new JSONObject(text);
@@ -321,30 +305,25 @@ public class SettingsStore {
     }
   }
 
-  private static void writeJson(String fileName, JSONObject json)
-      throws Throwable {
+  private static void writeJson(String fileName, JSONObject json) throws Throwable {
     Uri docUri = getDocUri(fileName, true);
-    if (docUri == null || appContext == null)
-      throw new IllegalStateException("Not configured");
+    if (docUri == null || appContext == null) throw new IllegalStateException("Not configured");
 
-    try (OutputStream os =
-             appContext.getContentResolver().openOutputStream(docUri, "wt");
-         GZIPOutputStream gzos = new GZIPOutputStream(os)) {
+    try (OutputStream os = appContext.getContentResolver().openOutputStream(docUri, "wt");
+        GZIPOutputStream gzos = new GZIPOutputStream(os)) {
       gzos.write(json.toString().getBytes(StandardCharsets.UTF_8));
       gzos.finish();
     }
   }
 
   private static String uriToDisplayPath(Uri uri) {
-    if (uri == null)
-      return null;
+    if (uri == null) return null;
     try {
       String decoded = Uri.decode(uri.toString());
       if (decoded.contains("/tree/primary:")) {
-        String path = decoded.substring(decoded.indexOf("/tree/primary:") +
-                                        "/tree/primary:".length());
-        if (path.endsWith("/"))
-          path = path.substring(0, path.length() - 1);
+        String path =
+            decoded.substring(decoded.indexOf("/tree/primary:") + "/tree/primary:".length());
+        if (path.endsWith("/")) path = path.substring(0, path.length() - 1);
         return "/sdcard/" + path;
       }
       String docId = DocumentsContract.getTreeDocumentId(uri);

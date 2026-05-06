@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.application'
+    id 'com.diffplug.spotless'
 }
 
 android {
@@ -49,6 +50,17 @@ android {
         main {
             java.srcDirs = ['src/main/java']
         }
+    }
+}
+
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        googleJavaFormat('1.25.0').reflowLongStrings(false)
+        importOrder()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 }
 

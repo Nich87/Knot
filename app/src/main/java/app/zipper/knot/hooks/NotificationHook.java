@@ -9,30 +9,26 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class NotificationHook implements BaseHook {
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
-      throws Throwable {
+  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
     XposedHelpers.findAndHookMethod(
-        Notification.Builder.class, "addAction", Notification.Action.class,
+        Notification.Builder.class,
+        "addAction",
+        Notification.Action.class,
         new XC_MethodHook() {
           @Override
-          protected void beforeHookedMethod(MethodHookParam param)
-              throws Throwable {
-            if (!config.removeNotificationMuteButton.enabled)
-              return;
+          protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+            if (!config.removeNotificationMuteButton.enabled) return;
 
-            Notification.Action action = (Notification.Action)param.args[0];
-            if (action == null || action.title == null)
-              return;
+            Notification.Action action = (Notification.Action) param.args[0];
+            if (action == null || action.title == null) return;
 
-            android.app.Application app =
-                android.app.AndroidAppHelper.currentApplication();
-            if (app == null)
-              return;
+            android.app.Application app = android.app.AndroidAppHelper.currentApplication();
+            if (app == null) return;
 
-            int resId = app.getResources().getIdentifier(
-                "notification_button_mute", "string", app.getPackageName());
-            if (resId == 0)
-              return;
+            int resId =
+                app.getResources()
+                    .getIdentifier("notification_button_mute", "string", app.getPackageName());
+            if (resId == 0) return;
 
             String muteLabel = app.getString(resId);
             if (muteLabel.equals(action.title.toString())) {
@@ -42,27 +38,26 @@ public class NotificationHook implements BaseHook {
         });
 
     XposedHelpers.findAndHookMethod(
-        Notification.Builder.class, "addAction", int.class, CharSequence.class,
-        android.app.PendingIntent.class, new XC_MethodHook() {
+        Notification.Builder.class,
+        "addAction",
+        int.class,
+        CharSequence.class,
+        android.app.PendingIntent.class,
+        new XC_MethodHook() {
           @Override
-          protected void beforeHookedMethod(MethodHookParam param)
-              throws Throwable {
-            if (!config.removeNotificationMuteButton.enabled)
-              return;
+          protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+            if (!config.removeNotificationMuteButton.enabled) return;
 
-            CharSequence titleCs = (CharSequence)param.args[1];
-            if (titleCs == null)
-              return;
+            CharSequence titleCs = (CharSequence) param.args[1];
+            if (titleCs == null) return;
 
-            android.app.Application app =
-                android.app.AndroidAppHelper.currentApplication();
-            if (app == null)
-              return;
+            android.app.Application app = android.app.AndroidAppHelper.currentApplication();
+            if (app == null) return;
 
-            int resId = app.getResources().getIdentifier(
-                "notification_button_mute", "string", app.getPackageName());
-            if (resId == 0)
-              return;
+            int resId =
+                app.getResources()
+                    .getIdentifier("notification_button_mute", "string", app.getPackageName());
+            if (resId == 0) return;
 
             String muteLabel = app.getString(resId);
             if (muteLabel.equals(titleCs.toString())) {
