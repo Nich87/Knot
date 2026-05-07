@@ -53,16 +53,6 @@ public class LineDBUtils {
                 dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
         Cursor cursor =
             db.rawQuery(
-                "SELECT chat_name FROM chats WHERE chat_id = ? LIMIT 1", new String[] {chatId});
-        if (cursor.moveToFirst()) {
-          String name = cursor.getString(0);
-          cursor.close();
-          db.close();
-          return name;
-        }
-        cursor.close();
-        cursor =
-            db.rawQuery(
                 "SELECT chat_name FROM chat_history WHERE chat_id = ? LIMIT 1",
                 new String[] {chatId});
         if (cursor.moveToFirst()) {
@@ -138,15 +128,7 @@ public class LineDBUtils {
         SQLiteDatabase db =
             SQLiteDatabase.openDatabase(
                 dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
-        Cursor cursor = db.rawQuery("SELECT mid FROM user_profile", null);
-        if (cursor.moveToFirst()) {
-          String mid = cursor.getString(0);
-          cursor.close();
-          db.close();
-          return mid;
-        }
-        cursor.close();
-        cursor = db.rawQuery("SELECT mid FROM profile", null);
+        Cursor cursor = db.rawQuery("SELECT mid FROM profile", null);
         if (cursor.moveToFirst()) {
           String mid = cursor.getString(0);
           cursor.close();
