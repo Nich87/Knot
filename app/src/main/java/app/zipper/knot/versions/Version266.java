@@ -279,6 +279,14 @@ public class Version266 {
     v.aiIcon.repoClass = "yw0.c";
     v.aiIcon.methodGetShownAfterMillis = "i";
 
+    v.imageQuality.qualityProfileBaseClass = "ye8.a$b";
+    v.imageQuality.qualityProfileHighClass = "ye8.a$b$a";
+    v.imageQuality.qualityProfileMediumClass = "ye8.a$b$b";
+    v.imageQuality.methodGetMaxDimension = "a";
+    v.imageQuality.methodGetQuality = "b";
+    v.imageQuality.imageUtilClass = "jp.naver.line.android.util.a1";
+    v.imageQuality.methodCompressBitmap = "a";
+
     return v;
   }
 }

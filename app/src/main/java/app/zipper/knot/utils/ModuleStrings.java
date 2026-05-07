@@ -134,6 +134,9 @@ public class ModuleStrings {
       "常にアプリバージョンを15.12.2に偽装します。なにか特別な目的がない限り使用しないでください。";
   public static final String OPT_FIX_SETTINGS_TALK_CRASH_LABEL = "トーク設定のクラッシュを修正";
   public static final String OPT_FIX_SETTINGS_TALK_CRASH_DESC = "公式設定の「トーク」を開くとクラッシュする問題を修正します。";
+  public static final String OPT_HIGH_QUALITY_PHOTO_LABEL = "写真の送信品質を向上";
+  public static final String OPT_HIGH_QUALITY_PHOTO_DESC =
+      "写真送信時の自動圧縮・リサイズを回避し、最高品質で送信できるようにします。設定の「高画質」よりもさらに高品質な送信が可能になります。";
 
   public static final String DESC_PATH_ROW = "モジュールの設定ファイルなどが保存されるディレクトリを選択します。";
   public static final String DESC_RESET_ROW = "すべてのモジュール設定をデフォルト状態に戻します。";

@@ -238,6 +238,14 @@ public class KnotConfig {
           false,
           Category.DISPLAY);
 
+  public Item highQualityPhoto =
+      new Item(
+          "high_quality_photo",
+          ModuleStrings.OPT_HIGH_QUALITY_PHOTO_LABEL,
+          ModuleStrings.OPT_HIGH_QUALITY_PHOTO_DESC,
+          false,
+          Category.CHAT);
+
   public Item[] items = {
     removeAiFriendsButton,
     removeSearchBarAgentIButton,
@@ -263,6 +271,7 @@ public class KnotConfig {
     reactionNotification,
     experimentalFcmFix,
     spoofVersion,
-    safeSettingsResources
+    safeSettingsResources,
+    highQualityPhoto
   };
 }

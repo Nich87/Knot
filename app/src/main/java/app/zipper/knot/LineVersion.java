@@ -29,6 +29,17 @@ public class LineVersion {
     public SearchBarAgentI searchBarAgentI = new SearchBarAgentI();
     public AgentIInChat agentIInChat = new AgentIInChat();
     public AiIcon aiIcon = new AiIcon();
+    public ImageQuality imageQuality = new ImageQuality();
+
+    public static class ImageQuality {
+      public String qualityProfileBaseClass = "";
+      public String qualityProfileHighClass = "";
+      public String qualityProfileMediumClass = "";
+      public String methodGetMaxDimension = "";
+      public String methodGetQuality = "";
+      public String imageUtilClass = "";
+      public String methodCompressBitmap = "";
+    }
 
     public static class Main {
       public String mainActivity = "";

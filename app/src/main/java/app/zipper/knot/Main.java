@@ -77,7 +77,8 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
         new FcmFixHook(),
         new RemoveTalkRoomAgentIToggle(),
         new HideAiIconPermanently(),
-        new HomeSettingsTooltip()
+        new HomeSettingsTooltip(),
+        new ImageQuality()
       };
 
       for (BaseHook h : hooks) {
