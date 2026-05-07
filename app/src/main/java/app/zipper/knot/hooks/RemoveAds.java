@@ -31,7 +31,8 @@ public class RemoveAds implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (!config.removeAds.enabled) return;
+              if (!config.removeAds.enabled)
+                return;
               try {
                 View target = (View) param.thisObject;
                 View root = (View) target.getParent().getParent();
@@ -63,8 +64,10 @@ public class RemoveAds implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (!config.removeAds.enabled) return;
-              if ((int) param.args[0] == View.VISIBLE) param.args[0] = View.GONE;
+              if (!config.removeAds.enabled)
+                return;
+              if ((int) param.args[0] == View.VISIBLE)
+                param.args[0] = View.GONE;
             }
           });
     } catch (Throwable ignored) {
@@ -82,7 +85,8 @@ public class RemoveAds implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (!config.removeAds.enabled) return;
+              if (!config.removeAds.enabled)
+                return;
               try {
                 View container = (View) ((View) param.thisObject).getParent();
                 container.setVisibility(View.GONE);
@@ -103,9 +107,11 @@ public class RemoveAds implements BaseHook {
         new XC_MethodHook() {
           @Override
           protected void afterHookedMethod(MethodHookParam param) {
-            if (!config.removeAds.enabled) return;
+            if (!config.removeAds.enabled)
+              return;
             View view = (View) param.args[0];
-            if (isAdComponent(view.getClass().getName())) view.setVisibility(View.GONE);
+            if (isAdComponent(view.getClass().getName()))
+              view.setVisibility(View.GONE);
           }
         });
   }
@@ -113,18 +119,21 @@ public class RemoveAds implements BaseHook {
   private static boolean isAdComponent(String className) {
     LineVersion.Config cfg = LineVersion.get();
     if (cfg != null) {
-      if (className.startsWith(cfg.ads.classAdSdkBase)) return true;
-      if (className.startsWith(cfg.ads.classAdMolinBase)) return true;
+      if (className.startsWith(cfg.ads.classAdSdkBase))
+        return true;
+      if (className.startsWith(cfg.ads.classAdMolinBase))
+        return true;
     }
-    String lower = className.toLowerCase();
-    return lower.contains("nativead")
-        || lower.contains("adcard")
-        || lower.contains("adcell")
-        || lower.contains("aditem")
-        || lower.contains("adunit")
-        || lower.contains("adview")
-        || lower.contains("adbanner")
-        || lower.contains("admodule")
+    String simpleName = className.substring(className.lastIndexOf('.') + 1);
+    String lower = simpleName.toLowerCase();
+    return simpleName.contains("NativeAd")
+        || simpleName.contains("AdCard")
+        || simpleName.contains("AdCell")
+        || simpleName.contains("AdItem")
+        || simpleName.contains("AdUnit")
+        || simpleName.contains("AdView")
+        || simpleName.contains("AdBanner")
+        || simpleName.contains("AdModule")
         || lower.contains("sponsored")
         || lower.contains("promoted");
   }
