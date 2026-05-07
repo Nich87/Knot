@@ -1,10 +1,10 @@
 package app.zipper.knot.utils;
 
 import android.app.AndroidAppHelper;
-import app.zipper.knot.LineVersion;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import app.zipper.knot.LineVersion;
 import de.robv.android.xposed.XposedBridge;
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -232,7 +232,7 @@ public class LineDBUtils {
           queryArgs.add(String.valueOf(minMsgId));
 
           if (!includeOthers && myMid != null) {
-            sql += " AND from_mid = ? ";
+            sql += " AND (from_mid = ? OR from_mid IS NULL) ";
             queryArgs.add(myMid);
           }
           sql += " ORDER BY CAST(server_id AS INTEGER) DESC LIMIT 100";
@@ -246,6 +246,8 @@ public class LineDBUtils {
             String rawParam = cursor.getString(2);
             String fromMid = cursor.getString(3);
             long timeLong = cursor.getLong(4);
+
+            if (fromMid == null) fromMid = myMid;
 
             if (!includeOthers && fromMid != null && !fromMid.equals(myMid)) continue;
 
