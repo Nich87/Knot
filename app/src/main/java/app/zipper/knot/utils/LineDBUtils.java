@@ -25,7 +25,9 @@ public class LineDBUtils {
             SQLiteDatabase.openDatabase(
                 dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
         Cursor cursor =
-            db.rawQuery("SELECT profile_name FROM contacts WHERE mid = ?", new String[] {mid});
+            db.rawQuery(
+                "SELECT coalesce(overridden_name, address_book_name, profile_name) FROM contacts WHERE mid = ?",
+                new String[] {mid});
         if (cursor.moveToFirst()) {
           String name = cursor.getString(0);
           cursor.close();
@@ -36,7 +38,7 @@ public class LineDBUtils {
         db.close();
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: DB name resolution failed: " + t);
+      XposedBridge.log("Knot: Member name resolution failed: " + t);
     }
     return null;
   }
@@ -53,18 +55,7 @@ public class LineDBUtils {
                 dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
         Cursor cursor =
             db.rawQuery(
-                "SELECT chat_name FROM chats WHERE chat_id = ? LIMIT 1", new String[] {chatId});
-        if (cursor.moveToFirst()) {
-          String name = cursor.getString(0);
-          cursor.close();
-          db.close();
-          return name;
-        }
-        cursor.close();
-        cursor =
-            db.rawQuery(
-                "SELECT chat_name FROM chat_history WHERE chat_id = ? LIMIT 1",
-                new String[] {chatId});
+                "SELECT chat_name FROM chat WHERE chat_id = ? LIMIT 1", new String[] {chatId});
         if (cursor.moveToFirst()) {
           String name = cursor.getString(0);
           cursor.close();
@@ -103,7 +94,7 @@ public class LineDBUtils {
         cursor.close();
         db.close();
       }
-    } catch (Throwable t) {
+    } catch (Throwable ignored) {
     }
     return null;
   }
@@ -138,15 +129,8 @@ public class LineDBUtils {
         SQLiteDatabase db =
             SQLiteDatabase.openDatabase(
                 dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
-        Cursor cursor = db.rawQuery("SELECT mid FROM user_profile", null);
-        if (cursor.moveToFirst()) {
-          String mid = cursor.getString(0);
-          cursor.close();
-          db.close();
-          return mid;
-        }
-        cursor.close();
-        cursor = db.rawQuery("SELECT mid FROM profile", null);
+        Cursor cursor =
+            db.rawQuery("SELECT value FROM setting WHERE key = 'PROFILE_MID' LIMIT 1", null);
         if (cursor.moveToFirst()) {
           String mid = cursor.getString(0);
           cursor.close();
