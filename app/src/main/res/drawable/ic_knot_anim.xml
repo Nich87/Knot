@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_knot_vector">
+
+    <target android:name="strandA"     android:animation="@animator/knot_strand_a" />
+    <target android:name="cutA_top"    android:animation="@animator/knot_cut_a_top" />
+    <target android:name="cutA_bottom" android:animation="@animator/knot_cut_a_bottom" />
+    <target android:name="strandB"     android:animation="@animator/knot_strand_b" />
+    <target android:name="cutB_right"  android:animation="@animator/knot_cut_b_right" />
+    <target android:name="cutB_left"   android:animation="@animator/knot_cut_b_left" />
+    <target android:name="aOverRight"  android:animation="@animator/knot_cut_b_right" />
+    <target android:name="aOverLeft"   android:animation="@animator/knot_cut_b_left" />
+
+</animated-vector>

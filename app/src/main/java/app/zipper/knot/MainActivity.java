@@ -5,20 +5,27 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import androidx.core.splashscreen.SplashScreen;
 
 public class MainActivity extends Activity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
     super.onCreate(savedInstanceState);
     requestWindowFeature(Window.FEATURE_NO_TITLE);
     if (getActionBar() != null) getActionBar().hide();
@@ -114,6 +121,73 @@ public class MainActivity extends Activity {
 
     mainScroll.addView(parentLayout);
     setContentView(mainScroll);
+
+    if (Build.VERSION.SDK_INT < 31) return;
+
+    long startMs = SystemClock.elapsedRealtime();
+    splashScreen.setKeepOnScreenCondition(() -> SystemClock.elapsedRealtime() - startMs < 1100);
+
+    splashScreen.setOnExitAnimationListener(
+        provider -> {
+          View splashIcon = provider.getIconView();
+          FrameLayout overlay = (FrameLayout) provider.getView();
+
+          TextView label = new TextView(this);
+          label.setText("Knot");
+          label.setTextSize(40);
+          label.setLetterSpacing(0.03f);
+          label.setTextColor(Color.parseColor("#333333"));
+          label.setTypeface(null, Typeface.BOLD);
+          label.setAlpha(0f);
+          label.measure(
+              View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+              View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+
+          float density = getResources().getDisplayMetrics().density;
+          float gap = 10 * density;
+          int textW = label.getMeasuredWidth();
+          if (textW == 0) textW = Math.round(90 * density);
+          float logoHalfW = splashIcon.getWidth() * 0.389f * 0.30f;
+          float logoTX = -(gap + textW) / 2f;
+          float textTX = gap / 2f + logoHalfW;
+
+          label.setTranslationX(textTX);
+          overlay.addView(
+              label,
+              new FrameLayout.LayoutParams(
+                  FrameLayout.LayoutParams.WRAP_CONTENT,
+                  FrameLayout.LayoutParams.WRAP_CONTENT,
+                  Gravity.CENTER));
+
+          splashIcon
+              .animate()
+              .scaleX(0.30f)
+              .scaleY(0.30f)
+              .translationX(logoTX)
+              .setDuration(350)
+              .setInterpolator(new DecelerateInterpolator(1.6f))
+              .start();
+
+          label
+              .animate()
+              .alpha(1f)
+              .setStartDelay(80)
+              .setDuration(250)
+              .withEndAction(
+                  () ->
+                      overlay.postDelayed(
+                          () -> {
+                            splashIcon.animate().alpha(0f).setDuration(250).start();
+                            overlay
+                                .animate()
+                                .alpha(0f)
+                                .setDuration(250)
+                                .withEndAction(() -> overlay.post(provider::remove))
+                                .start();
+                          },
+                          750))
+              .start();
+        });
   }
 
   private int toPixels(int dp) {

@@ -9,13 +9,16 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
 
         <activity
             android:name="app.zipper.knot.MainActivity"
             android:exported="true"
-            android:launchMode="singleInstance">
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.App.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
