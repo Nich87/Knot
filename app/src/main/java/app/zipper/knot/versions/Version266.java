@@ -287,6 +287,13 @@ public class Version266 {
     v.imageQuality.imageUtilClass = "jp.naver.line.android.util.a1";
     v.imageQuality.methodCompressBitmap = "a";
 
+    v.profile.g50fClass = "g50.f";
+    v.profile.h13baClass = "h13.b$a";
+    v.profile.fieldH3 = "c";
+    v.profile.g50aClass = "g50.a";
+    v.profile.methodGetProfile = "getProfile";
+    v.profile.fieldMid = "b";
+
     return v;
   }
 }

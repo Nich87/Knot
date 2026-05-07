@@ -124,23 +124,43 @@ public class LineDBUtils {
     try {
       Context context = AndroidAppHelper.currentApplication();
       if (context == null) return null;
-      File dbFile = context.getDatabasePath("naver_line");
-      if (dbFile.exists()) {
-        SQLiteDatabase db =
-            SQLiteDatabase.openDatabase(
-                dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
-        Cursor cursor =
-            db.rawQuery("SELECT value FROM setting WHERE key = 'PROFILE_MID' LIMIT 1", null);
-        if (cursor.moveToFirst()) {
-          String mid = cursor.getString(0);
-          cursor.close();
-          db.close();
-          return mid;
+
+      LineVersion.Config cfg = LineVersion.get();
+      if (cfg == null || cfg.profile.g50fClass.isEmpty()) return null;
+
+      try {
+        ClassLoader cl = context.getClassLoader();
+        Class<?> g50f = cl.loadClass(cfg.profile.g50fClass);
+        Class<?> h13ba = cl.loadClass(cfg.profile.h13baClass);
+
+        java.lang.reflect.Field h3Field = h13ba.getDeclaredField(cfg.profile.fieldH3);
+        h3Field.setAccessible(true);
+        Object h3 = h3Field.get(null);
+
+        if (h3 != null) {
+          java.lang.reflect.Method aMethod =
+              g50f.getMethod("a", Context.class, cl.loadClass(cfg.profile.g50aClass));
+          Object profileManager = aMethod.invoke(null, context, h3);
+
+          if (profileManager != null) {
+            Object profile =
+                profileManager
+                    .getClass()
+                    .getMethod(cfg.profile.methodGetProfile)
+                    .invoke(profileManager);
+            if (profile != null) {
+              java.lang.reflect.Field midField =
+                  profile.getClass().getDeclaredField(cfg.profile.fieldMid);
+              midField.setAccessible(true);
+              String mid = (String) midField.get(profile);
+              if (mid != null && mid.startsWith("u")) return mid;
+            }
+          }
         }
-        cursor.close();
-        db.close();
+      } catch (Throwable ignored) {
       }
-    } catch (Throwable ignored) {
+    } catch (Throwable t) {
+      XposedBridge.log("Knot: Error in getMyMid: " + t.getMessage());
     }
     return null;
   }

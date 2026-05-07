@@ -30,6 +30,16 @@ public class LineVersion {
     public AgentIInChat agentIInChat = new AgentIInChat();
     public AiIcon aiIcon = new AiIcon();
     public ImageQuality imageQuality = new ImageQuality();
+    public Profile profile = new Profile();
+
+    public static class Profile {
+      public String g50fClass = "";
+      public String h13baClass = "";
+      public String fieldH3 = "";
+      public String g50aClass = "";
+      public String methodGetProfile = "getProfile";
+      public String fieldMid = "";
+    }
 
     public static class ImageQuality {
       public String qualityProfileBaseClass = "";
