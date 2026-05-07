@@ -1,6 +1,7 @@
 package app.zipper.knot.utils;
 
 import android.app.AndroidAppHelper;
+import app.zipper.knot.LineVersion;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
