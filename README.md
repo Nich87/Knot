@@ -24,6 +24,7 @@
 | ![Plus Menu](images/sc_plusmenu.png) | ![Read History](images/sc_readhistory.png) | ![Unsend](images/sc_unsend.png) |
 
 ## 主な機能
+> サブログイン（他端末ログイン）環境では一部機能が対応していません。すべての機能を使用したい場合は、メイン端末をご利用ください。
 
 ### プライバシー & メッセージ
 - **既読回避**: メッセージを既読にせずに読み、返信したい時だけ既読にできます。
