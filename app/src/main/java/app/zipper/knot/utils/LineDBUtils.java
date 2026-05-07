@@ -4,6 +4,7 @@ import android.app.AndroidAppHelper;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import app.zipper.knot.LineVersion;
 import de.robv.android.xposed.XposedBridge;
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -25,7 +26,9 @@ public class LineDBUtils {
             SQLiteDatabase.openDatabase(
                 dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
         Cursor cursor =
-            db.rawQuery("SELECT profile_name FROM contacts WHERE mid = ?", new String[] {mid});
+            db.rawQuery(
+                "SELECT coalesce(overridden_name, address_book_name, profile_name) FROM contacts WHERE mid = ?",
+                new String[] {mid});
         if (cursor.moveToFirst()) {
           String name = cursor.getString(0);
           cursor.close();
@@ -36,7 +39,7 @@ public class LineDBUtils {
         db.close();
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: DB name resolution failed: " + t);
+      XposedBridge.log("Knot: Member name resolution failed: " + t);
     }
     return null;
   }
@@ -53,18 +56,7 @@ public class LineDBUtils {
                 dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
         Cursor cursor =
             db.rawQuery(
-                "SELECT chat_name FROM chats WHERE chat_id = ? LIMIT 1", new String[] {chatId});
-        if (cursor.moveToFirst()) {
-          String name = cursor.getString(0);
-          cursor.close();
-          db.close();
-          return name;
-        }
-        cursor.close();
-        cursor =
-            db.rawQuery(
-                "SELECT chat_name FROM chat_history WHERE chat_id = ? LIMIT 1",
-                new String[] {chatId});
+                "SELECT chat_name FROM chat WHERE chat_id = ? LIMIT 1", new String[] {chatId});
         if (cursor.moveToFirst()) {
           String name = cursor.getString(0);
           cursor.close();
@@ -103,7 +95,7 @@ public class LineDBUtils {
         cursor.close();
         db.close();
       }
-    } catch (Throwable t) {
+    } catch (Throwable ignored) {
     }
     return null;
   }
@@ -133,30 +125,43 @@ public class LineDBUtils {
     try {
       Context context = AndroidAppHelper.currentApplication();
       if (context == null) return null;
-      File dbFile = context.getDatabasePath("naver_line");
-      if (dbFile.exists()) {
-        SQLiteDatabase db =
-            SQLiteDatabase.openDatabase(
-                dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
-        Cursor cursor = db.rawQuery("SELECT mid FROM user_profile", null);
-        if (cursor.moveToFirst()) {
-          String mid = cursor.getString(0);
-          cursor.close();
-          db.close();
-          return mid;
+
+      LineVersion.Config cfg = LineVersion.get();
+      if (cfg == null || cfg.profile.g50fClass.isEmpty()) return null;
+
+      try {
+        ClassLoader cl = context.getClassLoader();
+        Class<?> g50f = cl.loadClass(cfg.profile.g50fClass);
+        Class<?> h13ba = cl.loadClass(cfg.profile.h13baClass);
+
+        java.lang.reflect.Field h3Field = h13ba.getDeclaredField(cfg.profile.fieldH3);
+        h3Field.setAccessible(true);
+        Object h3 = h3Field.get(null);
+
+        if (h3 != null) {
+          java.lang.reflect.Method aMethod =
+              g50f.getMethod("a", Context.class, cl.loadClass(cfg.profile.g50aClass));
+          Object profileManager = aMethod.invoke(null, context, h3);
+
+          if (profileManager != null) {
+            Object profile =
+                profileManager
+                    .getClass()
+                    .getMethod(cfg.profile.methodGetProfile)
+                    .invoke(profileManager);
+            if (profile != null) {
+              java.lang.reflect.Field midField =
+                  profile.getClass().getDeclaredField(cfg.profile.fieldMid);
+              midField.setAccessible(true);
+              String mid = (String) midField.get(profile);
+              if (mid != null && mid.startsWith("u")) return mid;
+            }
+          }
         }
-        cursor.close();
-        cursor = db.rawQuery("SELECT mid FROM profile", null);
-        if (cursor.moveToFirst()) {
-          String mid = cursor.getString(0);
-          cursor.close();
-          db.close();
-          return mid;
-        }
-        cursor.close();
-        db.close();
+      } catch (Throwable ignored) {
       }
-    } catch (Throwable ignored) {
+    } catch (Throwable t) {
+      XposedBridge.log("Knot: Error in getMyMid: " + t.getMessage());
     }
     return null;
   }
@@ -227,7 +232,7 @@ public class LineDBUtils {
           queryArgs.add(String.valueOf(minMsgId));
 
           if (!includeOthers && myMid != null) {
-            sql += " AND from_mid = ? ";
+            sql += " AND (from_mid = ? OR from_mid IS NULL) ";
             queryArgs.add(myMid);
           }
           sql += " ORDER BY CAST(server_id AS INTEGER) DESC LIMIT 100";
@@ -241,6 +246,8 @@ public class LineDBUtils {
             String rawParam = cursor.getString(2);
             String fromMid = cursor.getString(3);
             long timeLong = cursor.getLong(4);
+
+            if (fromMid == null) fromMid = myMid;
 
             if (!includeOthers && fromMid != null && !fromMid.equals(myMid)) continue;
 
