@@ -252,7 +252,7 @@ public class ReadReceiptHandler implements BaseHook {
                     && SettingsStore.get("send_mark_state", false)) {
                   Class<?>[] params = ((java.lang.reflect.Method) param.method).getParameterTypes();
                   if (params.length == 1 && params[0] == String.class)
-                    bypassExpiry = System.currentTimeMillis() + 2000;
+                    bypassExpiry = System.currentTimeMillis() + 100;
                 }
               }
             });
@@ -267,7 +267,7 @@ public class ReadReceiptHandler implements BaseHook {
                     && SettingsStore.get("prevent_read_state", true)
                     && SettingsStore.get("send_mark_state", false)) {
                   if (((java.lang.reflect.Method) param.method).getParameterCount() == 0)
-                    bypassExpiry = System.currentTimeMillis() + 2000;
+                    bypassExpiry = System.currentTimeMillis() + 100;
                 }
               }
             });
@@ -281,13 +281,7 @@ public class ReadReceiptHandler implements BaseHook {
       XC_MethodHook sendHook =
           new XC_MethodHook() {
             @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              if (config.preventMarkAsRead.enabled
-                  && SettingsStore.get("prevent_read_state", true)
-                  && SettingsStore.get("send_mark_state", false)) {
-                bypassExpiry = System.currentTimeMillis() + 2000;
-              }
-            }
+            protected void beforeHookedMethod(MethodHookParam param) {}
 
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
@@ -302,6 +296,7 @@ public class ReadReceiptHandler implements BaseHook {
                 Object inst = cachedAt2eInstance;
                 if (inst == null) return;
 
+                bypassExpiry = System.currentTimeMillis() + 100;
                 XposedHelpers.callMethod(
                     inst, cfg.readReceipt.methodSendReadReceipt, 0L, chatId, true);
               } catch (Throwable t) {
