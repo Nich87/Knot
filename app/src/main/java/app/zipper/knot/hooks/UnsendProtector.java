@@ -33,6 +33,7 @@ public class UnsendProtector implements BaseHook {
   private static final Map<String, String> unsendEvents = new ConcurrentHashMap<>();
   private static final Map<String, TextView> timestampViews = new ConcurrentHashMap<>();
   private static volatile Bitmap indicatorIcon;
+  private static Toast currentToast;
 
   @Override
   public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
@@ -221,12 +222,15 @@ public class UnsendProtector implements BaseHook {
           tsView.setOnClickListener(
               v -> {
                 String time = unsendEvents.get(msgId);
-                if (time != null)
-                  Toast.makeText(
+                if (time != null) {
+                  if (currentToast != null) currentToast.cancel();
+                  currentToast =
+                      Toast.makeText(
                           context,
                           app.zipper.knot.utils.ModuleStrings.UNSET_TIME_PREFIX + time,
-                          Toast.LENGTH_SHORT)
-                      .show();
+                          Toast.LENGTH_SHORT);
+                  currentToast.show();
+                }
               });
         });
   }
