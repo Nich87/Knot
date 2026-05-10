@@ -384,7 +384,7 @@ public class LineVersion {
   private static final Map<String, Config> VERSION_TABLE = new HashMap<>();
 
   static {
-    VERSION_TABLE.put("26.6.", app.zipper.knot.versions.Version266.create());
+    VERSION_TABLE.put("26.6.0", app.zipper.knot.versions.Version2660.create());
   }
 
   private static volatile Config cachedConfig = null;
@@ -443,9 +443,7 @@ public class LineVersion {
     int count = 0;
     for (String key : VERSION_TABLE.keySet()) {
       if (count > 0) sb.append(", ");
-      // Convert "26.5." -> "26.5.0" for display
-      String ver = key.endsWith(".") ? key + "0" : key;
-      sb.append(ver);
+      sb.append(key);
       count++;
     }
     return sb.toString();

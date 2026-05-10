@@ -2,7 +2,7 @@ package app.zipper.knot.versions;
 
 import app.zipper.knot.LineVersion;
 
-public class Version266 {
+public class Version2660 {
   public static LineVersion.Config create() {
     LineVersion.Config v = new LineVersion.Config();
 
