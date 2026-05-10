@@ -12,6 +12,7 @@ import org.json.JSONObject;
 public class ReadReceiptHandler implements BaseHook {
 
   private static volatile long bypassExpiry = 0L;
+  private static volatile boolean isBulkReading = false;
   private static volatile Object cachedAt2eInstance = null;
 
   @Override
@@ -178,7 +179,7 @@ public class ReadReceiptHandler implements BaseHook {
               if (!config.preventMarkAsRead.enabled
                   || !SettingsStore.get("prevent_read_state", true)) return;
               if (SettingsStore.get("send_mark_state", false)
-                  && bypassExpiry > System.currentTimeMillis()) return;
+                  && (bypassExpiry > System.currentTimeMillis() || isBulkReading)) return;
 
               if (param.args[0] instanceof String) param.args[0] = "KNOT_NOP";
               else param.setResult(null);
@@ -234,7 +235,7 @@ public class ReadReceiptHandler implements BaseHook {
                   if (!config.preventMarkAsRead.enabled
                       || !SettingsStore.get("prevent_read_state", true)) return;
                   if (SettingsStore.get("send_mark_state", false)
-                      && bypassExpiry > System.currentTimeMillis()) return;
+                      && (bypassExpiry > System.currentTimeMillis() || isBulkReading)) return;
                   param.setResult(null);
                 }
               }
@@ -266,8 +267,16 @@ public class ReadReceiptHandler implements BaseHook {
                 if (config.preventMarkAsRead.enabled
                     && SettingsStore.get("prevent_read_state", true)
                     && SettingsStore.get("send_mark_state", false)) {
-                  if (((java.lang.reflect.Method) param.method).getParameterCount() == 0)
-                    bypassExpiry = System.currentTimeMillis() + 100;
+                  if (((java.lang.reflect.Method) param.method).getParameterCount() == 0) {
+                    isBulkReading = true;
+                  }
+                }
+              }
+
+              @Override
+              protected void afterHookedMethod(MethodHookParam param) {
+                if (((java.lang.reflect.Method) param.method).getParameterCount() == 0) {
+                  isBulkReading = false;
                 }
               }
             });
@@ -324,7 +333,7 @@ public class ReadReceiptHandler implements BaseHook {
                 if (params.length == 1 && params[0] == String.class) {
                   try {
                     if (SettingsStore.get("send_mark_state", false)
-                        && bypassExpiry > System.currentTimeMillis()) return;
+                        && (bypassExpiry > System.currentTimeMillis() || isBulkReading)) return;
 
                     StackTraceElement[] stack = Thread.currentThread().getStackTrace();
                     boolean isLocalRead = false;
