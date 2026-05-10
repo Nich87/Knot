@@ -137,6 +137,8 @@ public class ModuleStrings {
   public static final String OPT_HIGH_QUALITY_PHOTO_LABEL = "写真の送信品質を向上";
   public static final String OPT_HIGH_QUALITY_PHOTO_DESC =
       "写真送信時の自動圧縮・リサイズを回避し、最高品質で送信できるようにします。設定の「高画質」よりもさらに高品質な送信が可能になります。";
+  public static final String OPT_LONG_VIDEO_LABEL = "5分以上の動画を送信可能にする";
+  public static final String OPT_LONG_VIDEO_DESC = "動画送信時の5分の時間制限を解除し、長い動画を送信できるようにします。";
 
   public static final String DESC_PATH_ROW = "モジュールの設定ファイルなどが保存されるディレクトリを選択します。";
   public static final String DESC_RESET_ROW = "すべてのモジュール設定をデフォルト状態に戻します。";

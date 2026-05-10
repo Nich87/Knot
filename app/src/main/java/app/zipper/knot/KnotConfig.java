@@ -246,6 +246,14 @@ public class KnotConfig {
           false,
           Category.CHAT);
 
+  public Item longVideo =
+      new Item(
+          "long_video",
+          ModuleStrings.OPT_LONG_VIDEO_LABEL,
+          ModuleStrings.OPT_LONG_VIDEO_DESC,
+          false,
+          Category.CHAT);
+
   public Item[] items = {
     removeAiFriendsButton,
     removeSearchBarAgentIButton,
@@ -272,6 +280,7 @@ public class KnotConfig {
     experimentalFcmFix,
     spoofVersion,
     safeSettingsResources,
-    highQualityPhoto
+    highQualityPhoto,
+    longVideo
   };
 }

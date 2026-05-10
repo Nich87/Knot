@@ -294,6 +294,22 @@ public class Version266 {
     v.profile.methodGetProfile = "getProfile";
     v.profile.fieldMid = "b";
 
+    v.media.videoDurationCheckClass = "p31.b";
+    v.media.videoDurationCheckMethod = "c";
+    v.media.mediaPickerParamsClass = "com.linecorp.line.media.picker.b$i";
+    v.media.fieldMediaPickerMaxVideoDuration = "y";
+    v.media.droppedMediaPreprocessorClass = "fs0.b";
+    v.media.videoDurationSuccessClass = "q31.a$c";
+    v.media.fieldVideoDurationSuccess = "a";
+    v.media.galleryViewClass = "kc1.x";
+    v.media.fieldGalleryDurationLimit = "U";
+    v.media.selectionValidatorClass = "ev2.s";
+    v.media.selectionValidatorMethod = "o";
+    v.media.selectionValidatorParamClass = "gr1.b";
+    v.media.videoProfileTrimmerActivityClass =
+        "jp.naver.line.android.activity.setting.videoprofile.trim.VideoProfileTrimmerActivity";
+    v.media.fieldVideoProfileTrimmerLimit = "M";
+
     return v;
   }
 }

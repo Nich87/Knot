@@ -30,7 +30,25 @@ public class LineVersion {
     public AgentIInChat agentIInChat = new AgentIInChat();
     public AiIcon aiIcon = new AiIcon();
     public ImageQuality imageQuality = new ImageQuality();
+    public Media media = new Media();
     public Profile profile = new Profile();
+
+    public static class Media {
+      public String videoDurationCheckClass = "";
+      public String videoDurationCheckMethod = "";
+      public String mediaPickerParamsClass = "";
+      public String fieldMediaPickerMaxVideoDuration = "";
+      public String droppedMediaPreprocessorClass = "";
+      public String videoDurationSuccessClass = "";
+      public String fieldVideoDurationSuccess = "";
+      public String galleryViewClass = "";
+      public String fieldGalleryDurationLimit = "";
+      public String selectionValidatorClass = "";
+      public String selectionValidatorMethod = "";
+      public String selectionValidatorParamClass = "";
+      public String videoProfileTrimmerActivityClass = "";
+      public String fieldVideoProfileTrimmerLimit = "";
+    }
 
     public static class Profile {
       public String g50fClass = "";

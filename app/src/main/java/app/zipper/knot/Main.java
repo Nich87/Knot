@@ -78,7 +78,8 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
         new RemoveTalkRoomAgentIToggle(),
         new HideAiIconPermanently(),
         new HomeSettingsTooltip(),
-        new ImageQuality()
+        new ImageQuality(),
+        new LongVideoHook()
       };
 
       for (BaseHook h : hooks) {
