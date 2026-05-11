@@ -294,7 +294,7 @@ public class Version2661 {
     v.profile.methodGetProfile = "getProfile";
     v.profile.fieldMid = "b";
 
-    v.media.videoDurationCheckClass = "bk3.b";
+    v.media.videoDurationCheckClass = "p31.b";
     v.media.videoDurationCheckMethod = "c";
     v.media.mediaPickerParamsClass = "com.linecorp.line.media.picker.b$i";
     v.media.fieldMediaPickerMaxVideoDuration = "y";
