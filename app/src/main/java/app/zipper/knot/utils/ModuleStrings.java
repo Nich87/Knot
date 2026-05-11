@@ -105,7 +105,7 @@ public class ModuleStrings {
   public static final String OPT_EXTEND_TAB_CLICK_AREA_LABEL = "タブのタップ範囲を拡張";
   public static final String OPT_EXTEND_TAB_CLICK_AREA_DESC = "下部タブの反応範囲を広げ、押しやすくします。";
   public static final String OPT_HIDE_TAB_TEXT_LABEL = "タブラベルを非表示";
-  public static final String OPT_HIDE_TAB_TEXT_DESC = "下部タブのアイコン下のテキストを非表示にします。※通知アイコンがズレる場合があります。";
+  public static final String OPT_HIDE_TAB_TEXT_DESC = "下部タブのアイコン下のテキストを非表示にします。";
 
   public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_LABEL = "「通知をオフ」ボタンを非表示";
   public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_DESC =

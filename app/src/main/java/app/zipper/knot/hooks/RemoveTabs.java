@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
 import app.zipper.knot.SettingsStore;
@@ -119,6 +120,7 @@ public class RemoveTabs implements BaseHook {
     float scale = host.getResources().getDisplayMetrics().density;
     int w = (int) (80 * scale);
     int h = (int) (106 * scale);
+    float iconOffsetY = 21 * scale;
 
     for (View v : icons) {
       if (v == null) continue;
@@ -131,12 +133,30 @@ public class RemoveTabs implements BaseHook {
         iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
         iv.setAdjustViewBounds(true);
       }
-      v.setTranslationY(21 * scale);
+      v.setTranslationY(iconOffsetY);
     }
+    offsetTopAnchoredChildren(container, imgId, animImgId, iconOffsetY);
+
     for (int i = 0; i < container.getChildCount(); i++) {
       View child = container.getChildAt(i);
       if (child instanceof ViewGroup && child.getId() != imgId && child.getId() != animImgId)
         adjustTabDimensions(host, (ViewGroup) child);
+    }
+  }
+
+  private static void offsetTopAnchoredChildren(
+      ViewGroup container, int imgId, int animImgId, float offsetY) {
+    for (int i = 0; i < container.getChildCount(); i++) {
+      View child = container.getChildAt(i);
+      if (child.getId() == imgId || child.getId() == animImgId) continue;
+
+      ViewGroup.LayoutParams rawParams = child.getLayoutParams();
+      if (!(rawParams instanceof ConstraintLayout.LayoutParams)) continue;
+
+      ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) rawParams;
+      if (params.topToTop == imgId || params.topToTop == animImgId) {
+        child.setTranslationY(offsetY);
+      }
     }
   }
 }
