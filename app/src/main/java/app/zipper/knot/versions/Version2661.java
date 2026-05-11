@@ -80,14 +80,14 @@ public class Version2661 {
     v.plusMenu.methodExecuteAction = "X";
     v.plusMenu.editChatDrawable = "chat_tab_ui_header_plusmenu_edit_chat";
 
-    v.readReceipt.readReceiptManagerClass = "at2.f";
+    v.readReceipt.readReceiptManagerClass = "at2.e";
     v.readReceipt.readReceiptQueueClass = "ge8.b";
     v.readReceipt.methodEnqueueReadReceipt = "c";
     v.readReceipt.methodSendReadReceipt = "d";
     v.readReceipt.methodExecuteReadReceiptAsync = "e";
     v.readReceipt.methodReadAll = "c";
     v.readReceipt.operationNotifiedReadName = "NOTIFIED_READ_MESSAGE";
-    v.readReceipt.badgeClearClass = "dc8.b";
+    v.readReceipt.badgeClearClass = "cc8.b";
 
     v.unsend.talkServiceHookClass = "eh8.ae$a";
     v.unsend.chatMessageViewHolderClass = "nd1.h";
@@ -125,7 +125,7 @@ public class Version2661 {
     v.thrift.talkServiceClientInterface = "jp.naver.line.android.thrift.client.TalkServiceClient";
     v.thrift.chatSearchActivityClass = "com.linecorp.line.chat.search.ChatSearchActivity";
     v.thrift.sendMessage = "u0";
-    v.thrift.v1 = "r1";
+    v.thrift.v1 = "d1";
     v.thrift.v2 = "v2";
     v.thrift.protocolClass = "org.apache.thrift.o";
     v.thrift.messageClass = "org.apache.thrift.e";
