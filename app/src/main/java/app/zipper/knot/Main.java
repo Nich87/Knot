@@ -79,7 +79,9 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
         new HideAiIconPermanently(),
         new HomeSettingsTooltip(),
         new ImageQuality(),
-        new LongVideoHook()
+        new LongVideoHook(),
+        new SearchByMemberHook(),
+        new SearchMin1CharHook()
       };
 
       for (BaseHook h : hooks) {

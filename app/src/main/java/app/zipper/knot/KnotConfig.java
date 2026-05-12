@@ -254,6 +254,22 @@ public class KnotConfig {
           false,
           Category.CHAT);
 
+  public Item searchByMember =
+      new Item(
+          "search_by_member",
+          ModuleStrings.OPT_SEARCH_BY_MEMBER_LABEL,
+          ModuleStrings.OPT_SEARCH_BY_MEMBER_DESC,
+          false,
+          Category.CHAT);
+
+  public Item searchMin1Char =
+      new Item(
+          "search_min_1_char",
+          ModuleStrings.OPT_SEARCH_MIN_1_CHAR_LABEL,
+          ModuleStrings.OPT_SEARCH_MIN_1_CHAR_DESC,
+          false,
+          Category.CHAT);
+
   public Item[] items = {
     removeAiFriendsButton,
     removeSearchBarAgentIButton,
@@ -281,6 +297,8 @@ public class KnotConfig {
     spoofVersion,
     safeSettingsResources,
     highQualityPhoto,
-    longVideo
+    longVideo,
+    searchByMember,
+    searchMin1Char
   };
 }

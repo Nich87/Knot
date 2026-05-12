@@ -310,6 +310,14 @@ public class Version2660 {
         "jp.naver.line.android.activity.setting.videoprofile.trim.VideoProfileTrimmerActivity";
     v.media.fieldVideoProfileTrimmerLimit = "M";
 
+    v.chat.searchHeaderHelperClass = "fj1.g";
+    v.chat.searchKeywordTypeClass = "ky0.a";
+    v.chat.searchKeywordTypeMethod = "d";
+    v.chat.searchResultClass = "ky0.g";
+    v.chat.searchResultWrapperClass = "ky0.h";
+    v.chat.searchBoxViewClass = "jp.naver.line.android.customview.SearchBoxView";
+    v.chat.searchKeywordEventClass = "ej1.b";
+
     return v;
   }
 }

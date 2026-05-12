@@ -250,6 +250,13 @@ public class LineVersion {
       public String headerHelper = "";
       public String chatIdField = "";
       public String methodGetChatId = "";
+      public String searchHeaderHelperClass = "";
+      public String searchKeywordTypeClass = "";
+      public String searchKeywordTypeMethod = "";
+      public String searchResultClass = "";
+      public String searchResultWrapperClass = "";
+      public String searchBoxViewClass = "";
+      public String searchKeywordEventClass = "";
     }
 
     public static class ChatHeader {

@@ -160,6 +160,19 @@ public class ModuleStrings {
   public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_DESC = "トークタブ右上の「オープンチャット」ボタンを非表示にします。";
 
   public static final String TOOLTIP_SETTINGS_LONG_PRESS = "長押しでKnotの設定を開けます";
+  public static final String TOOLTIP_SEARCH_BY_MEMBER = "タップしてメンバーごとに絞り込み検索";
+
+  public static final String SEARCH_BY_MEMBER_BTN = "メンバーで検索";
+  public static final String SEARCH_BY_MEMBER_TITLE = "メンバーで絞り込み";
+  public static final String SEARCH_BY_MEMBER_EMPTY = "メンバーが見つかりません";
+  public static final String SEARCH_BY_MEMBER_FILTERING = "絞り込み中: ";
+  public static final String SEARCH_BY_MEMBER_FILTER_CLEARED = "絞り込みを解除しました";
+  public static final String OPT_SEARCH_BY_MEMBER_LABEL = "メンバーでトーク内検索";
+  public static final String OPT_SEARCH_BY_MEMBER_DESC =
+      "検索ボックス内の虫眼鏡アイコンを押すことで、メンバーを選んでそのユーザーのメッセージのみを絞り込み検索できるようにします。";
+
+  public static final String OPT_SEARCH_MIN_1_CHAR_LABEL = "1文字からトーク内検索";
+  public static final String OPT_SEARCH_MIN_1_CHAR_DESC = "トーク内検索の最低文字数を2文字から1文字に緩和します。";
 
   public static final String OPT_ABOUT_LABEL = "Knotについて";
   public static final String OPT_ABOUT_DESC = "バージョン情報など";

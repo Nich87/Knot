@@ -166,6 +166,122 @@ public class LineDBUtils {
     return null;
   }
 
+  public static class MemberInfo {
+    public final String mid;
+    public final String name;
+
+    public MemberInfo(String mid, String name) {
+      this.mid = mid;
+      this.name = name;
+    }
+  }
+
+  public static List<MessageRecord> searchMessagesByMember(
+      String chatId, String senderMid, String keyword) {
+    List<MessageRecord> results = new ArrayList<>();
+    try {
+      Context context = AndroidAppHelper.currentApplication();
+      if (context == null) return results;
+      File dbFile = context.getDatabasePath("naver_line");
+      if (!dbFile.exists()) return results;
+      SQLiteDatabase db =
+          SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+      try {
+        SimpleDateFormat fmt = new SimpleDateFormat("MM/dd HH:mm", Locale.getDefault());
+        String sql;
+        String[] args;
+        if (keyword == null || keyword.isEmpty()) {
+          sql =
+              "SELECT server_id, content, parameter, created_time FROM chat_history"
+                  + " WHERE chat_id = ? AND from_mid = ? ORDER BY created_time DESC LIMIT 200";
+          args = new String[] {chatId, senderMid};
+        } else {
+          sql =
+              "SELECT server_id, content, parameter, created_time FROM chat_history"
+                  + " WHERE chat_id = ? AND from_mid = ? AND content LIKE ?"
+                  + " ORDER BY created_time DESC LIMIT 100";
+          args = new String[] {chatId, senderMid, "%" + keyword + "%"};
+        }
+        Cursor cursor = db.rawQuery(sql, args);
+        try {
+          while (cursor.moveToNext()) {
+            String text = resolveMessageText(cursor.getString(1), cursor.getString(2));
+            if (text == null || text.isEmpty()) continue;
+            String ts = fmt.format(new Date(cursor.getLong(3)));
+            results.add(
+                new MessageRecord(cursor.getString(0), text, senderMid, null, chatId, null, ts));
+          }
+        } finally {
+          cursor.close();
+        }
+      } finally {
+        db.close();
+      }
+    } catch (Throwable t) {
+      XposedBridge.log("Knot: searchMessagesByMember failed: " + t);
+    }
+    return results;
+  }
+
+  public static List<MemberInfo> getChatMembers(String chatId) {
+    List<MemberInfo> results = new ArrayList<>();
+    if (chatId == null) return results;
+    try {
+      Context context = AndroidAppHelper.currentApplication();
+      if (context == null) return results;
+      File dbFile = context.getDatabasePath("naver_line");
+      if (!dbFile.exists()) return results;
+      SQLiteDatabase db =
+          SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+      try {
+        Cursor cursor =
+            db.rawQuery(
+                "SELECT from_mid FROM chat_history"
+                    + " WHERE chat_id = ? AND from_mid IS NOT NULL"
+                    + " GROUP BY from_mid ORDER BY MAX(created_time) DESC",
+                new String[] {chatId});
+        try {
+          while (cursor.moveToNext()) {
+            String mid = cursor.getString(0);
+            String name = resolveMemberName(mid);
+            results.add(new MemberInfo(mid, name != null ? name : mid));
+          }
+        } finally {
+          cursor.close();
+        }
+        String myMid = getMyMid();
+        if (myMid != null) {
+          boolean alreadyPresent = false;
+          for (MemberInfo mi : results) {
+            if (myMid.equals(mi.mid)) {
+              alreadyPresent = true;
+              break;
+            }
+          }
+          if (!alreadyPresent) {
+            Cursor selfCursor =
+                db.rawQuery(
+                    "SELECT COUNT(*) FROM chat_history WHERE chat_id = ? AND from_mid IS NULL",
+                    new String[] {chatId});
+            try {
+              if (selfCursor.moveToFirst() && selfCursor.getLong(0) > 0) {
+                String myName = resolveMemberName(myMid);
+                results.add(0, new MemberInfo(myMid, myName != null ? myName : myMid));
+              }
+            } finally {
+              selfCursor.close();
+            }
+          }
+        }
+      } finally {
+        db.close();
+      }
+    } catch (Throwable t) {
+      XposedBridge.log("Knot: getChatMembers failed: " + t);
+    }
+    return results;
+  }
+
   public static class MessageRecord {
     public final String id;
     public final String text;
