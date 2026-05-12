@@ -3,8 +3,7 @@ package app.zipper.knot.hooks;
 import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import android.widget.TextView;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
 import app.zipper.knot.SettingsStore;
@@ -51,7 +50,7 @@ public class RemoveTabs implements BaseHook {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
               if (SettingsStore.get(config.hideTabText.key, config.hideTabText.enabled)) {
-                ((View) param.thisObject).setVisibility(View.GONE);
+                ((View) param.thisObject).setVisibility(View.INVISIBLE);
               }
             }
           });
@@ -98,65 +97,59 @@ public class RemoveTabs implements BaseHook {
   private static void applyCompactLayout(Activity host) {
     LineVersion.Config c = LineVersion.get();
     int rootId = host.getResources().getIdentifier(c.tabs.resContainer, "id", c.linePkg);
+    int textId = host.getResources().getIdentifier(c.tabs.resBtnText, "id", c.linePkg);
+    int clickableId =
+        host.getResources().getIdentifier("bnb_button_clickable_area", "id", c.linePkg);
     if (rootId == 0) return;
+    if (textId == 0) return;
     ViewGroup root = host.findViewById(rootId);
     if (root == null) return;
     for (int i = 0; i < root.getChildCount(); i++) {
-      View child = root.getChildAt(i);
-      if (child instanceof ViewGroup) adjustTabDimensions(host, (ViewGroup) child);
+      applyLabelOffset(root.getChildAt(i), textId, clickableId);
     }
+    root.invalidate();
   }
 
-  private static void adjustTabDimensions(Activity host, ViewGroup container) {
-    LineVersion.Config c = LineVersion.get();
-    int imgId = host.getResources().getIdentifier(c.tabs.resBtnImg, "id", c.linePkg);
-    int animImgId = host.getResources().getIdentifier(c.tabs.resBtnAnimImg, "id", c.linePkg);
-    int textId = host.getResources().getIdentifier(c.tabs.resBtnText, "id", c.linePkg);
-
-    View label = container.findViewById(textId);
-    if (label != null) label.setVisibility(View.GONE);
-
-    View[] icons = {container.findViewById(imgId), container.findViewById(animImgId)};
-    float scale = host.getResources().getDisplayMetrics().density;
-    int w = (int) (80 * scale);
-    int h = (int) (106 * scale);
-    float iconOffsetY = 21 * scale;
-
-    for (View v : icons) {
-      if (v == null) continue;
-      ViewGroup.LayoutParams lp = v.getLayoutParams();
-      lp.width = w;
-      lp.height = h;
-      v.setLayoutParams(lp);
-      if (v instanceof ImageView) {
-        ImageView iv = (ImageView) v;
-        iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        iv.setAdjustViewBounds(true);
-      }
-      v.setTranslationY(iconOffsetY);
-    }
-    offsetTopAnchoredChildren(container, imgId, animImgId, iconOffsetY);
-
-    for (int i = 0; i < container.getChildCount(); i++) {
-      View child = container.getChildAt(i);
-      if (child instanceof ViewGroup && child.getId() != imgId && child.getId() != animImgId)
-        adjustTabDimensions(host, (ViewGroup) child);
-    }
-  }
-
-  private static void offsetTopAnchoredChildren(
-      ViewGroup container, int imgId, int animImgId, float offsetY) {
-    for (int i = 0; i < container.getChildCount(); i++) {
-      View child = container.getChildAt(i);
-      if (child.getId() == imgId || child.getId() == animImgId) continue;
-
-      ViewGroup.LayoutParams rawParams = child.getLayoutParams();
-      if (!(rawParams instanceof ConstraintLayout.LayoutParams)) continue;
-
-      ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) rawParams;
-      if (params.topToTop == imgId || params.topToTop == animImgId) {
+  private static void applyLabelOffset(View view, int textId, int clickableId) {
+    if (!(view instanceof ViewGroup)) return;
+    ViewGroup container = (ViewGroup) view;
+    View label = findDirectChildById(container, textId);
+    if (label != null) {
+      label.setVisibility(View.INVISIBLE);
+      float offsetY = resolveLabelOffset(label);
+      for (int i = 0; i < container.getChildCount(); i++) {
+        View child = container.getChildAt(i);
+        if (child.getId() == clickableId) {
+          child.setTranslationY(0f);
+          continue;
+        }
+        if (child.getId() == textId) {
+          child.setTranslationY(0f);
+          continue;
+        }
         child.setTranslationY(offsetY);
       }
     }
+
+    for (int i = 0; i < container.getChildCount(); i++) {
+      applyLabelOffset(container.getChildAt(i), textId, clickableId);
+    }
+  }
+
+  private static View findDirectChildById(ViewGroup container, int id) {
+    for (int i = 0; i < container.getChildCount(); i++) {
+      View child = container.getChildAt(i);
+      if (child.getId() == id) return child;
+    }
+    return null;
+  }
+
+  private static float resolveLabelOffset(View label) {
+    int height = label.getHeight();
+    if (height <= 0) height = label.getMeasuredHeight();
+    if (height <= 0 && label instanceof TextView) {
+      height = ((TextView) label).getLineHeight();
+    }
+    return Math.max(height, 0);
   }
 }
