@@ -9,8 +9,12 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RemoveAds implements BaseHook {
+
+  private static final Map<String, Boolean> adClassCache = new ConcurrentHashMap<>();
 
   @Override
   public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
@@ -31,7 +35,6 @@ public class RemoveAds implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (!config.removeAds.enabled) return;
               try {
                 View target = (View) param.thisObject;
                 View root = (View) target.getParent().getParent();
@@ -63,7 +66,6 @@ public class RemoveAds implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (!config.removeAds.enabled) return;
               if ((int) param.args[0] == View.VISIBLE) param.args[0] = View.GONE;
             }
           });
@@ -82,7 +84,6 @@ public class RemoveAds implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (!config.removeAds.enabled) return;
               try {
                 View container = (View) ((View) param.thisObject).getParent();
                 container.setVisibility(View.GONE);
@@ -103,7 +104,6 @@ public class RemoveAds implements BaseHook {
         new XC_MethodHook() {
           @Override
           protected void afterHookedMethod(MethodHookParam param) {
-            if (!config.removeAds.enabled) return;
             View view = (View) param.args[0];
             if (isAdComponent(view.getClass().getName())) view.setVisibility(View.GONE);
           }
@@ -111,6 +111,15 @@ public class RemoveAds implements BaseHook {
   }
 
   private static boolean isAdComponent(String className) {
+    Boolean cached = adClassCache.get(className);
+    if (cached != null) return cached;
+
+    boolean result = performAdCheck(className);
+    adClassCache.put(className, result);
+    return result;
+  }
+
+  private static boolean performAdCheck(String className) {
     LineVersion.Config cfg = LineVersion.get();
     if (cfg != null) {
       if (className.startsWith(cfg.ads.classAdSdkBase)) return true;

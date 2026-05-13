@@ -56,10 +56,12 @@ public class SettingsStore {
     }
   }
 
+  private static volatile JSONObject cachedSettingsJson = null;
+
   public static void load(KnotConfig config) {
     ensurePointerPath(appContext);
     try {
-      JSONObject json = readJson(SETTINGS_FILE);
+      JSONObject json = getSettingsJson();
       for (KnotConfig.Item item : config.items) {
         if (json.has(item.key)) {
           Object val = json.get(item.key);
@@ -68,6 +70,15 @@ public class SettingsStore {
         }
       }
     } catch (Throwable ignored) {
+    }
+  }
+
+  private static JSONObject getSettingsJson() throws Throwable {
+    if (cachedSettingsJson != null) return cachedSettingsJson;
+    synchronized (SettingsStore.class) {
+      if (cachedSettingsJson != null) return cachedSettingsJson;
+      cachedSettingsJson = readJson(SETTINGS_FILE);
+      return cachedSettingsJson;
     }
   }
 
@@ -120,9 +131,11 @@ public class SettingsStore {
 
   public static void save(String key, boolean value) {
     try {
-      JSONObject json = readJson(SETTINGS_FILE);
-      json.put(key, value);
-      writeJson(SETTINGS_FILE, json);
+      synchronized (SettingsStore.class) {
+        JSONObject json = getSettingsJson();
+        json.put(key, value);
+        writeJson(SETTINGS_FILE, json);
+      }
     } catch (Throwable e) {
       android.util.Log.e("Knot", "SettingsStore.save failed", e);
     }
@@ -130,7 +143,7 @@ public class SettingsStore {
 
   public static boolean get(String key, boolean defaultValue) {
     try {
-      JSONObject json = readJson(SETTINGS_FILE);
+      JSONObject json = getSettingsJson();
       if (json.has(key)) return json.getBoolean(key);
     } catch (Throwable ignored) {
     }
@@ -139,9 +152,11 @@ public class SettingsStore {
 
   public static void save(String key, String value) {
     try {
-      JSONObject json = readJson(SETTINGS_FILE);
-      json.put(key, value);
-      writeJson(SETTINGS_FILE, json);
+      synchronized (SettingsStore.class) {
+        JSONObject json = getSettingsJson();
+        json.put(key, value);
+        writeJson(SETTINGS_FILE, json);
+      }
     } catch (Throwable e) {
       android.util.Log.e("Knot", "SettingsStore.save string failed", e);
     }

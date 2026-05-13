@@ -55,42 +55,84 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
 
       XposedBridge.log("Knot: Initializing Knot hooks...");
 
-      BaseHook[] hooks = {
-        new SettingsUIInjector(),
-        new ReadReceiptHandler(),
-        new ReactionNotification(),
-        new UnsendProtector(),
-        new VersionSpoof(),
-        new RemoveAds(),
-        new RemoveHomeContents(),
-        new RemoveTabs(),
-        new RemoveHeaderButtons(),
-        new PlusMenuHook(),
-        new SettingsButtonLongPress(),
-        new ShowConfigWarning(),
-        new HeaderButtonInjector(),
-        new SafeResourceFix(),
-        new NotificationHook(),
-        new OpenInExternalBrowserHook(),
-        new FontUnlockHook(),
-        new BackupRestoreHook(),
-        new FcmFixHook(),
-        new RemoveTalkRoomAgentIToggle(),
-        new HideAiIconPermanently(),
-        new HomeSettingsTooltip(),
-        new ImageQuality(),
-        new LongVideoHook(),
-        new SearchByMemberHook(),
-        new SearchMin1CharHook()
-      };
+      applyHook(new SettingsUIInjector(), lpparam);
+      applyHook(new SettingsButtonLongPress(), lpparam);
+      applyHook(new ShowConfigWarning(), lpparam);
+      applyHook(new HomeSettingsTooltip(), lpparam);
+      applyHook(new SafeResourceFix(), lpparam);
 
-      for (BaseHook h : hooks) {
-        try {
-          h.hook(options, lpparam);
-        } catch (Throwable t) {
-          XposedBridge.log("Knot: Hook failed for " + h.getClass().getSimpleName() + ": " + t);
-        }
+      if (options.recordReadHistory.enabled || options.preventMarkAsRead.enabled) {
+        applyHook(new ReadReceiptHandler(), lpparam);
+        applyHook(new PlusMenuHook(), lpparam);
       }
+      if (options.recordReadHistory.enabled) {
+        applyHook(new HeaderButtonInjector(), lpparam);
+      }
+      if (options.preventUnsendMessage.enabled) {
+        applyHook(new UnsendProtector(), lpparam);
+      }
+      if (options.hideAiIconPermanently.enabled) {
+        applyHook(new RemoveTalkRoomAgentIToggle(), lpparam);
+        applyHook(new HideAiIconPermanently(), lpparam);
+      }
+      if (options.openUrlInDefaultBrowser.enabled) {
+        applyHook(new OpenInExternalBrowserHook(), lpparam);
+      }
+      if (options.highQualityPhoto.enabled) {
+        applyHook(new ImageQuality(), lpparam);
+      }
+      if (options.longVideo.enabled) {
+        applyHook(new LongVideoHook(), lpparam);
+      }
+      if (options.searchByMember.enabled) {
+        applyHook(new SearchByMemberHook(), lpparam);
+      }
+      if (options.searchMin1Char.enabled) {
+        applyHook(new SearchMin1CharHook(), lpparam);
+      }
+
+      if (options.removeAds.enabled) {
+        applyHook(new RemoveAds(), lpparam);
+      }
+      if (options.removeHomeRecommendations.enabled
+          || options.removeHomeServices.enabled
+          || options.removeHomeAccordion.enabled) {
+        applyHook(new RemoveHomeContents(), lpparam);
+      }
+      if (options.removeTabVoom.enabled
+          || options.removeTabNews.enabled
+          || options.removeTabMini.enabled
+          || options.hideTabText.enabled
+          || options.extendTabClickArea.enabled) {
+        applyHook(new RemoveTabs(), lpparam);
+      }
+      if (options.removeAiFriendsButton.enabled || options.removeOpenChatButton.enabled) {
+        applyHook(new RemoveHeaderButtons(), lpparam);
+      }
+      if (options.useCustomFont.enabled) {
+        applyHook(new FontUnlockHook(), lpparam);
+      }
+
+      if (options.reactionNotification.enabled) {
+        applyHook(new ReactionNotification(), lpparam);
+      }
+      if (options.removeNotificationMuteButton.enabled) {
+        applyHook(new NotificationHook(), lpparam);
+      }
+      if (options.experimentalFcmFix.enabled) {
+        applyHook(new FcmFixHook(), lpparam);
+      }
+      if (options.spoofVersion.enabled || options.spoofVersionUnsendOnly.enabled) {
+        applyHook(new VersionSpoof(), lpparam);
+      }
+    }
+  }
+
+  private void applyHook(BaseHook hook, XC_LoadPackage.LoadPackageParam lpparam) {
+    try {
+      hook.hook(options, lpparam);
+    } catch (Throwable t) {
+      XposedBridge.log("Knot: Hook failed for " + hook.getClass().getSimpleName() + ": " + t);
     }
   }
 
