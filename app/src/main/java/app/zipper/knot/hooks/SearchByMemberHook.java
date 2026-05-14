@@ -352,7 +352,8 @@ public class SearchByMemberHook implements BaseHook {
         Object result =
             XposedHelpers.newInstance(resultCls, chatId, ids.size(), resultKeyword, ids);
         XposedHelpers.setObjectField(
-            param.thisObject, lineVersionConfig.chat.searchResultWrapperResultOptionalField,
+            param.thisObject,
+            lineVersionConfig.chat.searchResultWrapperResultOptionalField,
             Optional.of(result));
       } finally {
         creatingResult.remove();
@@ -606,8 +607,7 @@ public class SearchByMemberHook implements BaseHook {
   }
 
   private Object getSearchController(Object helper) {
-    return XposedHelpers.getObjectField(
-        helper, lineVersionConfig.chat.searchHeaderControllerField);
+    return XposedHelpers.getObjectField(helper, lineVersionConfig.chat.searchHeaderControllerField);
   }
 
   private Object getSearchBoxView(Object controller) {
