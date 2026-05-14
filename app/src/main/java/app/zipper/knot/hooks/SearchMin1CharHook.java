@@ -9,6 +9,19 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class SearchMin1CharHook implements BaseHook {
 
+  private static boolean hasMeaningfulKeyword(String str) {
+    for (int i = 0; i < str.length(); ) {
+      int codePoint = str.codePointAt(i);
+      i += Character.charCount(codePoint);
+
+      if (Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) continue;
+      if (Character.isISOControl(codePoint)) continue;
+      if (Character.getType(codePoint) == Character.FORMAT) continue;
+      return true;
+    }
+    return false;
+  }
+
   @Override
   public void hook(KnotConfig options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
     if (!options.searchMin1Char.enabled) return;
@@ -32,7 +45,7 @@ public class SearchMin1CharHook implements BaseHook {
                 param.setResult(false);
                 return;
               }
-              param.setResult(str.trim().length() >= 1);
+              param.setResult(hasMeaningfulKeyword(str));
             }
           });
     } catch (Throwable t) {

@@ -311,12 +311,21 @@ public class Version2661 {
     v.media.fieldVideoProfileTrimmerLimit = "M";
 
     v.chat.searchHeaderHelperClass = "fj1.h";
+    v.chat.searchHeaderControllerField = "i";
+    v.chat.searchHeaderEventBusField = "b";
+    v.chat.searchControllerSearchBoxMethod = "d";
+    v.chat.searchPresenterClass = "jj1.n";
     v.chat.searchKeywordTypeClass = "ky0.a";
     v.chat.searchKeywordTypeMethod = "e";
     v.chat.searchResultClass = "ky0.f";
     v.chat.searchResultWrapperClass = "ky0.g";
     v.chat.searchBoxViewClass = "jp.naver.line.android.customview.SearchBoxView";
+    v.chat.searchBoxEditTextField = "b";
     v.chat.searchKeywordEventClass = "ej1.b";
+    v.chat.searchKeywordEventKeywordField = "a";
+    v.chat.searchPresenterKeywordChangedMethod = "onSearchInChatKeywordChangedEventReceived";
+    v.chat.searchPresenterKeywordSubjectField = "t";
+    v.chat.searchResultWrapperResultOptionalField = "c";
 
     return v;
   }
