@@ -251,12 +251,21 @@ public class LineVersion {
       public String chatIdField = "";
       public String methodGetChatId = "";
       public String searchHeaderHelperClass = "";
+      public String searchHeaderControllerField = "";
+      public String searchHeaderEventBusField = "";
+      public String searchControllerSearchBoxMethod = "";
+      public String searchPresenterClass = "";
       public String searchKeywordTypeClass = "";
       public String searchKeywordTypeMethod = "";
       public String searchResultClass = "";
       public String searchResultWrapperClass = "";
       public String searchBoxViewClass = "";
+      public String searchBoxEditTextField = "";
       public String searchKeywordEventClass = "";
+      public String searchKeywordEventKeywordField = "";
+      public String searchPresenterKeywordChangedMethod = "";
+      public String searchPresenterKeywordSubjectField = "";
+      public String searchResultWrapperResultOptionalField = "";
     }
 
     public static class ChatHeader {
