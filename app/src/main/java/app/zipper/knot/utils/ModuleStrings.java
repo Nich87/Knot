@@ -180,7 +180,7 @@ public class ModuleStrings {
 
   public static final String OPT_FIX_ANNOUNCEMENT_NAME_LABEL = "アナウンス者名の表示を修正";
   public static final String OPT_FIX_ANNOUNCEMENT_NAME_DESC =
-      "アナウンス登録時のシステムメッセージが「がアナウンスしました」と名前が空になるLINE側の不具合を修正し、「○○がアナウンスしました」と正しく表示します。";
+      "パッチ済みのLINEで、アナウンス登録時のシステムメッセージが「がアナウンスしました」と名前が空になる不具合を修正し、正しく表示されるようにします。";
 
   public static final String OPT_ABOUT_LABEL = "Knotについて";
   public static final String OPT_ABOUT_DESC = "バージョン情報など";
