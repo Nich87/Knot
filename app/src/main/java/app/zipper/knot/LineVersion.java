@@ -34,6 +34,12 @@ public class LineVersion {
     public Profile profile = new Profile();
     public AnnouncementFix announcementFix = new AnnouncementFix();
     public ChatJump chatJump = new ChatJump();
+    public ChatTimestamp chatTimestamp = new ChatTimestamp();
+
+    public static class ChatTimestamp {
+      public String displayTimeInterface = "";
+      public String methodCreatedMillis = "";
+    }
 
     public static class AnnouncementFix {
       public String formatterClass = "";

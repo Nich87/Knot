@@ -278,6 +278,14 @@ public class KnotConfig {
           false,
           Category.CHAT);
 
+  public Item showSecondsInChatTime =
+      new Item(
+          "show_seconds_in_chat_time",
+          ModuleStrings.OPT_SHOW_SECONDS_IN_CHAT_TIME_LABEL,
+          ModuleStrings.OPT_SHOW_SECONDS_IN_CHAT_TIME_DESC,
+          false,
+          Category.CHAT);
+
   public Item[] items = {
     removeAiFriendsButton,
     removeSearchBarAgentIButton,
@@ -308,6 +316,7 @@ public class KnotConfig {
     longVideo,
     searchByMember,
     searchMin1Char,
-    fixAnnouncementName
+    fixAnnouncementName,
+    showSecondsInChatTime
   };
 }

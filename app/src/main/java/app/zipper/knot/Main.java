@@ -94,6 +94,9 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
       if (options.fixAnnouncementName.enabled) {
         applyHook(new AnnouncementNameFix(), lpparam);
       }
+      if (options.showSecondsInChatTime.enabled) {
+        applyHook(new ChatTimestampSeconds(), lpparam);
+      }
 
       if (options.removeAds.enabled) {
         applyHook(new RemoveAds(), lpparam);

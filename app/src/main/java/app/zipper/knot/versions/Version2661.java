@@ -346,6 +346,9 @@ public class Version2661 {
         "jp.naver.line.android.activity.chathistory.ChatHistoryActivityLaunchActivity";
     v.chatJump.requestExtraKey = "chatHistoryRequest";
 
+    v.chatTimestamp.displayTimeInterface = "g21.f";
+    v.chatTimestamp.methodCreatedMillis = "a";
+
     return v;
   }
 }
