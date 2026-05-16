@@ -174,6 +174,10 @@ public class ModuleStrings {
   public static final String OPT_SEARCH_MIN_1_CHAR_LABEL = "1文字からトーク内検索";
   public static final String OPT_SEARCH_MIN_1_CHAR_DESC = "トーク内検索の最低文字数を2文字から1文字に緩和します。";
 
+  public static final String OPT_FIX_ANNOUNCEMENT_NAME_LABEL = "アナウンス者名の表示を修正";
+  public static final String OPT_FIX_ANNOUNCEMENT_NAME_DESC =
+      "アナウンス登録時のシステムメッセージが「がアナウンスしました」と名前が空になるLINE側の不具合を修正し、「○○がアナウンスしました」と正しく表示します。";
+
   public static final String OPT_ABOUT_LABEL = "Knotについて";
   public static final String OPT_ABOUT_DESC = "バージョン情報など";
   public static final String ABOUT_TITLE = "Knotについて";

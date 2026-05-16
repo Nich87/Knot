@@ -90,6 +90,9 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
       if (options.searchMin1Char.enabled) {
         applyHook(new SearchMin1CharHook(), lpparam);
       }
+      if (options.fixAnnouncementName.enabled) {
+        applyHook(new AnnouncementNameFix(), lpparam);
+      }
 
       if (options.removeAds.enabled) {
         applyHook(new RemoveAds(), lpparam);

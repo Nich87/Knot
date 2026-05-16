@@ -32,6 +32,14 @@ public class LineVersion {
     public ImageQuality imageQuality = new ImageQuality();
     public Media media = new Media();
     public Profile profile = new Profile();
+    public AnnouncementFix announcementFix = new AnnouncementFix();
+
+    public static class AnnouncementFix {
+      public String formatterClass = "";
+      public String formatMethod = "";
+      public String nameResolverMethod = "";
+      public String announcementEventClass = "";
+    }
 
     public static class Media {
       public String videoDurationCheckClass = "";

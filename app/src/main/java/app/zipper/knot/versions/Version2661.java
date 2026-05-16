@@ -327,6 +327,11 @@ public class Version2661 {
     v.chat.searchPresenterKeywordSubjectField = "t";
     v.chat.searchResultWrapperResultOptionalField = "c";
 
+    v.announcementFix.formatterClass = "pf1.c";
+    v.announcementFix.formatMethod = "a";
+    v.announcementFix.nameResolverMethod = "b";
+    v.announcementFix.announcementEventClass = "ex0.h$c0";
+
     return v;
   }
 }

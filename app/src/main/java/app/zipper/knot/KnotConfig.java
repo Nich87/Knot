@@ -270,6 +270,14 @@ public class KnotConfig {
           false,
           Category.CHAT);
 
+  public Item fixAnnouncementName =
+      new Item(
+          "fix_announcement_name",
+          ModuleStrings.OPT_FIX_ANNOUNCEMENT_NAME_LABEL,
+          ModuleStrings.OPT_FIX_ANNOUNCEMENT_NAME_DESC,
+          false,
+          Category.CHAT);
+
   public Item[] items = {
     removeAiFriendsButton,
     removeSearchBarAgentIButton,
@@ -299,6 +307,7 @@ public class KnotConfig {
     highQualityPhoto,
     longVideo,
     searchByMember,
-    searchMin1Char
+    searchMin1Char,
+    fixAnnouncementName
   };
 }
