@@ -281,6 +281,15 @@ public class LineVersion {
       public String searchPresenterKeywordChangedMethod = "";
       public String searchPresenterKeywordSubjectField = "";
       public String searchResultWrapperResultOptionalField = "";
+      public String searchResultCountField = "";
+      public String searchResultTitleViewHolderClass = "";
+      public String searchResultTitleBindMethod = "";
+      public String searchResultTitleBindingField = "";
+      public String searchResultTitleTextViewField = "";
+      public String searchFtsInChatQueryClass = "";
+      public String searchFtsQueryField = "";
+      public String searchFtsChatIdField = "";
+      public String searchFtsLimitField = "";
     }
 
     public static class ChatHeader {

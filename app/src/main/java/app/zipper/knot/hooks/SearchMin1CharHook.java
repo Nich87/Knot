@@ -1,25 +1,56 @@
 package app.zipper.knot.hooks;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.utils.LineDBUtils;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SearchMin1CharHook implements BaseHook {
 
+  private static boolean isIgnoredKeywordCodePoint(int codePoint) {
+    return Character.isWhitespace(codePoint)
+        || Character.isSpaceChar(codePoint)
+        || Character.isISOControl(codePoint)
+        || Character.getType(codePoint) == Character.FORMAT;
+  }
+
   private static boolean hasMeaningfulKeyword(String str) {
+    if (str == null) return false;
+
     for (int i = 0; i < str.length(); ) {
       int codePoint = str.codePointAt(i);
       i += Character.charCount(codePoint);
 
-      if (Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) continue;
-      if (Character.isISOControl(codePoint)) continue;
-      if (Character.getType(codePoint) == Character.FORMAT) continue;
+      if (isIgnoredKeywordCodePoint(codePoint)) continue;
       return true;
     }
     return false;
+  }
+
+  private static String normalizeOneCharacterKeyword(String str) {
+    if (str == null) return null;
+
+    StringBuilder normalized = new StringBuilder();
+    int meaningfulCodePoints = 0;
+    for (int i = 0; i < str.length(); ) {
+      int codePoint = str.codePointAt(i);
+      i += Character.charCount(codePoint);
+
+      if (isIgnoredKeywordCodePoint(codePoint)) continue;
+      meaningfulCodePoints++;
+      if (meaningfulCodePoints > 1) return null;
+      normalized.appendCodePoint(codePoint);
+    }
+    return meaningfulCodePoints == 1 ? normalized.toString() : null;
   }
 
   @Override
@@ -40,16 +71,95 @@ public class SearchMin1CharHook implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              String str = (String) param.args[0];
-              if (str == null) {
-                param.setResult(false);
-                return;
-              }
-              param.setResult(hasMeaningfulKeyword(str));
+              param.setResult(hasMeaningfulKeyword((String) param.args[0]));
             }
           });
     } catch (Throwable t) {
       XposedBridge.log("Knot: SearchMin1CharHook error: " + t);
+    }
+
+    if (!config.chat.searchResultClass.isEmpty())
+      hookOneCharacterResults(config, lpparam.classLoader);
+  }
+
+  private void hookOneCharacterResults(LineVersion.Config config, ClassLoader classLoader) {
+    try {
+      XposedHelpers.findAndHookConstructor(
+          config.chat.searchResultClass,
+          classLoader,
+          String.class,
+          int.class,
+          String.class,
+          List.class,
+          new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+              replaceOneCharacterResults(param);
+            }
+          });
+    } catch (Throwable t) {
+      XposedBridge.log("Knot: SearchMin1CharHook result hook error: " + t);
+    }
+  }
+
+  private static void replaceOneCharacterResults(XC_MethodHook.MethodHookParam param) {
+    try {
+      String chatId = (String) param.args[0];
+      String keyword = normalizeOneCharacterKeyword((String) param.args[2]);
+      if (chatId == null || keyword == null) return;
+
+      List<Long> localIds = fetchExactOneCharacterLocalIds(chatId, keyword);
+      if (localIds == null) return;
+
+      param.args[1] = localIds.size();
+      param.args[3] = localIds;
+    } catch (Throwable t) {
+      XposedBridge.log("Knot: SearchMin1CharHook replace results error: " + t);
+    }
+  }
+
+  private static List<Long> fetchExactOneCharacterLocalIds(String chatId, String keyword) {
+    try {
+      Context context = android.app.AndroidAppHelper.currentApplication();
+      if (context == null) return null;
+
+      File dbFile = context.getDatabasePath("naver_line");
+      if (!dbFile.exists()) return null;
+
+      String senderMid = SearchByMemberHook.getActiveFilterMid(chatId);
+      StringBuilder sql =
+          new StringBuilder(
+              "SELECT id FROM chat_history"
+                  + " WHERE chat_id = ?"
+                  + " AND content IS NOT NULL"
+                  + " AND content = ?");
+      List<String> args = new ArrayList<>();
+      args.add(chatId);
+      args.add(keyword);
+
+      if (senderMid != null && !senderMid.isEmpty()) {
+        String myMid = LineDBUtils.getMyMid();
+        if (senderMid.equals(myMid)) {
+          sql.append(" AND (from_mid = ? OR from_mid IS NULL)");
+        } else {
+          sql.append(" AND from_mid = ?");
+        }
+        args.add(senderMid);
+      }
+
+      sql.append(" ORDER BY id DESC");
+
+      try (SQLiteDatabase db =
+              SQLiteDatabase.openDatabase(
+                  dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+          Cursor cursor = db.rawQuery(sql.toString(), args.toArray(new String[0]))) {
+        List<Long> result = new ArrayList<>();
+        while (cursor.moveToNext()) result.add(cursor.getLong(0));
+        return result;
+      }
+    } catch (Throwable t) {
+      XposedBridge.log("Knot: SearchMin1CharHook fetch local ids error: " + t);
+      return null;
     }
   }
 }
