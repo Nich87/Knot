@@ -33,12 +33,19 @@ public class LineVersion {
     public Media media = new Media();
     public Profile profile = new Profile();
     public AnnouncementFix announcementFix = new AnnouncementFix();
+    public ChatJump chatJump = new ChatJump();
 
     public static class AnnouncementFix {
       public String formatterClass = "";
       public String formatMethod = "";
       public String nameResolverMethod = "";
       public String announcementEventClass = "";
+    }
+
+    public static class ChatJump {
+      public String requestClass = "";
+      public String launchActivityClass = "";
+      public String requestExtraKey = "";
     }
 
     public static class Media {

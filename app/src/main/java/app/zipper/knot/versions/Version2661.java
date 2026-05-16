@@ -332,6 +332,11 @@ public class Version2661 {
     v.announcementFix.nameResolverMethod = "b";
     v.announcementFix.announcementEventClass = "ex0.h$c0";
 
+    v.chatJump.requestClass = "com.linecorp.line.chat.request.ChatHistoryRequest";
+    v.chatJump.launchActivityClass =
+        "jp.naver.line.android.activity.chathistory.ChatHistoryActivityLaunchActivity";
+    v.chatJump.requestExtraKey = "chatHistoryRequest";
+
     return v;
   }
 }

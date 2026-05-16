@@ -100,6 +100,31 @@ public class LineDBUtils {
     return null;
   }
 
+  public static long resolveLocalMessageId(String serverId) {
+    if (serverId == null) return -1L;
+    try {
+      Context context = AndroidAppHelper.currentApplication();
+      if (context == null) return -1L;
+      File dbFile = context.getDatabasePath("naver_line");
+      if (dbFile.exists()) {
+        SQLiteDatabase db =
+            SQLiteDatabase.openDatabase(
+                dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+        Cursor cursor =
+            db.rawQuery("SELECT id FROM chat_history WHERE server_id = ?", new String[] {serverId});
+        long localId = -1L;
+        if (cursor.moveToFirst()) {
+          localId = cursor.getLong(0);
+        }
+        cursor.close();
+        db.close();
+        return localId;
+      }
+    } catch (Throwable ignored) {
+    }
+    return -1L;
+  }
+
   public static String resolveMessageText(String content, String parameter) {
     if (content != null && !content.isEmpty() && !"null".equals(content)) {
       return content;

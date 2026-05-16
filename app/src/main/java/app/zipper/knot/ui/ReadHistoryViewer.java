@@ -38,6 +38,8 @@ public class ReadHistoryViewer {
       header.setPadding(0, 20, 0, 30);
       container.addView(header);
 
+      final AlertDialog[] dialogRef = new AlertDialog[1];
+
       boolean found = false;
       if (chats != null) {
         if (targetChatId != null) {
@@ -46,18 +48,19 @@ public class ReadHistoryViewer {
             JSONObject messages = chat.optJSONObject("m");
             if (messages != null) {
               found = true;
-              renderMessages(activity, container, messages, isDark);
+              renderMessages(activity, container, messages, isDark, targetChatId, dialogRef);
             }
           }
         } else {
           java.util.Iterator<String> chatKeys = chats.keys();
           while (chatKeys.hasNext()) {
-            JSONObject chat = chats.optJSONObject(chatKeys.next());
+            String chatKey = chatKeys.next();
+            JSONObject chat = chats.optJSONObject(chatKey);
             if (chat != null) {
               JSONObject messages = chat.optJSONObject("m");
               if (messages != null) {
                 found = true;
-                renderMessages(activity, container, messages, isDark);
+                renderMessages(activity, container, messages, isDark, chatKey, dialogRef);
               }
             }
           }
@@ -94,7 +97,9 @@ public class ReadHistoryViewer {
                   .show();
             });
       }
-      builder.show();
+      AlertDialog dialog = builder.create();
+      dialogRef[0] = dialog;
+      dialog.show();
 
     } catch (Throwable t) {
       XposedBridge.log("Knot: error: " + t.getMessage());
@@ -102,7 +107,12 @@ public class ReadHistoryViewer {
   }
 
   private static void renderMessages(
-      Activity activity, LinearLayout container, JSONObject messages, boolean isDark) {
+      Activity activity,
+      LinearLayout container,
+      JSONObject messages,
+      boolean isDark,
+      String chatId,
+      AlertDialog[] dialogRef) {
     java.util.List<String> sortedKeys = new java.util.ArrayList<>();
     java.util.Iterator<String> keys = messages.keys();
     while (keys.hasNext()) {
@@ -121,12 +131,18 @@ public class ReadHistoryViewer {
     for (String msgId : sortedKeys) {
       JSONObject msg = messages.optJSONObject(msgId);
       if (msg == null) continue;
-      addMessageCard(activity, container, msg, isDark);
+      addMessageCard(activity, container, msg, isDark, chatId, msgId, dialogRef);
     }
   }
 
   private static void addMessageCard(
-      Activity activity, LinearLayout container, JSONObject msg, boolean isDark) {
+      Activity activity,
+      LinearLayout container,
+      JSONObject msg,
+      boolean isDark,
+      String chatId,
+      String msgId,
+      AlertDialog[] dialogRef) {
     String messageText = msg.optString("c", "");
 
     LinearLayout card = new LinearLayout(activity);
@@ -186,6 +202,14 @@ public class ReadHistoryViewer {
         card.addView(detailRow);
       }
     }
+
+    card.setOnClickListener(
+        v -> {
+          boolean ok = app.zipper.knot.utils.ChatJumpUtil.jumpToMessage(activity, chatId, msgId);
+          if (ok && dialogRef[0] != null) {
+            dialogRef[0].dismiss();
+          }
+        });
 
     container.addView(card);
     View margin = new View(activity);
