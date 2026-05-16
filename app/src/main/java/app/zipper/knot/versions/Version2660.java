@@ -326,6 +326,15 @@ public class Version2660 {
     v.chat.searchPresenterKeywordChangedMethod = "onSearchInChatKeywordChangedEventReceived";
     v.chat.searchPresenterKeywordSubjectField = "t";
     v.chat.searchResultWrapperResultOptionalField = "c";
+    v.chat.searchResultCountField = "d";
+    v.chat.searchResultTitleViewHolderClass = "mj1.n";
+    v.chat.searchResultTitleBindMethod = "F0";
+    v.chat.searchResultTitleBindingField = "x";
+    v.chat.searchResultTitleTextViewField = "b";
+    v.chat.searchFtsInChatQueryClass = "ay1.p";
+    v.chat.searchFtsQueryField = "a";
+    v.chat.searchFtsChatIdField = "b";
+    v.chat.searchFtsLimitField = "c";
 
     v.announcementFix.formatterClass = "pf1.c";
     v.announcementFix.formatMethod = "a";
