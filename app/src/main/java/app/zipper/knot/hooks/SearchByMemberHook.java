@@ -64,6 +64,10 @@ public class SearchByMemberHook implements BaseHook {
     return !chatMemberFilter.isEmpty();
   }
 
+  static String getActiveFilterMid(String chatId) {
+    return chatId != null ? chatMemberFilter.get(chatId) : null;
+  }
+
   @Override
   public void hook(KnotConfig options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
     if (!options.searchByMember.enabled) return;
