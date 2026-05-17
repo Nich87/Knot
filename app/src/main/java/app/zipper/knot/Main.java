@@ -126,6 +126,9 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
       if (options.removeNotificationMuteButton.enabled) {
         applyHook(new NotificationHook(), lpparam);
       }
+      if (options.lineForegroundKeepAlive.enabled) {
+        applyHook(new LineForegroundKeepAliveHook(), lpparam);
+      }
       if (options.experimentalFcmFix.enabled) {
         applyHook(new FcmFixHook(), lpparam);
       }

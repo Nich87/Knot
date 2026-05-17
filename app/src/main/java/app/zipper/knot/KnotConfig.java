@@ -182,6 +182,14 @@ public class KnotConfig {
           false,
           Category.EXPERIMENTAL);
 
+  public Item lineForegroundKeepAlive =
+      new Item(
+          "line_foreground_keep_alive",
+          ModuleStrings.OPT_LINE_FOREGROUND_KEEP_ALIVE_LABEL,
+          ModuleStrings.OPT_LINE_FOREGROUND_KEEP_ALIVE_DESC,
+          false,
+          Category.EXPERIMENTAL);
+
   public Item reactionNotification =
       new Item(
           "reaction_notification",
@@ -310,6 +318,7 @@ public class KnotConfig {
     removeNotificationMuteButton,
     reactionNotification,
     experimentalFcmFix,
+    lineForegroundKeepAlive,
     spoofVersion,
     safeSettingsResources,
     highQualityPhoto,

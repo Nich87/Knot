@@ -239,6 +239,7 @@ public class Version2660 {
     v.notificationFix.firebaseWakefulStartMethod = "c";
     v.notificationFix.firebaseCompletedTaskClass = "lm.n";
     v.notificationFix.firebaseCompletedTaskMethod = "e";
+    v.foregroundKeepAlive.serviceClass = "androidx.work.impl.foreground.SystemForegroundService";
     v.notificationFix.lineLifecycleObserverClass =
         "jp.naver.line.android.common.lifecycle.LineLifecycleObserver";
     v.notificationFix.lineLifecycleObserverMethod = "onStateChanged";

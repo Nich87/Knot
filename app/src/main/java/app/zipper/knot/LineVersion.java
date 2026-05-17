@@ -25,6 +25,7 @@ public class LineVersion {
     public Font font = new Font();
     public Notification notification = new Notification();
     public NotificationFix notificationFix = new NotificationFix();
+    public ForegroundKeepAlive foregroundKeepAlive = new ForegroundKeepAlive();
     public TalkTabHeader talkTabHeader = new TalkTabHeader();
     public SearchBarAgentI searchBarAgentI = new SearchBarAgentI();
     public AgentIInChat agentIInChat = new AgentIInChat();
@@ -392,6 +393,10 @@ public class LineVersion {
       public String[] legyBackgroundWorkerFlagFieldCandidates = new String[0];
       public String[] legyHandlerFieldCandidates = new String[0];
       public String[] legyRunnableFieldCandidates = new String[0];
+    }
+
+    public static class ForegroundKeepAlive {
+      public String serviceClass = "";
     }
 
     public static class TalkTabHeader {
