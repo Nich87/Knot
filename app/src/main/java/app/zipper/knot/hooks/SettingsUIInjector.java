@@ -73,6 +73,7 @@ public class SettingsUIInjector implements BaseHook {
   private volatile Object targetFragment = null;
 
   private volatile Dialog settingsDialog = null;
+  private volatile Activity dialogHost = null;
   private volatile boolean pendingRestart = false;
   private volatile KnotConfig.Category currentActiveCategory = null;
   private volatile FrameLayout cachedItemHost = null;
@@ -414,6 +415,23 @@ public class SettingsUIInjector implements BaseHook {
             }
           }
         });
+
+    XposedHelpers.findAndHookMethod(
+        android.app.Activity.class,
+        "onDestroy",
+        new XC_MethodHook() {
+          @Override
+          protected void beforeHookedMethod(MethodHookParam param) {
+            if (param.thisObject != dialogHost) return;
+            try {
+              Dialog d = settingsDialog;
+              if (d != null && d.isShowing()) d.dismiss();
+            } catch (Throwable ignored) {
+            }
+            settingsDialog = null;
+            dialogHost = null;
+          }
+        });
   }
 
   private void displaySettingsDialog(Context ctx) {
@@ -439,6 +457,7 @@ public class SettingsUIInjector implements BaseHook {
             }
           };
       settingsDialog = dialog;
+      dialogHost = host;
       dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
       View content = createSettingsView(host, cachedToggle, cachedSuccess, dialog.getWindow());
@@ -506,6 +525,7 @@ public class SettingsUIInjector implements BaseHook {
     if (topHeader == null) {
       settingsDialog.dismiss();
       settingsDialog = null;
+      dialogHost = null;
       return;
     }
     View rootPane = topHeader.getRootView();
@@ -518,6 +538,7 @@ public class SettingsUIInjector implements BaseHook {
             () -> {
               settingsDialog.dismiss();
               settingsDialog = null;
+              dialogHost = null;
               currentActiveCategory = null;
               cachedItemHost = null;
               cachedNavHeader = null;
