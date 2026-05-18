@@ -117,7 +117,7 @@ public class ModuleStrings {
   public static final String OPT_EXPERIMENTAL_FCM_FIX_LABEL = "FCM Fix";
   public static final String OPT_EXPERIMENTAL_FCM_FIX_DESC =
       "非root環境で通知が1分程度で届かなくなる問題を回避するため、LINEのFCM通知受信処理を直接サービスに引き渡す挙動を有効にします。";
-  public static final String OPT_LINE_FOREGROUND_KEEP_ALIVE_LABEL = "LINEを常にフォアグラウンドサービス化する。";
+  public static final String OPT_LINE_FOREGROUND_KEEP_ALIVE_LABEL = "LINEを常にフォアグラウンドサービス化する";
   public static final String OPT_LINE_FOREGROUND_KEEP_ALIVE_DESC =
       "バッテリー使用量が増加する可能性がありますが、FCMFixがタスクキル後も動作します。非root環境で通知が届かなくなる問題の回避に有効です。Knotアップデート時は強制停止か一時停止が必要になる場合があります。";
 
