@@ -437,6 +437,7 @@ public class LineVersion {
   static {
     VERSION_TABLE.put("26.6.0", app.zipper.knot.versions.Version2660.create());
     VERSION_TABLE.put("26.6.1", app.zipper.knot.versions.Version2661.create());
+    VERSION_TABLE.put("26.6.2", app.zipper.knot.versions.Version2662.create());
   }
 
   private static volatile Config cachedConfig = null;
