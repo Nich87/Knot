@@ -283,7 +283,7 @@ public class KnotConfig {
           "fix_announcement_name",
           ModuleStrings.OPT_FIX_ANNOUNCEMENT_NAME_LABEL,
           ModuleStrings.OPT_FIX_ANNOUNCEMENT_NAME_DESC,
-          false,
+          true,
           Category.CHAT);
 
   public Item showSecondsInChatTime =
