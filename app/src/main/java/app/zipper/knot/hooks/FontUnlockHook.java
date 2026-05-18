@@ -239,8 +239,8 @@ public class FontUnlockHook implements BaseHook {
         android.content.Context.class,
         java.util.List.class,
         int.class,
-        "k6.p",
-        "k6.c",
+        cfg.font.fontRequestExecutorClass,
+        cfg.font.fontCallbackWithHandlerClass,
         new XC_MethodHook() {
           @Override
           protected void beforeHookedMethod(MethodHookParam param) {

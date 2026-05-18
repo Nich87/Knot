@@ -40,7 +40,7 @@ public class RemoveTalkRoomAgentIToggle implements BaseHook {
 
     int hookCount = 0;
     for (Method method : cls.getDeclaredMethods()) {
-      if (!isComposeRenderMethod(method)) continue;
+      if (!isComposeRenderMethod(cfg, method)) continue;
       XposedBridge.hookMethod(method, noOp);
       hookCount++;
     }
@@ -55,7 +55,7 @@ public class RemoveTalkRoomAgentIToggle implements BaseHook {
     return config.removeSearchBarAgentIButton.enabled || SettingsStore.get(LEGACY_KEY, false);
   }
 
-  private static boolean isComposeRenderMethod(Method method) {
+  private static boolean isComposeRenderMethod(LineVersion.Config cfg, Method method) {
     if (!Modifier.isStatic(method.getModifiers()) || method.getReturnType() != Void.TYPE) {
       return false;
     }
@@ -63,7 +63,7 @@ public class RemoveTalkRoomAgentIToggle implements BaseHook {
     boolean hasComposer = false;
     boolean hasFlags = false;
     for (Class<?> type : method.getParameterTypes()) {
-      if ("t2.k".equals(type.getName())) {
+      if (cfg.plusMenu.plusMenuComposerClass.equals(type.getName())) {
         hasComposer = true;
       } else if (type == Integer.TYPE) {
         hasFlags = true;

@@ -184,6 +184,8 @@ public class Version2662 {
     v.font.methodGetFontSettings = "g";
     v.font.methodOnFontChanged = "b";
     v.font.fieldTypeface = "f198947a";
+    v.font.fontRequestExecutorClass = "k6.p";
+    v.font.fontCallbackWithHandlerClass = "k6.c";
 
     v.res.idSettingList = 0x7f0b2373;
     v.res.idPersonalInfo = 0x7f15365b;

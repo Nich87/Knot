@@ -321,6 +321,8 @@ public class LineVersion {
       public String methodGetFontSettings = "e";
       public String methodOnFontChanged = "b";
       public String fieldTypeface = "";
+      public String fontRequestExecutorClass = "";
+      public String fontCallbackWithHandlerClass = "";
     }
 
     public static class Res {
