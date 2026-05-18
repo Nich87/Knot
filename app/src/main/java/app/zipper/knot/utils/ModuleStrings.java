@@ -191,7 +191,7 @@ public class ModuleStrings {
   public static final String ABOUT_CONTENT =
       "Knot v%s\n"
           + "A brand-new Xposed module for LINE\n\n"
-          + "Developed by 2b-zipper\n\n"
+          + "Developed by 2b-zipper, Nich87\n\n"
           + "GitHub: https://github.com/2b-zipper/Knot\n"
           + "License: GNU GPLv3\n\n"
           + "⚠️ 使用は自己責任で行ってください。";
