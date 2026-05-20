@@ -119,6 +119,7 @@ public class Version2660 {
     v.unsend.operationUnsendName = "DESTROY_MESSAGE";
     v.unsend.operationNotifiedUnsendName = "NOTIFIED_DESTROY_MESSAGE";
     v.unsend.unsendDestroyHandlerClass = "if8.y0";
+    v.unsend.operationClass = "fh8.ae";
 
     v.thrift.talkServiceClientImplClass =
         "jp.naver.line.android.thrift.client.impl.LegacyTalkServiceClientImpl";

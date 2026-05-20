@@ -219,6 +219,7 @@ public class LineVersion {
       public String operationUnsendName = "DESTROY_MESSAGE";
       public String operationNotifiedUnsendName = "NOTIFIED_DESTROY_MESSAGE";
       public String unsendDestroyHandlerClass = "";
+      public String operationClass = "";
     }
 
     public static class Thrift {

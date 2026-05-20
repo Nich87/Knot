@@ -71,10 +71,9 @@ public class UnsendProtector implements BaseHook {
               @Override
               protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 if (!Main.options.preventUnsendMessage.enabled) return;
-                // Signature: b(hf8.q0, fh8.ae, Continuation)
                 java.lang.reflect.Method m = (java.lang.reflect.Method) param.method;
                 Class<?>[] types = m.getParameterTypes();
-                if (types.length != 3 || !types[1].getName().equals("fh8.ae")) return;
+                if (types.length != 3 || !types[1].getName().equals(cfg.unsend.operationClass)) return;
 
                 Object aeVar = param.args[1];
                 if (aeVar == null) return;
