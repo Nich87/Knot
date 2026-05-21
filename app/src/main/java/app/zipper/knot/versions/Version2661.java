@@ -88,6 +88,7 @@ public class Version2661 {
     v.readReceipt.methodReadAll = "c";
     v.readReceipt.operationNotifiedReadName = "NOTIFIED_READ_MESSAGE";
     v.readReceipt.badgeClearClass = "cc8.b";
+    v.readReceipt.longPressReadClass = "ip1";
 
     v.unsend.talkServiceHookClass = "eh8.ae$a";
     v.unsend.chatMessageViewHolderClass = "nd1.h";

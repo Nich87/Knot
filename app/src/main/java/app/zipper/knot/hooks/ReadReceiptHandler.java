@@ -18,9 +18,9 @@ import org.json.JSONObject;
 
 public class ReadReceiptHandler implements BaseHook {
 
-  private static volatile long bypassExpiry = 0L;
   private static volatile boolean isBulkReading = false;
-  private static volatile Object cachedAt2eInstance = null;
+  private static final java.util.Set<String> pendingManualReads =
+      java.util.concurrent.ConcurrentHashMap.newKeySet();
 
   @Override
   public void hook(final KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
@@ -98,7 +98,10 @@ public class ReadReceiptHandler implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (param.args == null || param.args[0] == null) return;
+              if (param.args == null || param.args.length == 0 || param.args[0] == null) return;
+              for (Object a : param.args) {
+                if (a instanceof String && pendingManualReads.contains(a)) return;
+              }
               if (shouldBlockReadReceipt(config)) {
                 if (param.args[0] instanceof String) param.args[0] = "KNOT_NOP";
                 else param.setResult(null);
@@ -123,9 +126,19 @@ public class ReadReceiptHandler implements BaseHook {
               Method m = (Method) param.method;
               Class<?>[] params = m.getParameterTypes();
               if (params.length == 3 && params[0] == long.class) {
-                if (cachedAt2eInstance == null) cachedAt2eInstance = param.thisObject;
+                Object cid = param.args.length > 1 ? param.args[1] : null;
+                if (cid instanceof String && pendingManualReads.contains(cid)) return;
                 if (shouldBlockReadReceipt(config)) param.setResult(null);
               }
+            }
+
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+              Class<?>[] params = ((Method) param.method).getParameterTypes();
+              if (params.length == 3
+                  && params[0] == long.class
+                  && param.args.length > 1
+                  && param.args[1] instanceof String) pendingManualReads.remove(param.args[1]);
             }
           });
 
@@ -135,11 +148,15 @@ public class ReadReceiptHandler implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (isBypassEnabled(config)) {
-                Class<?>[] params = ((Method) param.method).getParameterTypes();
-                if (params.length == 1 && params[0] == String.class)
-                  bypassExpiry = System.currentTimeMillis() + 100;
-              }
+              if (!isPreventActive(config)) return;
+              Class<?>[] params = ((Method) param.method).getParameterTypes();
+              if (params.length != 1 || params[0] != String.class) return;
+
+              String manualClass = cfg.readReceipt.longPressReadClass;
+              boolean manual =
+                  manualClass != null && !manualClass.isEmpty() && isFromClass(manualClass);
+              if (manual || SettingsStore.get("send_mark_state", false))
+                pendingManualReads.add((String) param.args[0]);
             }
           });
 
@@ -149,7 +166,7 @@ public class ReadReceiptHandler implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (isBypassEnabled(config) && ((Method) param.method).getParameterCount() == 0)
+              if (isPreventActive(config) && ((Method) param.method).getParameterCount() == 0)
                 isBulkReading = true;
             }
 
@@ -171,9 +188,7 @@ public class ReadReceiptHandler implements BaseHook {
           new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-              if (!config.preventMarkAsRead.enabled
-                  || !SettingsStore.get("prevent_read_state", true)) return;
-              if (isBypassActive()) return;
+              if (!isPreventActive(config) || isBulkReading) return;
 
               Class<?>[] params = ((Method) param.method).getParameterTypes();
               if (params.length == 1 && params[0] == String.class && isLocalReadContext())
@@ -185,21 +200,19 @@ public class ReadReceiptHandler implements BaseHook {
   }
 
   private boolean shouldBlockReadReceipt(KnotConfig config) {
-    if (!config.preventMarkAsRead.enabled || !SettingsStore.get("prevent_read_state", true))
-      return false;
-    return !isBypassActive();
+    return isPreventActive(config) && !isBulkReading;
   }
 
-  private boolean isBypassActive() {
-    return isBulkReading
-        || (SettingsStore.get("send_mark_state", false)
-            && bypassExpiry > System.currentTimeMillis());
+  private boolean isPreventActive(KnotConfig config) {
+    return config.preventMarkAsRead.enabled && SettingsStore.get("prevent_read_state", true);
   }
 
-  private boolean isBypassEnabled(KnotConfig config) {
-    return config.preventMarkAsRead.enabled
-        && SettingsStore.get("prevent_read_state", true)
-        && SettingsStore.get("send_mark_state", false);
+  private boolean isFromClass(String prefix) {
+    for (StackTraceElement el : Thread.currentThread().getStackTrace()) {
+      String n = el.getClassName();
+      if (n.equals(prefix) || n.startsWith(prefix + "$") || n.startsWith(prefix + ".")) return true;
+    }
+    return false;
   }
 
   private boolean isLocalReadContext() {

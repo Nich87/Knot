@@ -183,6 +183,7 @@ public class LineVersion {
       public String methodReadAll = "";
       public String operationNotifiedReadName = "NOTIFIED_READ_MESSAGE";
       public String badgeClearClass = "";
+      public String longPressReadClass = "";
     }
 
     public static class Unsend {
