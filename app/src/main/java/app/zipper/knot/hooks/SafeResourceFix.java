@@ -2,32 +2,29 @@ package app.zipper.knot.hooks;
 
 import android.content.res.Resources;
 import android.text.SpannedString;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 
 public class SafeResourceFix implements BaseHook {
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     if (!config.safeSettingsResources.enabled) return;
 
     try {
-      XposedHelpers.findAndHookMethod(
-          Resources.class,
-          "getText",
-          int.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              if (param.getResult() instanceof String) {
-                param.setResult(new SpannedString((String) param.getResult()));
-              }
-            }
-          });
+      Knot.module
+          .hook(Reflect.findMethodExact(Resources.class, "getText", int.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                if (result instanceof String) {
+                  return new SpannedString((String) result);
+                }
+                return result;
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Failed to hook SafeResourceFix: " + t.getMessage());
+      Knot.log("Knot: Failed to hook SafeResourceFix: " + t.getMessage());
     }
   }
 }

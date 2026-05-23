@@ -1,14 +1,13 @@
 package app.zipper.knot.hooks;
 
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
 import app.zipper.knot.utils.DexScanner;
 import app.zipper.knot.utils.LineDBUtils;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,8 +22,7 @@ public class ReadReceiptHandler implements BaseHook {
       java.util.concurrent.ConcurrentHashMap.newKeySet();
 
   @Override
-  public void hook(final KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam)
-      throws Throwable {
+  public void hook(final KnotConfig config, LoadParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
 
     hookOperationForHistory(cfg, lpparam.classLoader);
@@ -36,26 +34,25 @@ public class ReadReceiptHandler implements BaseHook {
 
   private void hookOperationForHistory(LineVersion.Config cfg, ClassLoader cl) {
     try {
-      XposedBridge.hookAllMethods(
-          XposedHelpers.findClass(cfg.unsend.talkServiceHookClass, cl),
+      Knot.hookAll(
+          Reflect.findClass(cfg.unsend.talkServiceHookClass, cl),
           cfg.unsend.methodReadBuffer,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              try {
-                if (!SettingsStore.get("record_read_history", false)) return;
-
-                Object op = param.args[1];
-                if (op == null || op instanceof String) return;
-
-                Object type = XposedHelpers.getObjectField(op, cfg.unsend.operationTypeField);
-                if (type != null
-                    && cfg.readReceipt.operationNotifiedReadName.equals(type.toString())) {
-                  processReadOp(op, cfg, history -> SettingsStore.saveReadHistory(history));
+          chain -> {
+            Object result = chain.proceed();
+            try {
+              if (SettingsStore.get("record_read_history", false)) {
+                Object op = chain.getArg(1);
+                if (op != null && !(op instanceof String)) {
+                  Object type = Reflect.getObjectField(op, cfg.unsend.operationTypeField);
+                  if (type != null
+                      && cfg.readReceipt.operationNotifiedReadName.equals(type.toString())) {
+                    processReadOp(op, cfg, history -> SettingsStore.saveReadHistory(history));
+                  }
                 }
-              } catch (Throwable ignored) {
               }
+            } catch (Throwable ignored) {
             }
+            return result;
           });
     } catch (Throwable ignored) {
     }
@@ -64,27 +61,26 @@ public class ReadReceiptHandler implements BaseHook {
   private void hookReadQueue(LineVersion.Config cfg, ClassLoader cl) {
     if (cfg.readReceipt.readReceiptQueueClass.isEmpty()) return;
     try {
-      XposedBridge.hookAllMethods(
-          XposedHelpers.findClass(cfg.readReceipt.readReceiptQueueClass, cl),
+      Knot.hookAll(
+          Reflect.findClass(cfg.readReceipt.readReceiptQueueClass, cl),
           cfg.readReceipt.methodEnqueueReadReceipt,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              try {
-                if (!SettingsStore.get("record_read_history", false)) return;
-
-                Method m = (Method) param.method;
+          chain -> {
+            Object result = chain.proceed();
+            try {
+              if (SettingsStore.get("record_read_history", false)) {
+                Method m = (Method) chain.getExecutable();
                 Class<?>[] types = m.getParameterTypes();
                 if (types.length == 5 && types[0] == long.class && types[1] == String.class) {
-                  long createdTime = (long) param.args[0];
-                  String chatId = (String) param.args[1];
-                  String senderMid = (String) param.args[2];
-                  String lastMsgId = String.valueOf((long) param.args[3]);
+                  long createdTime = (long) chain.getArg(0);
+                  String chatId = (String) chain.getArg(1);
+                  String senderMid = (String) chain.getArg(2);
+                  String lastMsgId = String.valueOf((long) chain.getArg(3));
                   recordRead(chatId, senderMid, lastMsgId, createdTime);
                 }
-              } catch (Throwable ignored) {
               }
+            } catch (Throwable ignored) {
             }
+            return result;
           });
     } catch (Throwable ignored) {
     }
@@ -92,21 +88,25 @@ public class ReadReceiptHandler implements BaseHook {
 
   private void hookThriftReadReceipt(LineVersion.Config cfg, ClassLoader cl, KnotConfig config) {
     try {
-      XposedBridge.hookAllMethods(
+      Knot.hookAll(
           cl.loadClass(cfg.thrift.talkServiceClientImplClass),
           cfg.thrift.v1,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              if (param.args == null || param.args.length == 0 || param.args[0] == null) return;
-              for (Object a : param.args) {
-                if (a instanceof String && pendingManualReads.contains(a)) return;
-              }
-              if (shouldBlockReadReceipt(config)) {
-                if (param.args[0] instanceof String) param.args[0] = "KNOT_NOP";
-                else param.setResult(null);
+          chain -> {
+            List<Object> args = chain.getArgs();
+            if (args.isEmpty() || args.get(0) == null) return chain.proceed();
+            for (Object a : args) {
+              if (a instanceof String && pendingManualReads.contains(a)) return chain.proceed();
+            }
+            if (shouldBlockReadReceipt(config)) {
+              if (args.get(0) instanceof String) {
+                Object[] newArgs = args.toArray();
+                newArgs[0] = "KNOT_NOP";
+                return chain.proceed(newArgs);
+              } else {
+                return null;
               }
             }
+            return chain.proceed();
           });
     } catch (Throwable ignored) {
     }
@@ -117,62 +117,58 @@ public class ReadReceiptHandler implements BaseHook {
       Class<?> managerCls = getManagerClass(cfg, cl);
       if (managerCls == null) return;
 
-      XposedBridge.hookAllMethods(
+      Knot.hookAll(
           managerCls,
           cfg.readReceipt.methodSendReadReceipt,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              Method m = (Method) param.method;
-              Class<?>[] params = m.getParameterTypes();
-              if (params.length == 3 && params[0] == long.class) {
-                Object cid = param.args.length > 1 ? param.args[1] : null;
-                if (cid instanceof String && pendingManualReads.contains(cid)) return;
-                if (shouldBlockReadReceipt(config)) param.setResult(null);
+          chain -> {
+            Method m = (Method) chain.getExecutable();
+            Class<?>[] params = m.getParameterTypes();
+            boolean skip = false;
+            if (params.length == 3 && params[0] == long.class) {
+              Object cid = chain.getArgs().size() > 1 ? chain.getArg(1) : null;
+              if (!(cid instanceof String && pendingManualReads.contains(cid))
+                  && shouldBlockReadReceipt(config)) {
+                skip = true;
               }
             }
-
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              Class<?>[] params = ((Method) param.method).getParameterTypes();
-              if (params.length == 3
-                  && params[0] == long.class
-                  && param.args.length > 1
-                  && param.args[1] instanceof String) pendingManualReads.remove(param.args[1]);
+            Object result = skip ? null : chain.proceed();
+            if (params.length == 3
+                && params[0] == long.class
+                && chain.getArgs().size() > 1
+                && chain.getArg(1) instanceof String) {
+              pendingManualReads.remove(chain.getArg(1));
             }
+            return result;
           });
 
-      XposedBridge.hookAllMethods(
+      Knot.hookAll(
           managerCls,
           cfg.readReceipt.methodExecuteReadReceiptAsync,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              if (!isPreventActive(config)) return;
-              Class<?>[] params = ((Method) param.method).getParameterTypes();
-              if (params.length != 1 || params[0] != String.class) return;
-
-              String manualClass = cfg.readReceipt.longPressReadClass;
-              boolean manual =
-                  manualClass != null && !manualClass.isEmpty() && isFromClass(manualClass);
-              if (manual || SettingsStore.get("send_mark_state", false))
-                pendingManualReads.add((String) param.args[0]);
+          chain -> {
+            if (isPreventActive(config)) {
+              Class<?>[] params = ((Method) chain.getExecutable()).getParameterTypes();
+              if (params.length == 1 && params[0] == String.class) {
+                String manualClass = cfg.readReceipt.longPressReadClass;
+                boolean manual =
+                    manualClass != null && !manualClass.isEmpty() && isFromClass(manualClass);
+                if (manual || SettingsStore.get("send_mark_state", false)) {
+                  pendingManualReads.add((String) chain.getArg(0));
+                }
+              }
             }
+            return chain.proceed();
           });
 
-      XposedBridge.hookAllMethods(
+      Knot.hookAll(
           managerCls,
           cfg.readReceipt.methodReadAll,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              if (isPreventActive(config) && ((Method) param.method).getParameterCount() == 0)
-                isBulkReading = true;
-            }
-
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              if (((Method) param.method).getParameterCount() == 0) isBulkReading = false;
+          chain -> {
+            boolean isNoArg = ((Method) chain.getExecutable()).getParameterCount() == 0;
+            if (isPreventActive(config) && isNoArg) isBulkReading = true;
+            try {
+              return chain.proceed();
+            } finally {
+              if (isNoArg) isBulkReading = false;
             }
           });
     } catch (Throwable ignored) {
@@ -182,18 +178,17 @@ public class ReadReceiptHandler implements BaseHook {
   private void hookBadgeClear(LineVersion.Config cfg, ClassLoader cl, KnotConfig config) {
     if (cfg.readReceipt.badgeClearClass.isEmpty()) return;
     try {
-      XposedBridge.hookAllMethods(
-          XposedHelpers.findClass(cfg.readReceipt.badgeClearClass, cl),
+      Knot.hookAll(
+          Reflect.findClass(cfg.readReceipt.badgeClearClass, cl),
           "e",
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              if (!isPreventActive(config) || isBulkReading) return;
+          chain -> {
+            if (!isPreventActive(config) || isBulkReading) return chain.proceed();
 
-              Class<?>[] params = ((Method) param.method).getParameterTypes();
-              if (params.length == 1 && params[0] == String.class && isLocalReadContext())
-                param.setResult(null);
+            Class<?>[] params = ((Method) chain.getExecutable()).getParameterTypes();
+            if (params.length == 1 && params[0] == String.class && isLocalReadContext()) {
+              return null;
             }
+            return chain.proceed();
           });
     } catch (Throwable ignored) {
     }
@@ -229,7 +224,7 @@ public class ReadReceiptHandler implements BaseHook {
   private Class<?> getManagerClass(LineVersion.Config cfg, ClassLoader cl) {
     if (!cfg.readReceipt.readReceiptManagerClass.isEmpty()) {
       try {
-        return XposedHelpers.findClass(cfg.readReceipt.readReceiptManagerClass, cl);
+        return Reflect.findClass(cfg.readReceipt.readReceiptManagerClass, cl);
       } catch (Throwable ignored) {
       }
     }
@@ -266,10 +261,10 @@ public class ReadReceiptHandler implements BaseHook {
   private void processReadOp(
       Object op, LineVersion.Config cfg, java.util.function.Consumer<JSONObject> saver) {
     try {
-      long createdTime = XposedHelpers.getLongField(op, cfg.unsend.operationCreatedTimeField);
-      String chatId = (String) XposedHelpers.getObjectField(op, cfg.unsend.operationParam1Field);
-      String readerMid = (String) XposedHelpers.getObjectField(op, cfg.unsend.operationParam2Field);
-      String lastMsgId = (String) XposedHelpers.getObjectField(op, cfg.unsend.operationParam3Field);
+      long createdTime = Reflect.getLongField(op, cfg.unsend.operationCreatedTimeField);
+      String chatId = (String) Reflect.getObjectField(op, cfg.unsend.operationParam1Field);
+      String readerMid = (String) Reflect.getObjectField(op, cfg.unsend.operationParam2Field);
+      String lastMsgId = (String) Reflect.getObjectField(op, cfg.unsend.operationParam3Field);
 
       JSONObject history = SettingsStore.loadReadHistory();
       List<LineDBUtils.MessageRecord> records =

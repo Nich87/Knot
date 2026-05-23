@@ -3,8 +3,8 @@ package app.zipper.knot.utils;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Parcelable;
+import app.zipper.knot.Knot;
 import app.zipper.knot.LineVersion;
-import de.robv.android.xposed.XposedBridge;
 import java.lang.reflect.Constructor;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +63,7 @@ public class ChatJumpUtil {
       activity.overridePendingTransition(0, 0);
       return true;
     } catch (Throwable t) {
-      XposedBridge.log("Knot: ChatJumpUtil error: " + t);
+      Knot.log("Knot: ChatJumpUtil error: " + t);
       return false;
     }
   }

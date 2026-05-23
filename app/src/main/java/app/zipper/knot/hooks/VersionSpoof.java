@@ -1,13 +1,12 @@
 package app.zipper.knot.hooks;
 
 import android.content.Context;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
+import io.github.libxposed.api.XposedInterface;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,7 +19,7 @@ public class VersionSpoof implements BaseHook {
   private static final Set<String> targetUnsendMethods = new HashSet<>();
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
     if (cfg == null) return;
 
@@ -36,111 +35,111 @@ public class VersionSpoof implements BaseHook {
 
     if (config.spoofVersion.enabled || config.spoofVersionUnsendOnly.enabled) {
       applyUiLimitPatch(cfg, lpparam);
-    }
-
-    if (config.spoofVersion.enabled || config.spoofVersionUnsendOnly.enabled) {
       applyVersionPatch(config, cfg, lpparam);
     }
   }
 
-  private void applyUiLimitPatch(LineVersion.Config cfg, XC_LoadPackage.LoadPackageParam lpparam) {
+  private void applyUiLimitPatch(LineVersion.Config cfg, LoadParam lpparam) {
     if (cfg.unsend.chatServiceConfigClass.isEmpty() || cfg.unsend.methodUnsendLimit.isEmpty())
       return;
     try {
       Class<?> configCls =
-          XposedHelpers.findClass(cfg.unsend.chatServiceConfigClass, lpparam.classLoader);
-      XC_MethodReplacement patch =
-          new XC_MethodReplacement() {
-            @Override
-            protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
-              return 86400000;
-            }
-          };
-      XposedHelpers.findAndHookMethod(configCls, cfg.unsend.methodUnsendLimit, patch);
-      XposedHelpers.findAndHookMethod(configCls, cfg.unsend.methodUnsendPremiumLimit, patch);
+          Reflect.findClass(cfg.unsend.chatServiceConfigClass, lpparam.classLoader);
+      XposedInterface.Hooker limitPatch = chain -> 86400000;
+      Knot.module
+          .hook(Reflect.findMethodExact(configCls, cfg.unsend.methodUnsendLimit))
+          .intercept(limitPatch);
+      Knot.module
+          .hook(Reflect.findMethodExact(configCls, cfg.unsend.methodUnsendPremiumLimit))
+          .intercept(limitPatch);
     } catch (Throwable t) {
-      XposedBridge.log("Knot: UI limit patch failed: " + t.getMessage());
+      Knot.log("Knot: UI limit patch failed: " + t.getMessage());
     }
   }
 
-  private void applyVersionPatch(
-      KnotConfig config, LineVersion.Config cfg, XC_LoadPackage.LoadPackageParam lpparam) {
+  private void applyVersionPatch(KnotConfig config, LineVersion.Config cfg, LoadParam lpparam) {
     if (cfg.unsend.appInfoProviderClass.isEmpty()) return;
 
     initializeThriftInterception(lpparam.classLoader);
 
     try {
-      Class<?> infoCls =
-          XposedHelpers.findClass(cfg.unsend.appInfoProviderClass, lpparam.classLoader);
+      Class<?> infoCls = Reflect.findClass(cfg.unsend.appInfoProviderClass, lpparam.classLoader);
 
-      XC_MethodHook stringPatchHook =
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              if (!(param.getResult() instanceof String)) return;
-              String raw = (String) param.getResult();
+      XposedInterface.Hooker stringPatchHook =
+          chain -> {
+            Object result = chain.proceed();
+            if (!(result instanceof String)) return result;
+            String raw = (String) result;
 
-              if (config.spoofVersion.enabled) {
-                String patched = patchVersionString(raw);
-                XposedBridge.log(
-                    "Knot: Global patch "
-                        + raw.replace("\t", " ")
-                        + " -> "
-                        + patched.replace("\t", " "));
-                param.setResult(patched);
-                return;
-              }
-
-              if (config.spoofVersionUnsendOnly.enabled && isUnsendActionActive()) {
-                String patched = patchVersionString(raw);
-                XposedBridge.log(
-                    "Knot: Contextual patch "
-                        + raw.replace("\t", " ")
-                        + " -> "
-                        + patched.replace("\t", " "));
-                param.setResult(patched);
-              }
+            if (config.spoofVersion.enabled) {
+              String patched = patchVersionString(raw);
+              Knot.log(
+                  "Knot: Global patch "
+                      + raw.replace("\t", " ")
+                      + " -> "
+                      + patched.replace("\t", " "));
+              return patched;
             }
+
+            if (config.spoofVersionUnsendOnly.enabled && isUnsendActionActive()) {
+              String patched = patchVersionString(raw);
+              Knot.log(
+                  "Knot: Contextual patch "
+                      + raw.replace("\t", " ")
+                      + " -> "
+                      + patched.replace("\t", " "));
+              return patched;
+            }
+            return result;
           };
 
-      XposedHelpers.findAndHookMethod(infoCls, cfg.unsend.methodGetFullUserAgent, stringPatchHook);
-      XposedHelpers.findAndHookMethod(
-          infoCls, cfg.unsend.methodGetSimpleUserAgent, stringPatchHook);
-      XposedHelpers.findAndHookMethod(
-          infoCls, cfg.unsend.methodGetFullUserAgentWithContext, Context.class, stringPatchHook);
-      XposedHelpers.findAndHookMethod(
-          infoCls, cfg.unsend.methodGetSimpleUserAgentWithContext, Context.class, stringPatchHook);
+      Knot.module
+          .hook(Reflect.findMethodExact(infoCls, cfg.unsend.methodGetFullUserAgent))
+          .intercept(stringPatchHook);
+      Knot.module
+          .hook(Reflect.findMethodExact(infoCls, cfg.unsend.methodGetSimpleUserAgent))
+          .intercept(stringPatchHook);
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  infoCls, cfg.unsend.methodGetFullUserAgentWithContext, Context.class))
+          .intercept(stringPatchHook);
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  infoCls, cfg.unsend.methodGetSimpleUserAgentWithContext, Context.class))
+          .intercept(stringPatchHook);
 
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Version patch failed: " + t.getMessage());
+      Knot.log("Knot: Version patch failed: " + t.getMessage());
     }
   }
 
   private void initializeThriftInterception(ClassLoader cl) {
     LineVersion.Config cfg = LineVersion.get();
     try {
-      Class<?> protocolCls = XposedHelpers.findClass(cfg.thrift.protocolClass, cl);
-      XposedHelpers.findAndHookMethod(
-          protocolCls,
-          cfg.thrift.methodWriteMessageBegin,
-          String.class,
-          cfg.thrift.messageClass,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              String method = (String) param.args[0];
-              if (targetUnsendMethods.contains(method)) {
-                unsendProcessingFlag.set(true);
-              }
-            }
-
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              unsendProcessingFlag.set(false);
-            }
-          });
+      Class<?> protocolCls = Reflect.findClass(cfg.thrift.protocolClass, cl);
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  protocolCls,
+                  cfg.thrift.methodWriteMessageBegin,
+                  String.class,
+                  cfg.thrift.messageClass))
+          .intercept(
+              chain -> {
+                String method = (String) chain.getArg(0);
+                if (targetUnsendMethods.contains(method)) {
+                  unsendProcessingFlag.set(true);
+                }
+                try {
+                  return chain.proceed();
+                } finally {
+                  unsendProcessingFlag.set(false);
+                }
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Thrift interception failed: " + t.getMessage());
+      Knot.log("Knot: Thrift interception failed: " + t.getMessage());
     }
   }
 

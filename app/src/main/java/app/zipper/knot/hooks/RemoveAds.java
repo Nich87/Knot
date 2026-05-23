@@ -3,12 +3,11 @@ package app.zipper.knot.hooks;
 import android.graphics.Canvas;
 import android.view.View;
 import android.view.ViewGroup;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,7 +16,7 @@ public class RemoveAds implements BaseHook {
   private static final Map<String, Boolean> adClassCache = new ConcurrentHashMap<>();
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
 
     applyLadAdHook(config, lpparam, cfg);
@@ -25,89 +24,83 @@ public class RemoveAds implements BaseHook {
     applyGenericAddViewHook(config);
   }
 
-  private void applyLadAdHook(
-      KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam, LineVersion.Config cfg) {
+  private void applyLadAdHook(KnotConfig config, LoadParam lpparam, LineVersion.Config cfg) {
     try {
       Class<?> ladCls = lpparam.classLoader.loadClass(cfg.ads.ladAdView);
-      XposedHelpers.findAndHookMethod(
-          ladCls,
-          "onAttachedToWindow",
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              try {
-                View target = (View) param.thisObject;
-                View root = (View) target.getParent().getParent();
-                ViewGroup.LayoutParams lp = root.getLayoutParams();
-                if (lp != null) {
-                  lp.height = 0;
-                  root.setLayoutParams(lp);
-                }
-                root.setVisibility(View.GONE);
-              } catch (Throwable e) {
+      Knot.module
+          .hook(Reflect.findMethodExact(ladCls, "onAttachedToWindow"))
+          .intercept(
+              chain -> {
                 try {
-                  View target = (View) param.thisObject;
-                  View root = (View) target.getParent();
+                  View target = (View) chain.getThisObject();
+                  View root = (View) target.getParent().getParent();
                   ViewGroup.LayoutParams lp = root.getLayoutParams();
                   if (lp != null) {
                     lp.height = 0;
                     root.setLayoutParams(lp);
                   }
                   root.setVisibility(View.GONE);
-                } catch (Throwable ignored) {
+                } catch (Throwable e) {
+                  try {
+                    View target = (View) chain.getThisObject();
+                    View root = (View) target.getParent();
+                    ViewGroup.LayoutParams lp = root.getLayoutParams();
+                    if (lp != null) {
+                      lp.height = 0;
+                      root.setLayoutParams(lp);
+                    }
+                    root.setVisibility(View.GONE);
+                  } catch (Throwable ignored) {
+                  }
                 }
-              }
-            }
-          });
+                return chain.proceed();
+              });
 
-      XposedBridge.hookAllMethods(
+      Knot.hookAll(
           ladCls,
           "setVisibility",
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              if ((int) param.args[0] == View.VISIBLE) param.args[0] = View.GONE;
+          chain -> {
+            Object[] args = chain.getArgs().toArray();
+            if ((int) args[0] == View.VISIBLE) {
+              args[0] = View.GONE;
+              return chain.proceed(args);
             }
+            return chain.proceed();
           });
     } catch (Throwable ignored) {
     }
   }
 
-  private void applySmartChannelHook(
-      KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam, LineVersion.Config cfg) {
+  private void applySmartChannelHook(KnotConfig config, LoadParam lpparam, LineVersion.Config cfg) {
     try {
       Class<?> smartCls = lpparam.classLoader.loadClass(cfg.ads.smartChannel);
-      XposedHelpers.findAndHookMethod(
-          smartCls,
-          "dispatchDraw",
-          Canvas.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              try {
-                View container = (View) ((View) param.thisObject).getParent();
-                container.setVisibility(View.GONE);
-              } catch (Throwable ignored) {
-              }
-            }
-          });
+      Knot.module
+          .hook(Reflect.findMethodExact(smartCls, "dispatchDraw", Canvas.class))
+          .intercept(
+              chain -> {
+                try {
+                  View container = (View) ((View) chain.getThisObject()).getParent();
+                  container.setVisibility(View.GONE);
+                } catch (Throwable ignored) {
+                }
+                return chain.proceed();
+              });
     } catch (Throwable ignored) {
     }
   }
 
   private void applyGenericAddViewHook(KnotConfig config) {
-    XposedHelpers.findAndHookMethod(
-        ViewGroup.class,
-        "addView",
-        View.class,
-        ViewGroup.LayoutParams.class,
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) {
-            View view = (View) param.args[0];
-            if (isAdComponent(view.getClass().getName())) view.setVisibility(View.GONE);
-          }
-        });
+    Knot.module
+        .hook(
+            Reflect.findMethodExact(
+                ViewGroup.class, "addView", View.class, ViewGroup.LayoutParams.class))
+        .intercept(
+            chain -> {
+              Object result = chain.proceed();
+              View view = (View) chain.getArg(0);
+              if (isAdComponent(view.getClass().getName())) view.setVisibility(View.GONE);
+              return result;
+            });
   }
 
   private static boolean isAdComponent(String className) {

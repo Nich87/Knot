@@ -1,16 +1,16 @@
 package app.zipper.knot.hooks;
 
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
+import io.github.libxposed.api.XposedInterface;
 
 public class ImageQuality implements BaseHook {
 
   @Override
-  public void hook(KnotConfig options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig options, LoadParam lpparam) throws Throwable {
     if (!options.highQualityPhoto.enabled) return;
 
     LineVersion.Config v = LineVersion.get();
@@ -24,33 +24,30 @@ public class ImageQuality implements BaseHook {
     if (v.imageQuality.qualityProfileHighClass.isEmpty()) return;
 
     try {
-      XC_MethodHook qualityHook =
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (v.imageQuality.methodGetMaxDimension.equals(param.method.getName())) {
-                param.setResult(99999);
-              } else if (v.imageQuality.methodGetQuality.equals(param.method.getName())) {
-                param.setResult(100);
-              }
-            }
-          };
+      XposedInterface.Hooker maxDimensionHook = chain -> 99999;
+      XposedInterface.Hooker qualityHook = chain -> 100;
 
-      Class<?> highClass = XposedHelpers.findClass(v.imageQuality.qualityProfileHighClass, cl);
-      XposedHelpers.findAndHookMethod(highClass, v.imageQuality.methodGetMaxDimension, qualityHook);
-      XposedHelpers.findAndHookMethod(highClass, v.imageQuality.methodGetQuality, qualityHook);
+      Class<?> highClass = Reflect.findClass(v.imageQuality.qualityProfileHighClass, cl);
+      Knot.module
+          .hook(Reflect.findMethodExact(highClass, v.imageQuality.methodGetMaxDimension))
+          .intercept(maxDimensionHook);
+      Knot.module
+          .hook(Reflect.findMethodExact(highClass, v.imageQuality.methodGetQuality))
+          .intercept(qualityHook);
 
       if (!v.imageQuality.qualityProfileMediumClass.isEmpty()) {
-        Class<?> mediumClass =
-            XposedHelpers.findClass(v.imageQuality.qualityProfileMediumClass, cl);
-        XposedHelpers.findAndHookMethod(
-            mediumClass, v.imageQuality.methodGetMaxDimension, qualityHook);
-        XposedHelpers.findAndHookMethod(mediumClass, v.imageQuality.methodGetQuality, qualityHook);
+        Class<?> mediumClass = Reflect.findClass(v.imageQuality.qualityProfileMediumClass, cl);
+        Knot.module
+            .hook(Reflect.findMethodExact(mediumClass, v.imageQuality.methodGetMaxDimension))
+            .intercept(maxDimensionHook);
+        Knot.module
+            .hook(Reflect.findMethodExact(mediumClass, v.imageQuality.methodGetQuality))
+            .intercept(qualityHook);
       }
 
-      XposedBridge.log("Knot: Image quality profiles hooked");
+      Knot.log("Knot: Image quality profiles hooked");
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Failed to hook image quality profiles: " + t.getMessage());
+      Knot.log("Knot: Failed to hook image quality profiles: " + t.getMessage());
     }
   }
 
@@ -58,28 +55,31 @@ public class ImageQuality implements BaseHook {
     if (v.imageQuality.imageUtilClass.isEmpty()) return;
 
     try {
-      XposedHelpers.findAndHookMethod(
-          android.graphics.Bitmap.class,
-          "compress",
-          android.graphics.Bitmap.CompressFormat.class,
-          int.class,
-          java.io.OutputStream.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              android.graphics.Bitmap.CompressFormat format =
-                  (android.graphics.Bitmap.CompressFormat) param.args[0];
-              int quality = (int) param.args[1];
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  android.graphics.Bitmap.class,
+                  "compress",
+                  android.graphics.Bitmap.CompressFormat.class,
+                  int.class,
+                  java.io.OutputStream.class))
+          .intercept(
+              chain -> {
+                android.graphics.Bitmap.CompressFormat format =
+                    (android.graphics.Bitmap.CompressFormat) chain.getArg(0);
+                int quality = (int) chain.getArg(1);
 
-              if (format == android.graphics.Bitmap.CompressFormat.JPEG && quality < 100) {
-                param.args[1] = 100;
-              }
-            }
-          });
+                if (format == android.graphics.Bitmap.CompressFormat.JPEG && quality < 100) {
+                  Object[] args = chain.getArgs().toArray();
+                  args[1] = 100;
+                  return chain.proceed(args);
+                }
+                return chain.proceed();
+              });
 
-      XposedBridge.log("Knot: Bitmap.compress hooked");
+      Knot.log("Knot: Bitmap.compress hooked");
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Failed to hook Bitmap.compress: " + t.getMessage());
+      Knot.log("Knot: Failed to hook Bitmap.compress: " + t.getMessage());
     }
   }
 }

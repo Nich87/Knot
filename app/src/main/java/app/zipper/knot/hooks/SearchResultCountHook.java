@@ -4,13 +4,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.widget.TextView;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.utils.LineDBUtils;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public class SearchResultCountHook implements BaseHook {
   }
 
   @Override
-  public void hook(KnotConfig options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig options, LoadParam lpparam) throws Throwable {
     if (!options.searchMin1Char.enabled) return;
 
     LineVersion.Config config = LineVersion.get();
@@ -54,19 +54,17 @@ public class SearchResultCountHook implements BaseHook {
         || config.chat.searchFtsLimitField.isEmpty()) return;
 
     try {
-      Class<?> queryClass =
-          XposedHelpers.findClass(config.chat.searchFtsInChatQueryClass, classLoader);
-      XposedBridge.hookAllMethods(
+      Class<?> queryClass = Reflect.findClass(config.chat.searchFtsInChatQueryClass, classLoader);
+      Knot.hookAll(
           queryClass,
           "invoke",
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              cacheFtsInChatCount(param, config);
-            }
+          chain -> {
+            Object result = chain.proceed();
+            cacheFtsInChatCount(chain, result, config);
+            return result;
           });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchResultCountHook FTS count hook error: " + t);
+      Knot.log("Knot: SearchResultCountHook FTS count hook error: " + t);
     }
   }
 
@@ -75,21 +73,23 @@ public class SearchResultCountHook implements BaseHook {
       return;
 
     try {
-      XposedHelpers.findAndHookConstructor(
-          config.chat.searchResultClass,
-          classLoader,
-          String.class,
-          int.class,
-          String.class,
-          List.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              replaceCappedResultCount(param, config);
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findConstructorExact(
+                  config.chat.searchResultClass,
+                  classLoader,
+                  String.class,
+                  int.class,
+                  String.class,
+                  List.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                replaceCappedResultCount(chain, config);
+                return result;
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchResultCountHook result count hook error: " + t);
+      Knot.log("Knot: SearchResultCountHook result count hook error: " + t);
     }
   }
 
@@ -101,44 +101,43 @@ public class SearchResultCountHook implements BaseHook {
 
     try {
       Class<?> titleViewHolderClass =
-          XposedHelpers.findClass(config.chat.searchResultTitleViewHolderClass, classLoader);
-      XposedBridge.hookAllMethods(
+          Reflect.findClass(config.chat.searchResultTitleViewHolderClass, classLoader);
+      Knot.hookAll(
           titleViewHolderClass,
           config.chat.searchResultTitleBindMethod,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              replaceCappedHeaderCount(param, config);
-            }
+          chain -> {
+            Object result = chain.proceed();
+            replaceCappedHeaderCount(chain, config);
+            return result;
           });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchResultCountHook title count hook error: " + t);
+      Knot.log("Knot: SearchResultCountHook title count hook error: " + t);
     }
   }
 
   private static void cacheFtsInChatCount(
-      XC_MethodHook.MethodHookParam param, LineVersion.Config config) {
+      XposedInterface.Chain chain, Object result, LineVersion.Config config) {
     try {
-      if (param.args == null || param.args.length == 0 || param.args[0] == null) return;
+      List<Object> args = chain.getArgs();
+      if (args.isEmpty() || args.get(0) == null) return;
 
-      Object result = param.getResult();
       if (!(result instanceof List<?>)) return;
 
-      int limit = XposedHelpers.getIntField(param.thisObject, config.chat.searchFtsLimitField);
+      int limit = Reflect.getIntField(chain.getThisObject(), config.chat.searchFtsLimitField);
       if (((List<?>) result).size() < limit || limit < LINE_SEARCH_CAPPED_COUNT) return;
 
       String chatId =
-          (String) XposedHelpers.getObjectField(param.thisObject, config.chat.searchFtsChatIdField);
+          (String) Reflect.getObjectField(chain.getThisObject(), config.chat.searchFtsChatIdField);
       String ftsQuery =
-          (String) XposedHelpers.getObjectField(param.thisObject, config.chat.searchFtsQueryField);
+          (String) Reflect.getObjectField(chain.getThisObject(), config.chat.searchFtsQueryField);
       if (chatId == null || ftsQuery == null || ftsQuery.isEmpty()) return;
 
-      Integer count = fetchFtsInChatCount(param.args[0], chatId, ftsQuery);
+      Integer count = fetchFtsInChatCount(args.get(0), chatId, ftsQuery);
       if (count == null || count <= LINE_SEARCH_DISPLAY_CAP) return;
 
       rememberRecentFtsCount(chatId, count);
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchResultCountHook cache FTS count error: " + t);
+      Knot.log("Knot: SearchResultCountHook cache FTS count error: " + t);
     }
   }
 
@@ -146,7 +145,7 @@ public class SearchResultCountHook implements BaseHook {
     Object statement = null;
     try {
       statement =
-          XposedHelpers.callMethod(
+          Reflect.callMethod(
               dbHandle,
               "E1",
               "SELECT COUNT(*)"
@@ -155,23 +154,23 @@ public class SearchResultCountHook implements BaseHook {
                   + " ON fts_message.rowid = message_chat_relation.message_id"
                   + " WHERE message_chat_relation.chat_id = ?"
                   + " AND fts_message.formatted_message MATCH ?");
-      XposedHelpers.callMethod(statement, "X1", 1, chatId);
-      XposedHelpers.callMethod(statement, "X1", 2, ftsQuery);
-      Object hasRow = XposedHelpers.callMethod(statement, "A1");
+      Reflect.callMethod(statement, "X1", 1, chatId);
+      Reflect.callMethod(statement, "X1", 2, ftsQuery);
+      Object hasRow = Reflect.callMethod(statement, "A1");
       if (!Boolean.TRUE.equals(hasRow)) return null;
 
-      Object count = XposedHelpers.callMethod(statement, "getLong", 0);
+      Object count = Reflect.callMethod(statement, "getLong", 0);
       if (!(count instanceof Number)) return null;
       long value = ((Number) count).longValue();
       if (value > Integer.MAX_VALUE) return Integer.MAX_VALUE;
       return (int) value;
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchResultCountHook fetch FTS count error: " + t);
+      Knot.log("Knot: SearchResultCountHook fetch FTS count error: " + t);
       return null;
     } finally {
       if (statement != null) {
         try {
-          XposedHelpers.callMethod(statement, "close");
+          Reflect.callMethod(statement, "close");
         } catch (Throwable ignored) {
         }
       }
@@ -179,21 +178,21 @@ public class SearchResultCountHook implements BaseHook {
   }
 
   private static void replaceCappedResultCount(
-      XC_MethodHook.MethodHookParam param, LineVersion.Config config) {
+      XposedInterface.Chain chain, LineVersion.Config config) {
     try {
-      if (param.args == null || param.args.length < 3) return;
-      if (!(param.args[1] instanceof Integer)) return;
+      List<Object> args = chain.getArgs();
+      if (args.size() < 3) return;
+      if (!(args.get(1) instanceof Integer)) return;
 
-      String chatId = (String) param.args[0];
-      String keyword = (String) param.args[2];
-      int currentCount = (Integer) param.args[1];
+      String chatId = (String) args.get(0);
+      String keyword = (String) args.get(2);
+      int currentCount = (Integer) args.get(1);
 
       if (currentCount == LINE_SEARCH_CAPPED_COUNT && !isOneCharacterKeyword(keyword)) {
         Integer actualCount = resolveActualCount(chatId, keyword);
         if (actualCount != null && actualCount > LINE_SEARCH_DISPLAY_CAP) {
-          XposedHelpers.setIntField(
-              param.thisObject, config.chat.searchResultCountField, actualCount);
-          param.args[1] = actualCount;
+          Reflect.setIntField(
+              chain.getThisObject(), config.chat.searchResultCountField, actualCount);
           rememberExactCount(actualCount);
           return;
         }
@@ -201,7 +200,7 @@ public class SearchResultCountHook implements BaseHook {
 
       if (currentCount > LINE_SEARCH_DISPLAY_CAP) rememberExactCount(currentCount);
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchResultCountHook replace result count error: " + t);
+      Knot.log("Knot: SearchResultCountHook replace result count error: " + t);
     }
   }
 
@@ -219,28 +218,29 @@ public class SearchResultCountHook implements BaseHook {
   }
 
   private static void replaceCappedHeaderCount(
-      XC_MethodHook.MethodHookParam param, LineVersion.Config config) {
+      XposedInterface.Chain chain, LineVersion.Config config) {
     try {
-      if (param.args == null || param.args.length < 3 || param.args[0] == null) return;
+      List<Object> args = chain.getArgs();
+      if (args.size() < 3 || args.get(0) == null) return;
 
-      int count = XposedHelpers.getIntField(param.args[0], "b");
+      int count = Reflect.getIntField(args.get(0), "b");
       if (!shouldShowExactHeaderCount(count)) return;
 
-      Object title = XposedHelpers.getObjectField(param.args[0], "a");
+      Object title = Reflect.getObjectField(args.get(0), "a");
       if (!(title instanceof String)) return;
 
       Object binding =
-          XposedHelpers.getObjectField(param.thisObject, config.chat.searchResultTitleBindingField);
+          Reflect.getObjectField(chain.getThisObject(), config.chat.searchResultTitleBindingField);
       if (binding == null) return;
 
       Object titleView =
-          XposedHelpers.getObjectField(binding, config.chat.searchResultTitleTextViewField);
+          Reflect.getObjectField(binding, config.chat.searchResultTitleTextViewField);
       if (!(titleView instanceof TextView)) return;
 
-      boolean rtl = Boolean.TRUE.equals(param.args[2]);
+      boolean rtl = Boolean.TRUE.equals(args.get(2));
       ((TextView) titleView).setText(formatSearchResultTitle((String) title, count, rtl));
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchResultCountHook replace title count error: " + t);
+      Knot.log("Knot: SearchResultCountHook replace title count error: " + t);
     }
   }
 
@@ -252,7 +252,7 @@ public class SearchResultCountHook implements BaseHook {
 
   private static String formatSearchResultTitle(String title, int count, boolean rtl) {
     StringBuilder sb = new StringBuilder(title);
-    if (rtl) sb.append('\u200f');
+    if (rtl) sb.append('‏');
     sb.append(' ').append(count);
     return sb.toString();
   }
@@ -305,7 +305,7 @@ public class SearchResultCountHook implements BaseHook {
 
   private static Integer fetchLocalLikeMatchCount(String chatId, String keyword) {
     try {
-      Context context = android.app.AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return null;
 
       File dbFile = context.getDatabasePath("naver_line");
@@ -342,7 +342,7 @@ public class SearchResultCountHook implements BaseHook {
         return (int) count;
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchResultCountHook fetch local LIKE count error: " + t);
+      Knot.log("Knot: SearchResultCountHook fetch local LIKE count error: " + t);
       return null;
     }
   }

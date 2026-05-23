@@ -9,8 +9,8 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import app.zipper.knot.Knot;
 import app.zipper.knot.SettingsStore;
-import de.robv.android.xposed.XposedBridge;
 import org.json.JSONObject;
 
 public class ReadHistoryViewer {
@@ -102,7 +102,7 @@ public class ReadHistoryViewer {
       dialog.show();
 
     } catch (Throwable t) {
-      XposedBridge.log("Knot: error: " + t.getMessage());
+      Knot.log("Knot: error: " + t.getMessage());
     }
   }
 

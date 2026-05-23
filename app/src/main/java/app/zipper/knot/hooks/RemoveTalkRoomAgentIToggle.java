@@ -1,13 +1,13 @@
 package app.zipper.knot.hooks;
 
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
 import app.zipper.knot.Main;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -16,7 +16,7 @@ public class RemoveTalkRoomAgentIToggle implements BaseHook {
   private static final String LEGACY_KEY = "remove_talkroom_agent_i_toggle";
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     if (!isEnabled(config)) return;
 
     LineVersion.Config cfg = LineVersion.get();
@@ -24,30 +24,26 @@ public class RemoveTalkRoomAgentIToggle implements BaseHook {
 
     final Class<?> cls;
     try {
-      cls = XposedHelpers.findClass(cfg.agentIInChat.toggleComposableClass, lpparam.classLoader);
+      cls = Reflect.findClass(cfg.agentIInChat.toggleComposableClass, lpparam.classLoader);
     } catch (Throwable t) {
       return;
     }
 
-    XC_MethodHook noOp =
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam param) {
-            if (!isEnabled(Main.options)) return;
-            param.setResult(null);
-          }
+    XposedInterface.Hooker noOp =
+        chain -> {
+          if (isEnabled(Main.options)) return null;
+          return chain.proceed();
         };
 
     int hookCount = 0;
     for (Method method : cls.getDeclaredMethods()) {
       if (!isComposeRenderMethod(cfg, method)) continue;
-      XposedBridge.hookMethod(method, noOp);
+      Knot.module.hook(method).intercept(noOp);
       hookCount++;
     }
 
     if (hookCount > 0) {
-      XposedBridge.log(
-          "Knot: RemoveTalkRoomAgentIToggle hooked " + hookCount + " compose methods.");
+      Knot.log("Knot: RemoveTalkRoomAgentIToggle hooked " + hookCount + " compose methods.");
     }
   }
 

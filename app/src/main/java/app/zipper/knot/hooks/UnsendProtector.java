@@ -12,14 +12,15 @@ import android.graphics.drawable.BitmapDrawable;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
 import app.zipper.knot.Main;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
@@ -36,86 +37,91 @@ public class UnsendProtector implements BaseHook {
   private static Toast currentToast;
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     if (!config.preventUnsendMessage.enabled) return;
     initializeUnsendCache();
 
     LineVersion.Config cfg = LineVersion.get();
 
     try {
-      XposedBridge.hookAllMethods(
-          XposedHelpers.findClass(cfg.unsend.talkServiceHookClass, lpparam.classLoader),
+      Knot.hookAll(
+          Reflect.findClass(cfg.unsend.talkServiceHookClass, lpparam.classLoader),
           cfg.unsend.methodReadBuffer,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              if (!Main.options.preventUnsendMessage.enabled) return;
+          chain -> {
+            Object result = chain.proceed();
+            if (Main.options.preventUnsendMessage.enabled) {
               try {
-                handleIncomingOperation(param);
+                handleIncomingOperation(chain);
               } catch (Exception e) {
-                XposedBridge.log("Knot: Unsend error: " + e);
+                Knot.log("Knot: Unsend error: " + e);
               }
             }
+            return result;
           });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Unsend op hook failed: " + t);
+      Knot.log("Knot: Unsend op hook failed: " + t);
     }
 
     if (cfg.unsend.unsendDestroyHandlerClass != null
         && !cfg.unsend.unsendDestroyHandlerClass.isEmpty()) {
       try {
-        XposedBridge.hookAllMethods(
-            XposedHelpers.findClass(cfg.unsend.unsendDestroyHandlerClass, lpparam.classLoader),
+        Knot.hookAll(
+            Reflect.findClass(cfg.unsend.unsendDestroyHandlerClass, lpparam.classLoader),
             "b",
-            new XC_MethodHook() {
-              @Override
-              protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (!Main.options.preventUnsendMessage.enabled) return;
-                java.lang.reflect.Method m = (java.lang.reflect.Method) param.method;
-                Class<?>[] types = m.getParameterTypes();
-                if (types.length != 3 || !types[1].getName().equals(cfg.unsend.operationClass))
-                  return;
-
-                Object aeVar = param.args[1];
-                if (aeVar == null) return;
-
-                String msgId = (String) XposedHelpers.getObjectField(aeVar, "h");
-                if (msgId == null || msgId.isEmpty()) return;
-
-                if (!unsendEvents.containsKey(msgId)) {
-                  XposedBridge.log("Knot: Blocked unsend (handler), id=" + msgId);
-                  persistUnsendEvent(msgId, getFormattedTime());
+            chain -> {
+              if (Main.options.preventUnsendMessage.enabled) {
+                try {
+                  handleDestroyHandler(chain, cfg);
+                } catch (Throwable ignored) {
                 }
-
-                XposedHelpers.setObjectField(aeVar, "h", "");
-
-                TextView tsView = timestampViews.get(msgId);
-                if (tsView != null) applyUnsendIndicator(tsView, tsView.getContext(), msgId);
               }
+              return chain.proceed();
             });
       } catch (Throwable t) {
-        XposedBridge.log("Knot: Destroy handler hook failed: " + t);
+        Knot.log("Knot: Destroy handler hook failed: " + t);
       }
     }
 
     try {
-      XposedBridge.hookAllMethods(
-          XposedHelpers.findClass(cfg.unsend.chatMessageViewHolderClass, lpparam.classLoader),
+      Knot.hookAll(
+          Reflect.findClass(cfg.unsend.chatMessageViewHolderClass, lpparam.classLoader),
           cfg.unsend.methodBind,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              if (!Main.options.preventUnsendMessage.enabled) return;
+          chain -> {
+            Object result = chain.proceed();
+            if (Main.options.preventUnsendMessage.enabled) {
               try {
-                handleViewHolderBinding(param);
+                handleViewHolderBinding(chain);
               } catch (Exception e) {
-                XposedBridge.log("Knot: Bind error: " + e);
+                Knot.log("Knot: Bind error: " + e);
               }
             }
+            return result;
           });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Bind hook failed: " + t);
+      Knot.log("Knot: Bind hook failed: " + t);
     }
+  }
+
+  private static void handleDestroyHandler(XposedInterface.Chain chain, LineVersion.Config cfg) {
+    Method m = (Method) chain.getExecutable();
+    Class<?>[] types = m.getParameterTypes();
+    if (types.length != 3 || !types[1].getName().equals(cfg.unsend.operationClass)) return;
+
+    Object aeVar = chain.getArg(1);
+    if (aeVar == null) return;
+
+    String msgId = (String) Reflect.getObjectField(aeVar, "h");
+    if (msgId == null || msgId.isEmpty()) return;
+
+    if (!unsendEvents.containsKey(msgId)) {
+      Knot.log("Knot: Blocked unsend (handler), id=" + msgId);
+      persistUnsendEvent(msgId, getFormattedTime());
+    }
+
+    Reflect.setObjectField(aeVar, "h", "");
+
+    TextView tsView = timestampViews.get(msgId);
+    if (tsView != null) applyUnsendIndicator(tsView, tsView.getContext(), msgId);
   }
 
   private static void initializeUnsendCache() {
@@ -127,7 +133,7 @@ public class UnsendProtector implements BaseHook {
         unsendEvents.put(id, json.getString(id));
       }
     } catch (Exception e) {
-      XposedBridge.log("Knot: Unsend history load error: " + e);
+      Knot.log("Knot: Unsend history load error: " + e);
     }
   }
 
@@ -139,7 +145,7 @@ public class UnsendProtector implements BaseHook {
         json.put(entry.getKey(), entry.getValue());
       SettingsStore.saveUnsendHistory(json);
     } catch (Exception e) {
-      XposedBridge.log("Knot: Unsend history save error: " + e);
+      Knot.log("Knot: Unsend history save error: " + e);
     }
   }
 
@@ -147,49 +153,46 @@ public class UnsendProtector implements BaseHook {
     return new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault()).format(new Date());
   }
 
-  private static void handleIncomingOperation(XC_MethodHook.MethodHookParam param)
-      throws Exception {
+  private static void handleIncomingOperation(XposedInterface.Chain chain) throws Exception {
     LineVersion.Config cfg = LineVersion.get();
-    Object operation = param.args[1];
+    Object operation = chain.getArg(1);
     if (operation == null || operation instanceof String) return;
     if (operation.getClass().getName().startsWith("java.")) return;
 
-    Object type = XposedHelpers.getObjectField(operation, cfg.unsend.operationTypeField);
+    Object type = Reflect.getObjectField(operation, cfg.unsend.operationTypeField);
     if (type == null) return;
 
     String typeStr = type.toString();
     if (!cfg.unsend.operationNotifiedUnsendName.equals(typeStr)
         && !cfg.unsend.operationUnsendName.equals(typeStr)) return;
 
-    String msgId =
-        (String) XposedHelpers.getObjectField(operation, cfg.unsend.operationParam2Field);
+    String msgId = (String) Reflect.getObjectField(operation, cfg.unsend.operationParam2Field);
     if (msgId == null || msgId.isEmpty()) return;
 
     if (!unsendEvents.containsKey(msgId)) {
       String time = getFormattedTime();
-      XposedBridge.log("Knot: Blocked unsend, id=" + msgId);
+      Knot.log("Knot: Blocked unsend, id=" + msgId);
       persistUnsendEvent(msgId, time);
     }
 
     Object harmlessType =
-        XposedHelpers.callStaticMethod(
+        Reflect.callStaticMethod(
             type.getClass(), cfg.unsend.methodOperationTypeValueOf, cfg.unsend.operationTypeDummy);
-    XposedHelpers.setObjectField(operation, cfg.unsend.operationTypeField, harmlessType);
+    Reflect.setObjectField(operation, cfg.unsend.operationTypeField, harmlessType);
 
     TextView tsView = timestampViews.get(msgId);
     if (tsView != null) applyUnsendIndicator(tsView, tsView.getContext(), msgId);
   }
 
-  private static void handleViewHolderBinding(XC_MethodHook.MethodHookParam param)
-      throws Exception {
+  private static void handleViewHolderBinding(XposedInterface.Chain chain) throws Exception {
     LineVersion.Config cfg = LineVersion.get();
-    Object viewData = param.args[cfg.unsend.methodBindIndex];
+    Object viewData = chain.getArg(cfg.unsend.methodBindIndex);
     if (viewData == null) return;
-    Object commonData = XposedHelpers.callMethod(viewData, cfg.unsend.methodGetCommonData);
+    Object commonData = Reflect.callMethod(viewData, cfg.unsend.methodGetCommonData);
     if (commonData == null) return;
 
-    String msgId = (String) XposedHelpers.getObjectField(commonData, cfg.unsend.chatMessageIdField);
-    View root = (View) XposedHelpers.callMethod(param.thisObject, cfg.unsend.methodGetItemView);
+    String msgId = (String) Reflect.getObjectField(commonData, cfg.unsend.chatMessageIdField);
+    View root = (View) Reflect.callMethod(chain.getThisObject(), cfg.unsend.methodGetItemView);
     if (root == null) return;
 
     TextView tsView = (TextView) root.findViewById(cfg.res.idTimestamp);

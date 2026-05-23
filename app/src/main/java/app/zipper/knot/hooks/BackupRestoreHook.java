@@ -11,9 +11,9 @@ import android.util.Log;
 import android.widget.Toast;
 import androidx.documentfile.provider.DocumentFile;
 import app.zipper.knot.KnotConfig;
+import app.zipper.knot.LoadParam;
 import app.zipper.knot.SettingsStore;
 import app.zipper.knot.utils.ModuleStrings;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -33,7 +33,7 @@ public class BackupRestoreHook implements BaseHook {
   private static final Handler uiHandler = new Handler(Looper.getMainLooper());
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {}
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {}
 
   public static void runBackup(Context context) {
     final ProgressDialog pd = createSyncProgress(context, ModuleStrings.RESTORE_PREPARING);

@@ -1,7 +1,5 @@
 package app.zipper.knot;
 
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -460,8 +458,8 @@ public class LineVersion {
     if (cl == null) return null;
     try {
       Class<?> verCls = cl.loadClass("jp.naver.line.android.common.LineAppVersion");
-      String verName = (String) XposedHelpers.callStaticMethod(verCls, "getVerName");
-      XposedBridge.log("Knot: Detected LINE version: " + verName);
+      String verName = (String) Reflect.callStaticMethod(verCls, "getVerName");
+      Knot.log("Knot: Detected LINE version: " + verName);
 
       for (Map.Entry<String, Config> entry : VERSION_TABLE.entrySet()) {
         if (verName.startsWith(entry.getKey())) {
@@ -470,7 +468,7 @@ public class LineVersion {
         }
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Version detection via class failed: " + t.getMessage());
+      Knot.log("Knot: Version detection via class failed: " + t.getMessage());
     }
 
     return null;
@@ -482,7 +480,7 @@ public class LineVersion {
     try {
       String verName =
           context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
-      XposedBridge.log("Knot: Detected LINE version via PackageInfo: " + verName);
+      Knot.log("Knot: Detected LINE version via PackageInfo: " + verName);
       for (Map.Entry<String, Config> entry : VERSION_TABLE.entrySet()) {
         if (verName.startsWith(entry.getKey())) {
           cachedConfig = entry.getValue();
@@ -490,7 +488,7 @@ public class LineVersion {
         }
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Version detection via PackageInfo failed: " + t.getMessage());
+      Knot.log("Knot: Version detection via PackageInfo failed: " + t.getMessage());
     }
     return null;
   }

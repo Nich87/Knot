@@ -34,16 +34,15 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import app.zipper.knot.BuildConfig;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
 import app.zipper.knot.Main;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
 import app.zipper.knot.utils.ModuleStrings;
 import app.zipper.knot.utils.ThemeUtils;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.io.File;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -86,352 +85,348 @@ public class SettingsUIInjector implements BaseHook {
   };
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     instance = this;
     LineVersion.Config cfg = LineVersion.get();
 
     Class<?> fragmentClass =
-        XposedHelpers.findClass(cfg.settings.mainSettingsFragmentClass, lpparam.classLoader);
-    XposedHelpers.findAndHookMethod(
-        fragmentClass,
-        "onViewCreated",
-        View.class,
-        Bundle.class,
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) {
-            try {
-              LineVersion.Config c = LineVersion.get();
-              targetFragment = param.thisObject;
-              View listView = ((View) param.args[0]).findViewById(c.res.idSettingList);
-              if (listView != null)
-                targetAdapter = XposedHelpers.callMethod(listView, "getAdapter");
-              openSettingsAction =
-                  () ->
-                      displaySettingsDialog(
-                          (Context) XposedHelpers.callMethod(targetFragment, "requireContext"));
-            } catch (Throwable ignored) {
-            }
-          }
-        });
-
-    Class<?> proxyInterface =
-        XposedHelpers.findClass(cfg.settings.settingsItemClass, lpparam.classLoader);
-    XposedHelpers.findAndHookMethod(
-        cfg.settings.settingsAdapterClass,
-        lpparam.classLoader,
-        cfg.settings.methodSetItems,
-        Collection.class,
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam param) {
-            if (param.thisObject != targetAdapter) return;
-            LineVersion.Config c = LineVersion.get();
-            List<Object> items = new ArrayList<>((Collection<?>) param.args[0]);
-            int insertPos = items.size();
-            findPosition:
-            for (int i = 0; i < items.size(); i++) {
+        Reflect.findClass(cfg.settings.mainSettingsFragmentClass, lpparam.classLoader);
+    Knot.module
+        .hook(Reflect.findMethodExact(fragmentClass, "onViewCreated", View.class, Bundle.class))
+        .intercept(
+            chain -> {
+              Object result = chain.proceed();
               try {
-                Object model =
-                    XposedHelpers.getObjectField(items.get(i), cfg.settings.fieldItemModel);
-                if (model == null) continue;
-                for (java.lang.reflect.Field f : model.getClass().getDeclaredFields()) {
-                  if (f.getType() == int.class) {
-                    f.setAccessible(true);
-                    if (f.getInt(model) == c.res.idPersonalInfo) {
-                      insertPos = i;
-                      break findPosition;
-                    }
-                  }
-                }
+                LineVersion.Config c = LineVersion.get();
+                targetFragment = chain.getThisObject();
+                View listView = ((View) chain.getArg(0)).findViewById(c.res.idSettingList);
+                if (listView != null) targetAdapter = Reflect.callMethod(listView, "getAdapter");
+                openSettingsAction =
+                    () ->
+                        displaySettingsDialog(
+                            (Context) Reflect.callMethod(targetFragment, "requireContext"));
               } catch (Throwable ignored) {
               }
-            }
-            Object section =
-                createAdapterItemProxy(proxyInterface, lpparam.classLoader, c.res.typeSection);
-            Object row = createAdapterItemProxy(proxyInterface, lpparam.classLoader, c.res.typeRow);
+              return result;
+            });
 
-            if (c.settings.settingsAdapterWrapperClass != null
-                && !c.settings.settingsAdapterWrapperClass.isEmpty()) {
-              try {
-                Class<?> wrapperCls =
-                    XposedHelpers.findClass(
-                        c.settings.settingsAdapterWrapperClass, lpparam.classLoader);
-                Class<?> headerCls =
-                    XposedHelpers.findClass(
-                        c.settings.settingsHeaderItemClass, lpparam.classLoader);
-                Class<?> itemCls =
-                    XposedHelpers.findClass(c.settings.settingsRowItemClass, lpparam.classLoader);
-
-                Class<?> unsafeCls = XposedHelpers.findClass("sun.misc.Unsafe", (ClassLoader) null);
-                Object unsafe = XposedHelpers.getStaticObjectField(unsafeCls, "theUnsafe");
-
-                Object dummyHeader =
-                    XposedHelpers.callMethod(unsafe, "allocateInstance", headerCls);
-                Object dummyRow = XposedHelpers.callMethod(unsafe, "allocateInstance", itemCls);
-
-                XposedHelpers.setIntField(
-                    dummyHeader, cfg.settings.fieldLayoutId, c.res.typeSection);
-                XposedHelpers.setIntField(dummyRow, cfg.settings.fieldLayoutId, c.res.typeRow);
-
-                section = XposedHelpers.newInstance(wrapperCls, dummyHeader);
-                row = XposedHelpers.newInstance(wrapperCls, dummyRow);
-
-                XposedHelpers.setObjectField(dummyHeader, cfg.settings.fieldModelTag, BRAND_TAG);
-                XposedHelpers.setObjectField(dummyRow, cfg.settings.fieldModelTag, BRAND_TAG);
-
-                XposedHelpers.setBooleanField(dummyHeader, cfg.settings.fieldIsVisible, true);
-
-                Class<?> bc =
-                    XposedHelpers.findClass(
-                        c.settings.settingsHandlerBaseClass, lpparam.classLoader);
-                Object dummyHandler =
-                    XposedHelpers.getStaticObjectField(bc, cfg.settings.fieldDefaultHandler);
-
-                String[] handlerFields = {
-                  cfg.settings.fieldActionHandler,
-                  cfg.settings.fieldIconProvider,
-                  cfg.settings.fieldDescriptionProvider,
-                  cfg.settings.fieldSubActionHandler,
-                  cfg.settings.fieldVisibilityFilter
-                };
-                for (String f : handlerFields) {
-                  try {
-                    XposedHelpers.setObjectField(dummyRow, f, dummyHandler);
-                    XposedHelpers.setObjectField(dummyHeader, f, dummyHandler);
-                  } catch (Throwable ignored) {
+    final Class<?> proxyInterface =
+        Reflect.findClass(cfg.settings.settingsItemClass, lpparam.classLoader);
+    Knot.module
+        .hook(
+            Reflect.findMethodExact(
+                cfg.settings.settingsAdapterClass,
+                lpparam.classLoader,
+                cfg.settings.methodSetItems,
+                Collection.class))
+        .intercept(
+            chain -> {
+              if (chain.getThisObject() != targetAdapter) return chain.proceed();
+              LineVersion.Config c = LineVersion.get();
+              List<Object> items = new ArrayList<>((Collection<?>) chain.getArg(0));
+              int insertPos = items.size();
+              findPosition:
+              for (int i = 0; i < items.size(); i++) {
+                try {
+                  Object model = Reflect.getObjectField(items.get(i), cfg.settings.fieldItemModel);
+                  if (model == null) continue;
+                  for (java.lang.reflect.Field f : model.getClass().getDeclaredFields()) {
+                    if (f.getType() == int.class) {
+                      f.setAccessible(true);
+                      if (f.getInt(model) == c.res.idPersonalInfo) {
+                        insertPos = i;
+                        break findPosition;
+                      }
+                    }
                   }
+                } catch (Throwable ignored) {
                 }
-
-                XposedHelpers.setObjectField(
-                    dummyRow,
-                    cfg.settings.fieldVisibilityFilter,
-                    XposedHelpers.getStaticObjectField(bc, cfg.settings.fieldCommonHandler));
-                XposedHelpers.setObjectField(
-                    dummyHeader,
-                    cfg.settings.fieldVisibilityFilter,
-                    XposedHelpers.getStaticObjectField(bc, cfg.settings.fieldCommonHandler));
-              } catch (Throwable e) {
-                XposedBridge.log("Knot: Adapter wrapper failed: " + e);
               }
-            }
+              Object section =
+                  createAdapterItemProxy(proxyInterface, lpparam.classLoader, c.res.typeSection);
+              Object row =
+                  createAdapterItemProxy(proxyInterface, lpparam.classLoader, c.res.typeRow);
 
-            items.add(insertPos, section);
-            items.add(insertPos + 1, row);
-            param.args[0] = items;
-          }
-        });
+              if (c.settings.settingsAdapterWrapperClass != null
+                  && !c.settings.settingsAdapterWrapperClass.isEmpty()) {
+                try {
+                  Class<?> wrapperCls =
+                      Reflect.findClass(
+                          c.settings.settingsAdapterWrapperClass, lpparam.classLoader);
+                  Class<?> headerCls =
+                      Reflect.findClass(c.settings.settingsHeaderItemClass, lpparam.classLoader);
+                  Class<?> itemCls =
+                      Reflect.findClass(c.settings.settingsRowItemClass, lpparam.classLoader);
+
+                  Class<?> unsafeCls = Reflect.findClass("sun.misc.Unsafe", (ClassLoader) null);
+                  Object unsafe = Reflect.getStaticObjectField(unsafeCls, "theUnsafe");
+
+                  Object dummyHeader = Reflect.callMethod(unsafe, "allocateInstance", headerCls);
+                  Object dummyRow = Reflect.callMethod(unsafe, "allocateInstance", itemCls);
+
+                  Reflect.setIntField(dummyHeader, cfg.settings.fieldLayoutId, c.res.typeSection);
+                  Reflect.setIntField(dummyRow, cfg.settings.fieldLayoutId, c.res.typeRow);
+
+                  section = Reflect.newInstance(wrapperCls, dummyHeader);
+                  row = Reflect.newInstance(wrapperCls, dummyRow);
+
+                  Reflect.setObjectField(dummyHeader, cfg.settings.fieldModelTag, BRAND_TAG);
+                  Reflect.setObjectField(dummyRow, cfg.settings.fieldModelTag, BRAND_TAG);
+
+                  Reflect.setBooleanField(dummyHeader, cfg.settings.fieldIsVisible, true);
+
+                  Class<?> bc =
+                      Reflect.findClass(c.settings.settingsHandlerBaseClass, lpparam.classLoader);
+                  Object dummyHandler =
+                      Reflect.getStaticObjectField(bc, cfg.settings.fieldDefaultHandler);
+
+                  String[] handlerFields = {
+                    cfg.settings.fieldActionHandler,
+                    cfg.settings.fieldIconProvider,
+                    cfg.settings.fieldDescriptionProvider,
+                    cfg.settings.fieldSubActionHandler,
+                    cfg.settings.fieldVisibilityFilter
+                  };
+                  for (String f : handlerFields) {
+                    try {
+                      Reflect.setObjectField(dummyRow, f, dummyHandler);
+                      Reflect.setObjectField(dummyHeader, f, dummyHandler);
+                    } catch (Throwable ignored) {
+                    }
+                  }
+
+                  Reflect.setObjectField(
+                      dummyRow,
+                      cfg.settings.fieldVisibilityFilter,
+                      Reflect.getStaticObjectField(bc, cfg.settings.fieldCommonHandler));
+                  Reflect.setObjectField(
+                      dummyHeader,
+                      cfg.settings.fieldVisibilityFilter,
+                      Reflect.getStaticObjectField(bc, cfg.settings.fieldCommonHandler));
+                } catch (Throwable e) {
+                  Knot.log("Knot: Adapter wrapper failed: " + e);
+                }
+              }
+
+              items.add(insertPos, section);
+              items.add(insertPos + 1, row);
+              return chain.proceed(new Object[] {items});
+            });
 
     Class<?> itemBindingClass =
-        XposedHelpers.findClass(cfg.settings.settingsBaseAdapterClass, lpparam.classLoader);
-    XposedHelpers.findAndHookMethod(
-        cfg.settings.settingsSearchHelperClass,
-        lpparam.classLoader,
-        cfg.settings.methodBindViewHolder,
-        itemBindingClass,
-        int.class,
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam param) {
-            if (param.thisObject != targetAdapter) return;
-            LineVersion.Config c = LineVersion.get();
-            int currentPos = (int) param.args[1];
-            try {
-              Object currentItem =
-                  XposedHelpers.callMethod(param.thisObject, c.settings.methodGetItem, currentPos);
-              if (currentItem == null) return;
-              if (currentItem.getClass().getName().equals(c.settings.settingsAdapterWrapperClass)) {
-                currentItem = XposedHelpers.getObjectField(currentItem, c.settings.fieldItemModel);
-              }
-              if (currentItem == null) return;
-
-              String sourceTag =
-                  (String) XposedHelpers.getObjectField(currentItem, c.settings.fieldModelTag);
-              if (!BRAND_TAG.equals(sourceTag)) return;
-
-              param.setResult(null);
-
-              int entryType = XposedHelpers.getIntField(currentItem, cfg.settings.fieldLayoutId);
-              View itemView =
-                  (View)
-                      XposedHelpers.getObjectField(param.args[0], c.settings.fieldViewHolderView);
-              if (entryType == c.res.typeSection) {
-                if (itemView instanceof TextView) ((TextView) itemView).setText(BRAND_TAG);
-              } else if (entryType == c.res.typeRow) {
-                applyVisibility(itemView, c.res.idIcon, View.VISIBLE);
-                applyVisibility(itemView, c.res.idDesc, View.GONE);
-                applyVisibility(itemView, c.res.idMark, View.GONE);
-                applyVisibility(itemView, c.res.idSeparator, View.GONE);
-                applyVisibility(itemView, c.res.idNewMark, View.GONE);
-                applyVisibility(itemView, c.res.idNoticeDot, View.GONE);
-                applyVisibility(itemView, c.res.idArrow, View.VISIBLE);
-
-                android.widget.ImageView iconView = itemView.findViewById(c.res.idIcon);
-                if (iconView != null) {
-                  try {
-                    Context modCtx =
-                        itemView
-                            .getContext()
-                            .createPackageContext(
-                                "app.zipper.knot", Context.CONTEXT_IGNORE_SECURITY);
-                    int resId =
-                        modCtx
-                            .getResources()
-                            .getIdentifier("ic_knot", "drawable", "app.zipper.knot");
-
-                    if (resId != 0) {
-                      iconView.setImageDrawable(modCtx.getDrawable(resId));
-                      iconView.setVisibility(android.view.View.VISIBLE);
-
-                      float density =
-                          itemView.getContext().getResources().getDisplayMetrics().density;
-                      int size = (int) (24 * density);
-                      android.view.ViewGroup.LayoutParams lp = iconView.getLayoutParams();
-                      if (lp != null) {
-                        lp.width = size;
-                        lp.height = size;
-                        iconView.setLayoutParams(lp);
-                      }
-                      iconView.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
-                    }
-                  } catch (Throwable ignored) {
-                  }
-                }
-                TextView title = itemView.findViewById(c.res.idTitle);
-                if (title != null) title.setText(ModuleStrings.SETTINGS_TITLE);
-                itemView.setOnClickListener(v -> displaySettingsDialog(v.getContext()));
-              }
-            } catch (Throwable ignored) {
-            }
-          }
-        });
-
-    XposedHelpers.findAndHookMethod(
-        android.app.Activity.class,
-        "onActivityResult",
-        int.class,
-        int.class,
-        Intent.class,
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam param) {
-            int requestCode = (int) param.args[0];
-            if (requestCode == PICK_DIRECTORY_CODE) {
-              param.setResult(null);
-              if ((int) param.args[1] != Activity.RESULT_OK || param.args[2] == null) return;
-              Uri treeUri = ((Intent) param.args[2]).getData();
-              if (treeUri == null) return;
+        Reflect.findClass(cfg.settings.settingsBaseAdapterClass, lpparam.classLoader);
+    Knot.module
+        .hook(
+            Reflect.findMethodExact(
+                cfg.settings.settingsSearchHelperClass,
+                lpparam.classLoader,
+                cfg.settings.methodBindViewHolder,
+                itemBindingClass,
+                int.class))
+        .intercept(
+            chain -> {
+              if (chain.getThisObject() != targetAdapter) return chain.proceed();
+              LineVersion.Config c = LineVersion.get();
+              int currentPos = (int) chain.getArg(1);
+              boolean ours = false;
               try {
-                ((Activity) param.thisObject)
-                    .getContentResolver()
-                    .takePersistableUriPermission(
-                        treeUri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                Object currentItem =
+                    Reflect.callMethod(chain.getThisObject(), c.settings.methodGetItem, currentPos);
+                if (currentItem == null) return chain.proceed();
+                if (currentItem
+                    .getClass()
+                    .getName()
+                    .equals(c.settings.settingsAdapterWrapperClass)) {
+                  currentItem = Reflect.getObjectField(currentItem, c.settings.fieldItemModel);
+                }
+                if (currentItem == null) return chain.proceed();
+
+                String sourceTag =
+                    (String) Reflect.getObjectField(currentItem, c.settings.fieldModelTag);
+                if (!BRAND_TAG.equals(sourceTag)) return chain.proceed();
+
+                ours = true;
+
+                int entryType = Reflect.getIntField(currentItem, cfg.settings.fieldLayoutId);
+                View itemView =
+                    (View) Reflect.getObjectField(chain.getArg(0), c.settings.fieldViewHolderView);
+                if (entryType == c.res.typeSection) {
+                  if (itemView instanceof TextView) ((TextView) itemView).setText(BRAND_TAG);
+                } else if (entryType == c.res.typeRow) {
+                  applyVisibility(itemView, c.res.idIcon, View.VISIBLE);
+                  applyVisibility(itemView, c.res.idDesc, View.GONE);
+                  applyVisibility(itemView, c.res.idMark, View.GONE);
+                  applyVisibility(itemView, c.res.idSeparator, View.GONE);
+                  applyVisibility(itemView, c.res.idNewMark, View.GONE);
+                  applyVisibility(itemView, c.res.idNoticeDot, View.GONE);
+                  applyVisibility(itemView, c.res.idArrow, View.VISIBLE);
+
+                  android.widget.ImageView iconView = itemView.findViewById(c.res.idIcon);
+                  if (iconView != null) {
+                    try {
+                      Context modCtx =
+                          itemView
+                              .getContext()
+                              .createPackageContext(
+                                  "app.zipper.knot", Context.CONTEXT_IGNORE_SECURITY);
+                      int resId =
+                          modCtx
+                              .getResources()
+                              .getIdentifier("ic_knot", "drawable", "app.zipper.knot");
+
+                      if (resId != 0) {
+                        iconView.setImageDrawable(modCtx.getDrawable(resId));
+                        iconView.setVisibility(android.view.View.VISIBLE);
+
+                        float density =
+                            itemView.getContext().getResources().getDisplayMetrics().density;
+                        int size = (int) (24 * density);
+                        android.view.ViewGroup.LayoutParams lp = iconView.getLayoutParams();
+                        if (lp != null) {
+                          lp.width = size;
+                          lp.height = size;
+                          iconView.setLayoutParams(lp);
+                        }
+                        iconView.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+                      }
+                    } catch (Throwable ignored) {
+                    }
+                  }
+                  TextView title = itemView.findViewById(c.res.idTitle);
+                  if (title != null) title.setText(ModuleStrings.SETTINGS_TITLE);
+                  itemView.setOnClickListener(v -> displaySettingsDialog(v.getContext()));
+                }
               } catch (Throwable ignored) {
               }
-              SettingsStore.setSettingsDir(treeUri.toString());
-              SettingsStore.load(Main.options);
-              pendingRestart = true;
-              if (onSettingsReloadRequest != null) onSettingsReloadRequest.run();
-            } else if (requestCode == PICK_FONT_CODE) {
-              param.setResult(null);
-              if ((int) param.args[1] != Activity.RESULT_OK || param.args[2] == null) return;
-              Uri fontUri = ((Intent) param.args[2]).getData();
-              if (fontUri == null) return;
+              return ours ? null : chain.proceed();
+            });
 
-              try {
-                Context ctx = (Context) param.thisObject;
-                java.io.InputStream is = ctx.getContentResolver().openInputStream(fontUri);
-                File out = new File(ctx.getFilesDir(), "knot_custom_font.ttf");
-                java.io.FileOutputStream os = new java.io.FileOutputStream(out);
-                byte[] buffer = new byte[8192];
-                int len;
-                while ((len = is.read(buffer)) != -1) os.write(buffer, 0, len);
-                os.close();
-                is.close();
-
-                String localPath = out.getAbsolutePath();
-                SettingsStore.save("custom_font_path", localPath);
-                for (KnotConfig.Item itm : Main.options.items) {
-                  if (itm.key.equals("custom_font_path")) {
-                    itm.value = localPath;
-                    break;
-                  }
+    Knot.module
+        .hook(
+            Reflect.findMethodExact(
+                android.app.Activity.class, "onActivityResult", int.class, int.class, Intent.class))
+        .intercept(
+            chain -> {
+              int requestCode = (int) chain.getArg(0);
+              if (requestCode == PICK_DIRECTORY_CODE) {
+                if ((int) chain.getArg(1) != Activity.RESULT_OK || chain.getArg(2) == null)
+                  return null;
+                Uri treeUri = ((Intent) chain.getArg(2)).getData();
+                if (treeUri == null) return null;
+                try {
+                  ((Activity) chain.getThisObject())
+                      .getContentResolver()
+                      .takePersistableUriPermission(
+                          treeUri,
+                          Intent.FLAG_GRANT_READ_URI_PERMISSION
+                              | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                } catch (Throwable ignored) {
                 }
+                SettingsStore.setSettingsDir(treeUri.toString());
+                SettingsStore.load(Main.options);
                 pendingRestart = true;
                 if (onSettingsReloadRequest != null) onSettingsReloadRequest.run();
-              } catch (Throwable t) {
-                XposedBridge.log("Knot: Failed to copy font file: " + t.getMessage());
-              }
-            } else if (requestCode == PICK_RESTORE_DB_CODE) {
-              param.setResult(null);
-              if ((int) param.args[1] != Activity.RESULT_OK || param.args[2] == null) return;
-              Uri dbUri = ((Intent) param.args[2]).getData();
-              if (dbUri == null) return;
+                return null;
+              } else if (requestCode == PICK_FONT_CODE) {
+                if ((int) chain.getArg(1) != Activity.RESULT_OK || chain.getArg(2) == null)
+                  return null;
+                Uri fontUri = ((Intent) chain.getArg(2)).getData();
+                if (fontUri == null) return null;
 
-              Context ctx = (Context) param.thisObject;
-              new Thread(
-                      () -> {
-                        File tempFile = null;
-                        try {
-                          tempFile = File.createTempFile("knot_restore_", ".db", ctx.getCacheDir());
-                          try (java.io.InputStream is =
-                                  ctx.getContentResolver().openInputStream(dbUri);
-                              java.io.FileOutputStream os =
-                                  new java.io.FileOutputStream(tempFile)) {
-                            byte[] buffer = new byte[8192];
-                            int len;
-                            while ((len = is.read(buffer)) != -1) os.write(buffer, 0, len);
+                try {
+                  Context ctx = (Context) chain.getThisObject();
+                  java.io.InputStream is = ctx.getContentResolver().openInputStream(fontUri);
+                  File out = new File(ctx.getFilesDir(), "knot_custom_font.ttf");
+                  java.io.FileOutputStream os = new java.io.FileOutputStream(out);
+                  byte[] buffer = new byte[8192];
+                  int len;
+                  while ((len = is.read(buffer)) != -1) os.write(buffer, 0, len);
+                  os.close();
+                  is.close();
+
+                  String localPath = out.getAbsolutePath();
+                  SettingsStore.save("custom_font_path", localPath);
+                  for (KnotConfig.Item itm : Main.options.items) {
+                    if (itm.key.equals("custom_font_path")) {
+                      itm.value = localPath;
+                      break;
+                    }
+                  }
+                  pendingRestart = true;
+                  if (onSettingsReloadRequest != null) onSettingsReloadRequest.run();
+                } catch (Throwable t) {
+                  Knot.log("Knot: Failed to copy font file: " + t.getMessage());
+                }
+                return null;
+              } else if (requestCode == PICK_RESTORE_DB_CODE) {
+                if ((int) chain.getArg(1) != Activity.RESULT_OK || chain.getArg(2) == null)
+                  return null;
+                Uri dbUri = ((Intent) chain.getArg(2)).getData();
+                if (dbUri == null) return null;
+
+                Context ctx = (Context) chain.getThisObject();
+                new Thread(
+                        () -> {
+                          File tempFile = null;
+                          try {
+                            tempFile =
+                                File.createTempFile("knot_restore_", ".db", ctx.getCacheDir());
+                            try (java.io.InputStream is =
+                                    ctx.getContentResolver().openInputStream(dbUri);
+                                java.io.FileOutputStream os =
+                                    new java.io.FileOutputStream(tempFile)) {
+                              byte[] buffer = new byte[8192];
+                              int len;
+                              while ((len = is.read(buffer)) != -1) os.write(buffer, 0, len);
+                            }
+
+                            final File finalFile = tempFile;
+                            new Handler(Looper.getMainLooper())
+                                .post(
+                                    () -> {
+                                      int themeId =
+                                          ThemeUtils.isContextDarkTheme(ctx)
+                                              ? android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK
+                                              : android.app.AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
+                                      new AlertDialog.Builder(ctx, themeId)
+                                          .setTitle(ModuleStrings.RESTORE_CONFIRM_TITLE)
+                                          .setMessage(ModuleStrings.RESTORE_CONFIRM_MSG)
+                                          .setPositiveButton(
+                                              ModuleStrings.SETTINGS_YES,
+                                              (d, w) -> {
+                                                BackupRestoreHook.runRestore(ctx, finalFile);
+                                              })
+                                          .setNegativeButton(
+                                              ModuleStrings.SETTINGS_CANCEL,
+                                              (d, w) -> finalFile.delete())
+                                          .show();
+                                    });
+                          } catch (Throwable t) {
+                            Knot.log("Knot: Failed to prepare restore DB: " + t.getMessage());
+                            if (tempFile != null) tempFile.delete();
                           }
+                        })
+                    .start();
+                return null;
+              }
+              return chain.proceed();
+            });
 
-                          final File finalFile = tempFile;
-                          new Handler(Looper.getMainLooper())
-                              .post(
-                                  () -> {
-                                    int themeId =
-                                        ThemeUtils.isContextDarkTheme(ctx)
-                                            ? android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK
-                                            : android.app.AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
-                                    new AlertDialog.Builder(ctx, themeId)
-                                        .setTitle(ModuleStrings.RESTORE_CONFIRM_TITLE)
-                                        .setMessage(ModuleStrings.RESTORE_CONFIRM_MSG)
-                                        .setPositiveButton(
-                                            ModuleStrings.SETTINGS_YES,
-                                            (d, w) -> {
-                                              BackupRestoreHook.runRestore(ctx, finalFile);
-                                            })
-                                        .setNegativeButton(
-                                            ModuleStrings.SETTINGS_CANCEL,
-                                            (d, w) -> finalFile.delete())
-                                        .show();
-                                  });
-                        } catch (Throwable t) {
-                          XposedBridge.log("Knot: Failed to prepare restore DB: " + t.getMessage());
-                          if (tempFile != null) tempFile.delete();
-                        }
-                      })
-                  .start();
-            }
-          }
-        });
-
-    XposedHelpers.findAndHookMethod(
-        android.app.Activity.class,
-        "onDestroy",
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam param) {
-            if (param.thisObject != dialogHost) return;
-            try {
-              Dialog d = settingsDialog;
-              if (d != null && d.isShowing()) d.dismiss();
-            } catch (Throwable ignored) {
-            }
-            settingsDialog = null;
-            dialogHost = null;
-          }
-        });
+    Knot.module
+        .hook(Reflect.findMethodExact(android.app.Activity.class, "onDestroy"))
+        .intercept(
+            chain -> {
+              if (chain.getThisObject() == dialogHost) {
+                try {
+                  Dialog d = settingsDialog;
+                  if (d != null && d.isShowing()) d.dismiss();
+                } catch (Throwable ignored) {
+                }
+                settingsDialog = null;
+                dialogHost = null;
+              }
+              return chain.proceed();
+            });
   }
 
   private void displaySettingsDialog(Context ctx) {
@@ -494,7 +489,7 @@ public class SettingsUIInjector implements BaseHook {
           .setInterpolator(new DecelerateInterpolator())
           .start();
     } catch (Throwable e) {
-      XposedBridge.log("Knot: Dialog display failed: " + e.getMessage());
+      Knot.log("Knot: Dialog display failed: " + e.getMessage());
     }
   }
 
@@ -571,7 +566,7 @@ public class SettingsUIInjector implements BaseHook {
       View navHeader = hostContainer.findViewById(currentCfg.res.idHeader);
       if (navHeader != null) {
         try {
-          XposedHelpers.callMethod(navHeader, currentCfg.main.methodRefreshNavHeader, win);
+          Reflect.callMethod(navHeader, currentCfg.main.methodRefreshNavHeader, win);
         } catch (Throwable t) {
           if (currentCfg.res.idStatusBarGuide != 0) {
             View guide = navHeader.findViewById(currentCfg.res.idStatusBarGuide);
@@ -588,14 +583,13 @@ public class SettingsUIInjector implements BaseHook {
             }
           }
         }
-        XposedHelpers.callMethod(
+        Reflect.callMethod(
             navHeader, currentCfg.main.methodHeaderSetTitle, ModuleStrings.SETTINGS_TITLE);
         try {
-          XposedHelpers.callMethod(
-              navHeader, currentCfg.main.methodHeaderSetButtonVisibility, true);
+          Reflect.callMethod(navHeader, currentCfg.main.methodHeaderSetButtonVisibility, true);
         } catch (Throwable ignored) {
         }
-        XposedHelpers.callMethod(
+        Reflect.callMethod(
             navHeader,
             currentCfg.main.methodHeaderSetButtonListener,
             (View.OnClickListener) v -> initiateDialogClosure());
@@ -672,11 +666,11 @@ public class SettingsUIInjector implements BaseHook {
 
     LineVersion.Config currentCfg = LineVersion.get();
     String title = (category == null) ? ModuleStrings.SETTINGS_TITLE : category.label;
-    XposedHelpers.callMethod(
+    Reflect.callMethod(
         cachedNavHeader, currentCfg.main.methodRefreshNavHeader, settingsDialog.getWindow());
-    XposedHelpers.callMethod(cachedNavHeader, currentCfg.main.methodHeaderSetTitle, title);
+    Reflect.callMethod(cachedNavHeader, currentCfg.main.methodHeaderSetTitle, title);
 
-    XposedHelpers.callMethod(
+    Reflect.callMethod(
         cachedNavHeader,
         currentCfg.main.methodHeaderSetButtonListener,
         (View.OnClickListener)
@@ -828,22 +822,22 @@ public class SettingsUIInjector implements BaseHook {
         row = infl.inflate(currentCfg.res.layoutCheckbox, parent, false);
         boolean isEnabled = SettingsStore.get(i.key, i.enabled);
 
-        XposedHelpers.callMethod(row, currentCfg.settings.methodSetTitleText, i.label);
-        XposedHelpers.callMethod(
+        Reflect.callMethod(row, currentCfg.settings.methodSetTitleText, i.label);
+        Reflect.callMethod(
             row, currentCfg.settings.methodSetDescription, i.description, null, null);
 
         if (toggleType != null)
-          XposedHelpers.callMethod(row, currentCfg.settings.methodSetItemType, toggleType);
+          Reflect.callMethod(row, currentCfg.settings.methodSetItemType, toggleType);
         if (statusEnum != null)
-          XposedHelpers.callMethod(row, currentCfg.settings.methodSetSyncStatus, statusEnum);
+          Reflect.callMethod(row, currentCfg.settings.methodSetSyncStatus, statusEnum);
 
-        XposedHelpers.callMethod(row, currentCfg.settings.methodSetChecked, isEnabled);
-        XposedHelpers.callMethod(row, currentCfg.settings.methodSetDividerVisible, true);
+        Reflect.callMethod(row, currentCfg.settings.methodSetChecked, isEnabled);
+        Reflect.callMethod(row, currentCfg.settings.methodSetDividerVisible, true);
 
         row.setOnClickListener(
             v -> {
               boolean newState = !SettingsStore.get(settingKey, i.enabled);
-              XposedHelpers.callMethod(v, currentCfg.settings.methodSetChecked, newState);
+              Reflect.callMethod(v, currentCfg.settings.methodSetChecked, newState);
               for (KnotConfig.Item itm : Main.options.items) {
                 if (itm.key.equals(settingKey)) {
                   itm.enabled = newState;

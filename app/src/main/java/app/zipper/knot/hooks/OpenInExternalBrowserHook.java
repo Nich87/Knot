@@ -4,53 +4,54 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 
 public class OpenInExternalBrowserHook implements BaseHook {
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     if (config == null || !config.openUrlInDefaultBrowser.enabled) return;
 
     try {
-      XposedHelpers.findAndHookMethod(
-          "jp.naver.line.android.activity.iab.InAppBrowserActivity",
-          lpparam.classLoader,
-          "onCreate",
-          Bundle.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              Activity activity = (Activity) param.thisObject;
-              Intent intent = activity.getIntent();
-              if (intent == null) return;
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  "jp.naver.line.android.activity.iab.InAppBrowserActivity",
+                  lpparam.classLoader,
+                  "onCreate",
+                  Bundle.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                Activity activity = (Activity) chain.getThisObject();
+                Intent intent = activity.getIntent();
+                if (intent == null) return result;
 
-              Uri uri = intent.getData();
-              if (uri == null) return;
+                Uri uri = intent.getData();
+                if (uri == null) return result;
 
-              String url = uri.toString();
+                String url = uri.toString();
 
-              // URLs handled by IAB for functionality
-              if (url.startsWith("https://account-center.lylink.yahoo.co.jp")
-                  || url.startsWith("https://access.line.me")
-                  || url.startsWith(
-                      "https://id.lylink.yahoo.co.jp/federation/ly/normal/callback/first")) {
-                return;
-              }
+                // URLs handled by IAB for functionality
+                if (url.startsWith("https://account-center.lylink.yahoo.co.jp")
+                    || url.startsWith("https://access.line.me")
+                    || url.startsWith(
+                        "https://id.lylink.yahoo.co.jp/federation/ly/normal/callback/first")) {
+                  return result;
+                }
 
-              Intent externalIntent = new Intent(Intent.ACTION_VIEW, uri);
-              externalIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-              activity.startActivity(externalIntent);
+                Intent externalIntent = new Intent(Intent.ACTION_VIEW, uri);
+                externalIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                activity.startActivity(externalIntent);
 
-              activity.finish();
-            }
-          });
+                activity.finish();
+                return result;
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Failed to hook InAppBrowserActivity: " + t.getMessage());
+      Knot.log("Knot: Failed to hook InAppBrowserActivity: " + t.getMessage());
     }
   }
 }

@@ -1,11 +1,10 @@
 package app.zipper.knot.utils;
 
-import android.app.AndroidAppHelper;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import app.zipper.knot.Knot;
 import app.zipper.knot.LineVersion;
-import de.robv.android.xposed.XposedBridge;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ public class LineDBUtils {
   public static String resolveMemberName(String mid) {
     if (mid == null) return null;
     try {
-      Context context = AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return null;
       File dbFile = context.getDatabasePath("contact");
       if (dbFile.exists()) {
@@ -39,7 +38,7 @@ public class LineDBUtils {
         db.close();
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Member name resolution failed: " + t);
+      Knot.log("Knot: Member name resolution failed: " + t);
     }
     return null;
   }
@@ -47,7 +46,7 @@ public class LineDBUtils {
   public static String resolveChatName(String chatId) {
     if (chatId == null) return null;
     try {
-      Context context = AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return null;
       File dbFile = context.getDatabasePath("naver_line");
       if (dbFile.exists()) {
@@ -74,7 +73,7 @@ public class LineDBUtils {
   public static String resolveMessageContent(String serverId) {
     if (serverId == null) return null;
     try {
-      Context context = AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return null;
       File dbFile = context.getDatabasePath("naver_line");
       if (dbFile.exists()) {
@@ -103,7 +102,7 @@ public class LineDBUtils {
   public static long resolveLocalMessageId(String serverId) {
     if (serverId == null) return -1L;
     try {
-      Context context = AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return -1L;
       File dbFile = context.getDatabasePath("naver_line");
       if (dbFile.exists()) {
@@ -148,7 +147,7 @@ public class LineDBUtils {
 
   public static String getMyMid() {
     try {
-      Context context = AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return null;
 
       LineVersion.Config cfg = LineVersion.get();
@@ -186,7 +185,7 @@ public class LineDBUtils {
       } catch (Throwable ignored) {
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Error in getMyMid: " + t.getMessage());
+      Knot.log("Knot: Error in getMyMid: " + t.getMessage());
     }
     return null;
   }
@@ -205,7 +204,7 @@ public class LineDBUtils {
       String chatId, String senderMid, String keyword) {
     List<MessageRecord> results = new ArrayList<>();
     try {
-      Context context = AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return results;
       File dbFile = context.getDatabasePath("naver_line");
       if (!dbFile.exists()) return results;
@@ -243,7 +242,7 @@ public class LineDBUtils {
         db.close();
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: searchMessagesByMember failed: " + t);
+      Knot.log("Knot: searchMessagesByMember failed: " + t);
     }
     return results;
   }
@@ -252,7 +251,7 @@ public class LineDBUtils {
     List<MemberInfo> results = new ArrayList<>();
     if (chatId == null) return results;
     try {
-      Context context = AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return results;
       File dbFile = context.getDatabasePath("naver_line");
       if (!dbFile.exists()) return results;
@@ -302,7 +301,7 @@ public class LineDBUtils {
         db.close();
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: getChatMembers failed: " + t);
+      Knot.log("Knot: getChatMembers failed: " + t);
     }
     return results;
   }
@@ -340,7 +339,7 @@ public class LineDBUtils {
     if (targetChatId == null || latestMsgId == null) return results;
 
     try {
-      Context context = AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return results;
 
       File dbFile = context.getDatabasePath("naver_line");
@@ -413,7 +412,7 @@ public class LineDBUtils {
         db.close();
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Message resolution error: " + t.getMessage());
+      Knot.log("Knot: Message resolution error: " + t.getMessage());
     }
     return results;
   }

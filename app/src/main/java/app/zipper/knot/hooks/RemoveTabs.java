@@ -4,55 +4,52 @@ import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class RemoveTabs implements BaseHook {
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
 
-    XposedHelpers.findAndHookMethod(
-        cfg.main.mainActivity,
-        lpparam.classLoader,
-        "onResume",
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) {
-            Activity host = (Activity) param.thisObject;
-            LineVersion.Config c = LineVersion.get();
+    Knot.module
+        .hook(Reflect.findMethodExact(cfg.main.mainActivity, lpparam.classLoader, "onResume"))
+        .intercept(
+            chain -> {
+              Object result = chain.proceed();
+              Activity host = (Activity) chain.getThisObject();
+              LineVersion.Config c = LineVersion.get();
 
-            if (SettingsStore.get(config.removeTabVoom.key, config.removeTabVoom.enabled))
-              deactivateTab(host, c.tabs.resVoom);
-            if (SettingsStore.get(config.removeTabNews.key, config.removeTabNews.enabled))
-              deactivateTab(host, c.tabs.resNews);
-            if (SettingsStore.get(config.removeTabMini.key, config.removeTabMini.enabled))
-              deactivateTab(host, c.tabs.resMini);
-            if (SettingsStore.get(config.extendTabClickArea.key, config.extendTabClickArea.enabled))
-              expandInteractionArea(host);
-            if (SettingsStore.get(config.hideTabText.key, config.hideTabText.enabled))
-              applyCompactLayout(host);
-          }
-        });
+              if (SettingsStore.get(config.removeTabVoom.key, config.removeTabVoom.enabled))
+                deactivateTab(host, c.tabs.resVoom);
+              if (SettingsStore.get(config.removeTabNews.key, config.removeTabNews.enabled))
+                deactivateTab(host, c.tabs.resNews);
+              if (SettingsStore.get(config.removeTabMini.key, config.removeTabMini.enabled))
+                deactivateTab(host, c.tabs.resMini);
+              if (SettingsStore.get(
+                  config.extendTabClickArea.key, config.extendTabClickArea.enabled))
+                expandInteractionArea(host);
+              if (SettingsStore.get(config.hideTabText.key, config.hideTabText.enabled))
+                applyCompactLayout(host);
+              return result;
+            });
 
     try {
       Class<?> bnbLabelCls =
-          XposedHelpers.findClass(cfg.tabs.bottomNavigationBarTextViewClass, lpparam.classLoader);
-      XposedBridge.hookAllConstructors(
+          Reflect.findClass(cfg.tabs.bottomNavigationBarTextViewClass, lpparam.classLoader);
+      Knot.hookAllCtors(
           bnbLabelCls,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              if (SettingsStore.get(config.hideTabText.key, config.hideTabText.enabled)) {
-                ((View) param.thisObject).setVisibility(View.INVISIBLE);
-              }
+          chain -> {
+            Object result = chain.proceed();
+            if (SettingsStore.get(config.hideTabText.key, config.hideTabText.enabled)) {
+              ((View) chain.getThisObject()).setVisibility(View.INVISIBLE);
             }
+            return result;
           });
     } catch (Throwable ignored) {
     }

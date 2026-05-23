@@ -8,12 +8,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -31,7 +30,7 @@ public class FcmFixHook implements BaseHook {
 
   private static void logVerbose(String message) {
     if (VERBOSE_LOGGING) {
-      XposedBridge.log("Knot: " + message);
+      Knot.log("Knot: " + message);
     }
   }
 
@@ -41,12 +40,12 @@ public class FcmFixHook implements BaseHook {
     }
 
     try {
-      return XposedHelpers.getSurroundingThis(innerObject);
+      return Reflect.getSurroundingThis(innerObject);
     } catch (Throwable ignored) {
     }
 
     try {
-      return XposedHelpers.getObjectField(innerObject, "this$0");
+      return Reflect.getObjectField(innerObject, "this$0");
     } catch (Throwable ignored) {
     }
 
@@ -66,7 +65,7 @@ public class FcmFixHook implements BaseHook {
     }
 
     try {
-      return XposedHelpers.getObjectField(innerObject, "a");
+      return Reflect.getObjectField(innerObject, "a");
     } catch (Throwable ignored) {
     }
 
@@ -77,7 +76,7 @@ public class FcmFixHook implements BaseHook {
       throws NoSuchFieldException, IllegalAccessException {
     for (String fieldName : fieldNames) {
       try {
-        return XposedHelpers.getObjectField(target, fieldName);
+        return Reflect.getObjectField(target, fieldName);
       } catch (Throwable ignored) {
       }
     }
@@ -98,7 +97,7 @@ public class FcmFixHook implements BaseHook {
       throws NoSuchFieldException {
     for (String fieldName : fieldNames) {
       try {
-        XposedHelpers.setLongField(target, fieldName, value);
+        Reflect.setLongField(target, fieldName, value);
         return;
       } catch (Throwable ignored) {
       }
@@ -110,7 +109,7 @@ public class FcmFixHook implements BaseHook {
       throws NoSuchFieldException {
     for (String fieldName : fieldNames) {
       try {
-        XposedHelpers.setBooleanField(target, fieldName, value);
+        Reflect.setBooleanField(target, fieldName, value);
         return;
       } catch (Throwable ignored) {
       }
@@ -188,7 +187,7 @@ public class FcmFixHook implements BaseHook {
     if (!VERBOSE_LOGGING) {
       return;
     }
-    XposedBridge.log("Knot: " + prefix + " " + describeIntent(intent));
+    Knot.log("Knot: " + prefix + " " + describeIntent(intent));
   }
 
   private static Object resolveLegyStreamingManager(
@@ -201,7 +200,7 @@ public class FcmFixHook implements BaseHook {
       Object streamingManager, LineVersion.Config.NotificationFix fixCfg, Object backgroundState)
       throws Throwable {
     Object stateField = readFieldCandidate(streamingManager, fixCfg.legyStateFieldCandidates);
-    XposedHelpers.callMethod(stateField, "setValue", backgroundState);
+    Reflect.callMethod(stateField, "setValue", backgroundState);
     writeLongFieldCandidate(streamingManager, Long.MAX_VALUE, fixCfg.legyTimeoutFieldCandidates);
     writeBooleanFieldCandidate(
         streamingManager, false, fixCfg.legyBackgroundWorkerFlagFieldCandidates);
@@ -224,13 +223,12 @@ public class FcmFixHook implements BaseHook {
 
     try {
       Context appContext = context.getApplicationContext();
-      Class<?> dispatcherClass = XposedHelpers.findClass(fixCfg.firebaseDispatcherClass, cl);
+      Class<?> dispatcherClass = Reflect.findClass(fixCfg.firebaseDispatcherClass, cl);
       Object dispatcher =
-          XposedHelpers.callStaticMethod(dispatcherClass, fixCfg.firebaseDispatcherAccessorMethod);
-      Object queueObj =
-          XposedHelpers.getObjectField(dispatcher, fixCfg.firebaseDispatcherQueueField);
+          Reflect.callStaticMethod(dispatcherClass, fixCfg.firebaseDispatcherAccessorMethod);
+      Object queueObj = Reflect.getObjectField(dispatcher, fixCfg.firebaseDispatcherQueueField);
       if (!(queueObj instanceof Queue)) {
-        XposedBridge.log("Knot: Firebase direct-delivery queue unavailable");
+        Knot.log("Knot: Firebase direct-delivery queue unavailable");
         return false;
       }
 
@@ -238,7 +236,7 @@ public class FcmFixHook implements BaseHook {
       Queue<Intent> queue = (Queue<Intent>) queueObj;
       Intent queuedIntent = new Intent(originalIntent);
       if (!queue.offer(queuedIntent)) {
-        XposedBridge.log("Knot: Firebase direct-delivery queue rejected intent");
+        Knot.log("Knot: Firebase direct-delivery queue rejected intent");
         return false;
       }
 
@@ -249,20 +247,19 @@ public class FcmFixHook implements BaseHook {
       Object component = null;
       try {
         component =
-            XposedHelpers.callStaticMethod(
-                XposedHelpers.findClass(fixCfg.firebaseWakefulStartClass, cl),
+            Reflect.callStaticMethod(
+                Reflect.findClass(fixCfg.firebaseWakefulStartClass, cl),
                 fixCfg.firebaseWakefulStartMethod,
                 appContext,
                 serviceIntent);
       } catch (Throwable wakefulFailure) {
-        XposedBridge.log(
-            "Knot: wakeful Firebase direct-delivery failed, falling back: " + wakefulFailure);
+        Knot.log("Knot: wakeful Firebase direct-delivery failed, falling back: " + wakefulFailure);
         component = appContext.startService(serviceIntent);
       }
 
       if (component == null) {
         queue.remove(queuedIntent);
-        XposedBridge.log("Knot: Firebase direct-delivery startService returned null");
+        Knot.log("Knot: Firebase direct-delivery startService returned null");
         return false;
       }
 
@@ -270,13 +267,13 @@ public class FcmFixHook implements BaseHook {
       logIntent("forced-direct-intent", originalIntent);
       return true;
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Firebase direct-delivery failed: " + t);
+      Knot.log("Knot: Firebase direct-delivery failed: " + t);
       return false;
     }
   }
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     final ClassLoader cl = lpparam.classLoader;
     LineVersion.Config versionConfig = LineVersion.get();
     if (versionConfig == null) {
@@ -285,254 +282,246 @@ public class FcmFixHook implements BaseHook {
     final LineVersion.Config.NotificationFix fixCfg = versionConfig.notificationFix;
 
     try {
-      XposedHelpers.findAndHookMethod(
-          fixCfg.lineLifecycleObserverClass,
-          cl,
-          fixCfg.lineLifecycleObserverMethod,
-          LifecycleOwner.class,
-          Lifecycle.Event.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  fixCfg.lineLifecycleObserverClass,
+                  cl,
+                  fixCfg.lineLifecycleObserverMethod,
+                  LifecycleOwner.class,
+                  Lifecycle.Event.class))
+          .intercept(
+              chain -> {
+                if (!isEnabled(config)) return chain.proceed();
 
-              Lifecycle.Event event = (Lifecycle.Event) param.args[1];
-              if (event != Lifecycle.Event.ON_STOP) {
-                return;
-              }
-
-              logVerbose("suppressing LINE background lifecycle stop");
-              param.setResult(null);
-            }
-          });
-    } catch (Throwable ignored) {
-    }
-
-    try {
-      final Class<?> streamingStateClass =
-          XposedHelpers.findClass(fixCfg.legyStreamingStateClass, cl);
-      final Object backgroundState =
-          XposedHelpers.getStaticObjectField(streamingStateClass, fixCfg.legyBackgroundStateField);
-
-      XposedHelpers.findAndHookMethod(
-          fixCfg.legyStreamingLifecycleClass,
-          cl,
-          fixCfg.legyStreamingLifecycleMethod,
-          XposedHelpers.findClass(fixCfg.legyLifecycleOwnerClass, cl),
-          XposedHelpers.findClass(fixCfg.legyLifecycleEventClass, cl),
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
-
-              Object event = param.args[1];
-              if (event == null || !"ON_STOP".equals(event.toString())) {
-                return;
-              }
-
-              try {
-                Object observer = param.thisObject;
-                Object streamingManager = resolveLegyStreamingManager(observer, fixCfg);
-                if (streamingManager == null) {
-                  XposedBridge.log("Knot: failed to resolve legy streaming outer instance");
-                  return;
+                Lifecycle.Event event = (Lifecycle.Event) chain.getArg(1);
+                if (event != Lifecycle.Event.ON_STOP) {
+                  return chain.proceed();
                 }
 
-                suppressLegyBackgroundDisconnect(streamingManager, fixCfg, backgroundState);
-                logVerbose("suppressed legy streaming background disconnect timer");
-                param.setResult(null);
-              } catch (Throwable t) {
-                XposedBridge.log("Knot: failed to suppress legy background disconnect: " + t);
-              }
-            }
-          });
+                logVerbose("suppressing LINE background lifecycle stop");
+                return null;
+              });
     } catch (Throwable ignored) {
     }
 
     try {
-      XposedHelpers.findAndHookMethod(
-          fixCfg.legyDisconnectRunnableClass,
-          cl,
-          "run",
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
-              logVerbose("blocked legy streaming disconnect runnable");
-              param.setResult(null);
-            }
-          });
+      final Class<?> streamingStateClass = Reflect.findClass(fixCfg.legyStreamingStateClass, cl);
+      final Object backgroundState =
+          Reflect.getStaticObjectField(streamingStateClass, fixCfg.legyBackgroundStateField);
+
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  fixCfg.legyStreamingLifecycleClass,
+                  cl,
+                  fixCfg.legyStreamingLifecycleMethod,
+                  Reflect.findClass(fixCfg.legyLifecycleOwnerClass, cl),
+                  Reflect.findClass(fixCfg.legyLifecycleEventClass, cl)))
+          .intercept(
+              chain -> {
+                if (!isEnabled(config)) return chain.proceed();
+
+                Object event = chain.getArg(1);
+                if (event == null || !"ON_STOP".equals(event.toString())) {
+                  return chain.proceed();
+                }
+
+                try {
+                  Object observer = chain.getThisObject();
+                  Object streamingManager = resolveLegyStreamingManager(observer, fixCfg);
+                  if (streamingManager == null) {
+                    Knot.log("Knot: failed to resolve legy streaming outer instance");
+                    return chain.proceed();
+                  }
+
+                  suppressLegyBackgroundDisconnect(streamingManager, fixCfg, backgroundState);
+                  logVerbose("suppressed legy streaming background disconnect timer");
+                  return null;
+                } catch (Throwable t) {
+                  Knot.log("Knot: failed to suppress legy background disconnect: " + t);
+                  return chain.proceed();
+                }
+              });
     } catch (Throwable ignored) {
     }
 
     try {
-      Class<?> fcmServiceClass = XposedHelpers.findClass(fixCfg.lineFcmServiceClass, cl);
-      Class<?> remoteMessageClass = XposedHelpers.findClass(fixCfg.firebaseRemoteMessageClass, cl);
+      Knot.module
+          .hook(Reflect.findMethodExact(fixCfg.legyDisconnectRunnableClass, cl, "run"))
+          .intercept(
+              chain -> {
+                if (!isEnabled(config)) return chain.proceed();
+                logVerbose("blocked legy streaming disconnect runnable");
+                return null;
+              });
+    } catch (Throwable ignored) {
+    }
 
-      XposedHelpers.findAndHookMethod(
-          fcmServiceClass,
-          fixCfg.lineFcmDispatchMethod,
-          remoteMessageClass,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
-              logVerbose("LINE FCM message dispatch entered");
-            }
-          });
+    try {
+      Class<?> fcmServiceClass = Reflect.findClass(fixCfg.lineFcmServiceClass, cl);
+      Class<?> remoteMessageClass = Reflect.findClass(fixCfg.firebaseRemoteMessageClass, cl);
+
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  fcmServiceClass, fixCfg.lineFcmDispatchMethod, remoteMessageClass))
+          .intercept(
+              chain -> {
+                if (isEnabled(config)) logVerbose("LINE FCM message dispatch entered");
+                return chain.proceed();
+              });
 
       for (Method method : fcmServiceClass.getDeclaredMethods()) {
         if (!fixCfg.lineFcmOwnershipMethod.equals(method.getName())
             || method.getParameterTypes().length != 2) {
           continue;
         }
-        XposedBridge.hookMethod(
-            method,
-            new XC_MethodHook() {
-              @Override
-              protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                if (!isEnabled(config)) return;
-
-                param.setResult(Boolean.TRUE);
-                logVerbose("forced LINE FCM ownership validation pass");
-              }
-            });
+        method.setAccessible(true);
+        Knot.module
+            .hook(method)
+            .intercept(
+                chain -> {
+                  Object result = chain.proceed();
+                  if (isEnabled(config)) {
+                    logVerbose("forced LINE FCM ownership validation pass");
+                    return Boolean.TRUE;
+                  }
+                  return result;
+                });
         break;
       }
 
-      XposedHelpers.findAndHookMethod(
-          fcmServiceClass,
-          fixCfg.lineFcmTokenMethod,
-          String.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
-              logVerbose("LINE received Firebase token refresh: " + param.args[0]);
-            }
-          });
+      Knot.module
+          .hook(Reflect.findMethodExact(fcmServiceClass, fixCfg.lineFcmTokenMethod, String.class))
+          .intercept(
+              chain -> {
+                if (isEnabled(config))
+                  logVerbose("LINE received Firebase token refresh: " + chain.getArg(0));
+                return chain.proceed();
+              });
     } catch (Throwable ignored) {
     }
 
     try {
-      Class<?> receiverEnvelopeClass =
-          XposedHelpers.findClass(fixCfg.firebaseReceiverEnvelopeClass, cl);
-      XposedHelpers.findAndHookMethod(
-          fixCfg.firebaseReceiverClass,
-          cl,
-          fixCfg.firebaseReceiverMethod,
-          Context.class,
-          receiverEnvelopeClass,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
+      Class<?> receiverEnvelopeClass = Reflect.findClass(fixCfg.firebaseReceiverEnvelopeClass, cl);
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  fixCfg.firebaseReceiverClass,
+                  cl,
+                  fixCfg.firebaseReceiverMethod,
+                  Context.class,
+                  receiverEnvelopeClass))
+          .intercept(
+              chain -> {
+                if (!isEnabled(config)) return chain.proceed();
 
-              Object envelope = param.args[1];
-              Intent intent =
-                  envelope == null
-                      ? null
-                      : (Intent)
-                          XposedHelpers.getObjectField(
-                              envelope, fixCfg.firebaseReceiverIntentField);
-              logIntent("FirebaseInstanceIdReceiver received", intent);
-            }
-          });
+                Object envelope = chain.getArg(1);
+                Intent intent =
+                    envelope == null
+                        ? null
+                        : (Intent)
+                            Reflect.getObjectField(envelope, fixCfg.firebaseReceiverIntentField);
+                logIntent("FirebaseInstanceIdReceiver received", intent);
+                return chain.proceed();
+              });
     } catch (Throwable ignored) {
     }
 
     try {
-      XposedHelpers.findAndHookMethod(
-          fixCfg.firebaseDispatcherClass,
-          cl,
-          fixCfg.firebaseDispatcherMethod,
-          Intent.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  fixCfg.firebaseDispatcherClass,
+                  cl,
+                  fixCfg.firebaseDispatcherMethod,
+                  Intent.class))
+          .intercept(
+              chain -> {
+                if (!isEnabled(config)) return chain.proceed();
 
-              Intent intent = (Intent) param.args[0];
-              logIntent("Firebase dispatcher queued", intent);
+                Intent intent = (Intent) chain.getArg(0);
+                logIntent("Firebase dispatcher queued", intent);
 
-              if (intent == null
-                  || !"com.google.android.c2dm.intent.RECEIVE".equals(intent.getAction())) {
-                return;
-              }
+                if (intent == null
+                    || !"com.google.android.c2dm.intent.RECEIVE".equals(intent.getAction())) {
+                  return chain.proceed();
+                }
 
-              Context context =
-                  (Context)
-                      XposedHelpers.getObjectField(
-                          param.thisObject, fixCfg.firebaseDispatcherContextField);
-              if (!deliverMessagingIntentDirectly(context, cl, fixCfg, intent)) {
-                return;
-              }
+                Context context =
+                    (Context)
+                        Reflect.getObjectField(
+                            chain.getThisObject(), fixCfg.firebaseDispatcherContextField);
+                if (!deliverMessagingIntentDirectly(context, cl, fixCfg, intent)) {
+                  return chain.proceed();
+                }
 
-              Object completedTask =
-                  XposedHelpers.callStaticMethod(
-                      XposedHelpers.findClass(fixCfg.firebaseCompletedTaskClass, cl),
-                      fixCfg.firebaseCompletedTaskMethod,
-                      Integer.valueOf(-1));
-              param.setResult(completedTask);
-            }
-          });
+                return Reflect.callStaticMethod(
+                    Reflect.findClass(fixCfg.firebaseCompletedTaskClass, cl),
+                    fixCfg.firebaseCompletedTaskMethod,
+                    Integer.valueOf(-1));
+              });
     } catch (Throwable ignored) {
     }
 
     try {
-      XposedHelpers.findAndHookMethod(
-          fixCfg.firebaseBindDeliveryClass,
-          cl,
-          fixCfg.firebaseBindDeliveryMethod,
-          Intent.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
-              logIntent("Firebase bind-delivery queued", (Intent) param.args[0]);
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  fixCfg.firebaseBindDeliveryClass,
+                  cl,
+                  fixCfg.firebaseBindDeliveryMethod,
+                  Intent.class))
+          .intercept(
+              chain -> {
+                if (!isEnabled(config)) return chain.proceed();
+                logIntent("Firebase bind-delivery queued", (Intent) chain.getArg(0));
+                return chain.proceed();
+              });
     } catch (Throwable ignored) {
     }
 
     try {
-      XposedHelpers.findAndHookMethod(
-          fixCfg.firebaseMessagingServiceClass,
-          cl,
-          fixCfg.firebaseMessagingHandleMethod,
-          Intent.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
-              logIntent("FirebaseMessagingService handling", (Intent) param.args[0]);
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  fixCfg.firebaseMessagingServiceClass,
+                  cl,
+                  fixCfg.firebaseMessagingHandleMethod,
+                  Intent.class))
+          .intercept(
+              chain -> {
+                if (!isEnabled(config)) return chain.proceed();
+                logIntent("FirebaseMessagingService handling", (Intent) chain.getArg(0));
+                return chain.proceed();
+              });
     } catch (Throwable ignored) {
     }
 
     try {
-      XposedHelpers.findAndHookMethod(
-          fixCfg.lineFcmServiceBaseClass,
-          cl,
-          "onStartCommand",
-          Intent.class,
-          int.class,
-          int.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (!isEnabled(config)) return;
-              if (!(param.thisObject instanceof Service)) return;
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  fixCfg.lineFcmServiceBaseClass,
+                  cl,
+                  "onStartCommand",
+                  Intent.class,
+                  int.class,
+                  int.class))
+          .intercept(
+              chain -> {
+                if (!isEnabled(config)) return chain.proceed();
+                if (!(chain.getThisObject() instanceof Service)) return chain.proceed();
 
-              Service service = (Service) param.thisObject;
-              if (!fixCfg.lineFcmServiceClass.equals(service.getClass().getName())) {
-                return;
-              }
+                Service service = (Service) chain.getThisObject();
+                if (!fixCfg.lineFcmServiceClass.equals(service.getClass().getName())) {
+                  return chain.proceed();
+                }
 
-              logIntent("LineFirebaseMessagingService onStartCommand", (Intent) param.args[0]);
-            }
-          });
+                logIntent("LineFirebaseMessagingService onStartCommand", (Intent) chain.getArg(0));
+                return chain.proceed();
+              });
     } catch (Throwable ignored) {
     }
   }

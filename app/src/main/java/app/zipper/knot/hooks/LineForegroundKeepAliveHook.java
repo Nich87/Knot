@@ -13,12 +13,11 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 
 public class LineForegroundKeepAliveHook implements BaseHook {
 
@@ -34,7 +33,7 @@ public class LineForegroundKeepAliveHook implements BaseHook {
   }
 
   private static void log(String message) {
-    XposedBridge.log("Knot: " + message);
+    Knot.log("Knot: " + message);
   }
 
   private static Notification buildNotification(Context context) {
@@ -128,7 +127,7 @@ public class LineForegroundKeepAliveHook implements BaseHook {
       }
       log("requested LINE foreground keep-alive service");
     } catch (Throwable t) {
-      XposedBridge.log("Knot: failed to start LINE foreground keep-alive service: " + t);
+      Knot.log("Knot: failed to start LINE foreground keep-alive service: " + t);
     }
   }
 
@@ -148,7 +147,7 @@ public class LineForegroundKeepAliveHook implements BaseHook {
   }
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     if (!isEnabled(config)) {
       return;
     }
@@ -163,66 +162,63 @@ public class LineForegroundKeepAliveHook implements BaseHook {
       return;
     }
 
-    XposedHelpers.findAndHookMethod(
-        Application.class,
-        "onCreate",
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            if (!isEnabled(config)) return;
-            if (!(param.thisObject instanceof Application)) return;
-            Application application = (Application) param.thisObject;
-            appContext = application.getApplicationContext();
+    Knot.module
+        .hook(Reflect.findMethodExact(Application.class, "onCreate"))
+        .intercept(
+            chain -> {
+              Object result = chain.proceed();
+              if (!isEnabled(config)) return result;
+              if (!(chain.getThisObject() instanceof Application)) return result;
+              Application application = (Application) chain.getThisObject();
+              appContext = application.getApplicationContext();
 
-            if (lpparam.processName != null && !lpparam.packageName.equals(lpparam.processName)) {
-              return;
-            }
+              if (lpparam.processName != null && !lpparam.packageName.equals(lpparam.processName)) {
+                return result;
+              }
 
-            scheduleKeepAlive(application, keepAliveCfg);
-          }
-        });
+              scheduleKeepAlive(application, keepAliveCfg);
+              return result;
+            });
 
-    XposedHelpers.findAndHookMethod(
-        keepAliveCfg.serviceClass,
-        lpparam.classLoader,
-        "onStartCommand",
-        Intent.class,
-        int.class,
-        int.class,
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-            if (!isEnabled(config)) return;
-            Intent intent = (Intent) param.args[0];
-            if (intent == null || !KEEP_ALIVE_ACTION.equals(intent.getAction())) {
-              return;
-            }
+    Knot.module
+        .hook(
+            Reflect.findMethodExact(
+                keepAliveCfg.serviceClass,
+                lpparam.classLoader,
+                "onStartCommand",
+                Intent.class,
+                int.class,
+                int.class))
+        .intercept(
+            chain -> {
+              if (!isEnabled(config)) return chain.proceed();
+              Intent intent = (Intent) chain.getArg(0);
+              if (intent == null || !KEEP_ALIVE_ACTION.equals(intent.getAction())) {
+                return chain.proceed();
+              }
 
-            try {
-              startKeepAlive((Service) param.thisObject);
-              log("LINE foreground keep-alive service is active");
-              param.setResult(Service.START_STICKY);
-            } catch (Throwable t) {
-              XposedBridge.log("Knot: failed to activate LINE foreground keep-alive service: " + t);
-              param.setResult(Service.START_NOT_STICKY);
-            }
-          }
-        });
+              try {
+                startKeepAlive((Service) chain.getThisObject());
+                log("LINE foreground keep-alive service is active");
+                return Service.START_STICKY;
+              } catch (Throwable t) {
+                Knot.log("Knot: failed to activate LINE foreground keep-alive service: " + t);
+                return Service.START_NOT_STICKY;
+              }
+            });
 
-    XposedHelpers.findAndHookMethod(
-        keepAliveCfg.serviceClass,
-        lpparam.classLoader,
-        "onDestroy",
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            if (!isEnabled(config)) return;
-            if (appContext == null) return;
-            log("LINE foreground keep-alive service destroyed; scheduling restart");
-            new Handler(Looper.getMainLooper())
-                .postDelayed(() -> requestKeepAlive(appContext, keepAliveCfg), 3000L);
-          }
-        });
+    Knot.module
+        .hook(Reflect.findMethodExact(keepAliveCfg.serviceClass, lpparam.classLoader, "onDestroy"))
+        .intercept(
+            chain -> {
+              Object result = chain.proceed();
+              if (!isEnabled(config)) return result;
+              if (appContext == null) return result;
+              log("LINE foreground keep-alive service destroyed; scheduling restart");
+              new Handler(Looper.getMainLooper())
+                  .postDelayed(() -> requestKeepAlive(appContext, keepAliveCfg), 3000L);
+              return result;
+            });
 
     log("LineForegroundKeepAliveHook installed");
   }

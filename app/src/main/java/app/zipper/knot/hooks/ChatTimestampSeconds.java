@@ -2,13 +2,13 @@ package app.zipper.knot.hooks;
 
 import android.view.View;
 import android.widget.TextView;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
 import app.zipper.knot.Main;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.Reflect;
+import io.github.libxposed.api.XposedInterface;
 import java.lang.reflect.Field;
 import java.util.Calendar;
 import java.util.Locale;
@@ -26,74 +26,74 @@ public class ChatTimestampSeconds implements BaseHook {
   private static int tagKey;
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     if (!config.showSecondsInChatTime.enabled) return;
 
     final LineVersion.Config cfg = LineVersion.get();
     final int timestampId = cfg.res.idTimestamp;
     tagKey = timestampId;
     final Class<?> displayTimeIface =
-        XposedHelpers.findClass(cfg.chatTimestamp.displayTimeInterface, lpparam.classLoader);
+        Reflect.findClass(cfg.chatTimestamp.displayTimeInterface, lpparam.classLoader);
 
-    XposedBridge.hookAllMethods(
-        XposedHelpers.findClass(cfg.unsend.chatMessageViewHolderClass, lpparam.classLoader),
+    Knot.hookAll(
+        Reflect.findClass(cfg.unsend.chatMessageViewHolderClass, lpparam.classLoader),
         cfg.unsend.methodBind,
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam param) {
-            if (!Main.options.showSecondsInChatTime.enabled) return;
+        chain -> {
+          if (Main.options.showSecondsInChatTime.enabled) {
             try {
-              stashCreatedMillis(param, cfg, displayTimeIface, timestampId);
+              stashCreatedMillis(chain, cfg, displayTimeIface, timestampId);
             } catch (Throwable t) {
-              XposedBridge.log("Knot: ChatTimestampSeconds stash error: " + t);
+              Knot.log("Knot: ChatTimestampSeconds stash error: " + t);
             }
           }
+          return chain.proceed();
         });
 
-    XposedHelpers.findAndHookMethod(
-        TextView.class,
-        "setText",
-        CharSequence.class,
-        TextView.BufferType.class,
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam param) {
-            if (!Main.options.showSecondsInChatTime.enabled) return;
-            if (!(param.args[0] instanceof CharSequence)) return;
-            try {
-              TextView view = (TextView) param.thisObject;
-              Object stamp = view.getTag(tagKey);
-              if (!(stamp instanceof Long)) return;
-              String injected = injectSeconds(param.args[0].toString(), (Long) stamp);
-              if (injected != null) param.args[0] = injected;
-            } catch (Throwable t) {
-              XposedBridge.log("Knot: ChatTimestampSeconds setText error: " + t);
-            }
-          }
-        });
+    Knot.module
+        .hook(
+            Reflect.findMethodExact(
+                TextView.class, "setText", CharSequence.class, TextView.BufferType.class))
+        .intercept(
+            chain -> {
+              if (!Main.options.showSecondsInChatTime.enabled) return chain.proceed();
+              if (!(chain.getArg(0) instanceof CharSequence)) return chain.proceed();
+              try {
+                TextView view = (TextView) chain.getThisObject();
+                Object stamp = view.getTag(tagKey);
+                if (!(stamp instanceof Long)) return chain.proceed();
+                String injected = injectSeconds(chain.getArg(0).toString(), (Long) stamp);
+                if (injected != null) {
+                  return chain.proceed(new Object[] {injected, chain.getArg(1)});
+                }
+                return chain.proceed();
+              } catch (Throwable t) {
+                Knot.log("Knot: ChatTimestampSeconds setText error: " + t);
+                return chain.proceed();
+              }
+            });
   }
 
   private static void stashCreatedMillis(
-      XC_MethodHook.MethodHookParam param,
+      XposedInterface.Chain chain,
       LineVersion.Config cfg,
       Class<?> displayTimeIface,
       int timestampId)
       throws Throwable {
-    Object viewData = param.args[cfg.unsend.methodBindIndex];
+    Object viewData = chain.getArg(cfg.unsend.methodBindIndex);
     if (viewData == null) return;
 
-    Object commonData = XposedHelpers.callMethod(viewData, cfg.unsend.methodGetCommonData);
+    Object commonData = Reflect.callMethod(viewData, cfg.unsend.methodGetCommonData);
     if (commonData == null) return;
 
     Object displayTime = resolveDisplayTime(commonData, displayTimeIface);
     if (displayTime == null) return;
 
-    Object millisObj = XposedHelpers.callMethod(displayTime, cfg.chatTimestamp.methodCreatedMillis);
+    Object millisObj = Reflect.callMethod(displayTime, cfg.chatTimestamp.methodCreatedMillis);
     if (!(millisObj instanceof Number)) return;
     long createdMillis = ((Number) millisObj).longValue();
     if (createdMillis <= 0) return;
 
-    View root = (View) XposedHelpers.callMethod(param.thisObject, cfg.unsend.methodGetItemView);
+    View root = (View) Reflect.callMethod(chain.getThisObject(), cfg.unsend.methodGetItemView);
     if (root == null) return;
     TextView tsView = (TextView) root.findViewById(timestampId);
     if (tsView == null) return;

@@ -6,82 +6,83 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.Window;
 import android.widget.LinearLayout;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
+import app.zipper.knot.SettingsStore;
 import app.zipper.knot.utils.ModuleStrings;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class HeaderButtonInjector implements BaseHook {
 
   @Override
-  public void hook(KnotConfig options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig options, LoadParam lpparam) throws Throwable {
     LineVersion.Config config = LineVersion.get();
     if (config == null || config.chat.headerController.isEmpty()) return;
 
     try {
       Class<?> headerControllerClass =
-          XposedHelpers.findClass(config.chat.headerController, lpparam.classLoader);
-      Class<?> headerHelperClass =
-          XposedHelpers.findClass(config.chat.headerHelper, lpparam.classLoader);
+          Reflect.findClass(config.chat.headerController, lpparam.classLoader);
+      Class<?> headerHelperClass = Reflect.findClass(config.chat.headerHelper, lpparam.classLoader);
       Class<?> headerButtonTypeEnum =
-          XposedHelpers.findClass(config.main.headerButtonTypeClass, lpparam.classLoader);
+          Reflect.findClass(config.main.headerButtonTypeClass, lpparam.classLoader);
       final Object slotFarLeft =
-          XposedHelpers.getStaticObjectField(headerButtonTypeEnum, config.main.slotFarLeft);
+          Reflect.getStaticObjectField(headerButtonTypeEnum, config.main.slotFarLeft);
 
-      XposedHelpers.findAndHookConstructor(
-          headerControllerClass,
-          config.chatHeader.chatHistoryActivity,
-          config.chatHeader.chatHistoryActivity,
-          Window.class,
-          View.class,
-          config.chatHeader.fieldChatConfigChatId,
-          config.chatHeader.fieldChatConfigIsMuted,
-          config.chatHeader.fieldChatConfigCategory,
-          config.chatHeader.fieldChatConfigType,
-          headerHelperClass,
-          config.chatHeader.fieldAppInfoVersion,
-          config.chatHeader.fieldAppInfoPkg,
-          config.chatHeader.fieldAppInfoId,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              if (app.zipper.knot.SettingsStore.get("record_read_history", false)) {
-                injectButton(param.thisObject, slotFarLeft, config);
-              }
-            }
-          });
-
-      XposedHelpers.findAndHookMethod(
-          headerControllerClass,
-          config.main.methodSetHeaderButton,
-          headerButtonTypeEnum,
-          config.main.headerInterfaceA,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (slotFarLeft.equals(param.args[0])) {
-                if (app.zipper.knot.SettingsStore.get("record_read_history", false)) {
-                  param.setResult(null);
+      Knot.module
+          .hook(
+              Reflect.findConstructorExact(
+                  headerControllerClass,
+                  config.chatHeader.chatHistoryActivity,
+                  config.chatHeader.chatHistoryActivity,
+                  Window.class,
+                  View.class,
+                  config.chatHeader.fieldChatConfigChatId,
+                  config.chatHeader.fieldChatConfigIsMuted,
+                  config.chatHeader.fieldChatConfigCategory,
+                  config.chatHeader.fieldChatConfigType,
+                  headerHelperClass,
+                  config.chatHeader.fieldAppInfoVersion,
+                  config.chatHeader.fieldAppInfoPkg,
+                  config.chatHeader.fieldAppInfoId))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                if (SettingsStore.get("record_read_history", false)) {
+                  injectButton(chain.getThisObject(), slotFarLeft, config);
                 }
-              }
-            }
-          });
+                return result;
+              });
+
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  headerControllerClass,
+                  config.main.methodSetHeaderButton,
+                  headerButtonTypeEnum,
+                  config.main.headerInterfaceA))
+          .intercept(
+              chain -> {
+                if (slotFarLeft.equals(chain.getArg(0))
+                    && SettingsStore.get("record_read_history", false)) {
+                  return null;
+                }
+                return chain.proceed();
+              });
 
     } catch (Throwable t) {
-      XposedBridge.log("Knot: init error: " + t.getMessage());
+      Knot.log("Knot: init error: " + t.getMessage());
     }
   }
 
   private void injectButton(Object controller, Object slot, LineVersion.Config config) {
     try {
-      Object headerHelper = XposedHelpers.getObjectField(controller, config.main.fieldHeaderHelper);
+      Object headerHelper = Reflect.getObjectField(controller, config.main.fieldHeaderHelper);
       if (headerHelper == null) return;
 
       final Context context =
-          (Context) XposedHelpers.getObjectField(controller, config.main.fieldChatActivity);
+          (Context) Reflect.getObjectField(controller, config.main.fieldChatActivity);
       if (context == null) return;
 
       Drawable icon = null;
@@ -105,22 +106,21 @@ public class HeaderButtonInjector implements BaseHook {
           }
         }
       } catch (Throwable t) {
-        XposedBridge.log("Knot: icon load error: " + t.getMessage());
+        Knot.log("Knot: icon load error: " + t.getMessage());
       }
 
       if (icon == null) return;
 
       // Use stable setButtonImageViewDrawable API to avoid per-version config
       Object headerButton =
-          XposedHelpers.callMethod(headerHelper, config.main.methodGetHeaderButtonView, slot);
+          Reflect.callMethod(headerHelper, config.main.methodGetHeaderButtonView, slot);
       if (headerButton == null) return;
-      XposedHelpers.callMethod(headerButton, "setButtonImageViewDrawable", icon);
+      Reflect.callMethod(headerButton, "setButtonImageViewDrawable", icon);
 
-      XposedHelpers.callMethod(
-          headerHelper, config.main.methodSetHeaderLabel,
-          slot, ModuleStrings.READ_RECEIPT_VIEWER);
+      Reflect.callMethod(
+          headerHelper, config.main.methodSetHeaderLabel, slot, ModuleStrings.READ_RECEIPT_VIEWER);
 
-      XposedHelpers.callMethod(headerHelper, config.main.methodSetHeaderButtonVisibility, slot, 0);
+      Reflect.callMethod(headerHelper, config.main.methodSetHeaderButtonVisibility, slot, 0);
 
       try {
         if (headerButton instanceof LinearLayout) {
@@ -136,10 +136,10 @@ public class HeaderButtonInjector implements BaseHook {
           }
         }
       } catch (Throwable t) {
-        XposedBridge.log("Knot: layout error: " + t.getMessage());
+        Knot.log("Knot: layout error: " + t.getMessage());
       }
 
-      XposedHelpers.callMethod(
+      Reflect.callMethod(
           headerHelper,
           config.main.methodSetHeaderOnClickListener,
           slot,
@@ -147,10 +147,9 @@ public class HeaderButtonInjector implements BaseHook {
             @Override
             public void onClick(View v) {
               try {
-                XposedBridge.log("Knot: Clicked!");
+                Knot.log("Knot: Clicked!");
                 Activity activity =
-                    (Activity)
-                        XposedHelpers.getObjectField(controller, config.main.fieldChatActivity);
+                    (Activity) Reflect.getObjectField(controller, config.main.fieldChatActivity);
                 if (activity == null) return;
 
                 String chatId = activity.getIntent().getStringExtra("chatId");
@@ -159,10 +158,9 @@ public class HeaderButtonInjector implements BaseHook {
                 }
 
                 if (chatId == null || chatId.isEmpty()) {
-                  Object request = XposedHelpers.getObjectField(activity, config.chat.chatIdField);
+                  Object request = Reflect.getObjectField(activity, config.chat.chatIdField);
                   if (request != null) {
-                    chatId =
-                        (String) XposedHelpers.callMethod(request, config.chat.methodGetChatId);
+                    chatId = (String) Reflect.callMethod(request, config.chat.methodGetChatId);
                   }
                 }
 
@@ -174,13 +172,13 @@ public class HeaderButtonInjector implements BaseHook {
                       .show();
                 }
               } catch (Throwable t) {
-                XposedBridge.log("Knot: click error: " + t.toString());
+                Knot.log("Knot: click error: " + t.toString());
               }
             }
           });
 
     } catch (Throwable t) {
-      XposedBridge.log("Knot: injection error: " + t.getMessage());
+      Knot.log("Knot: injection error: " + t.getMessage());
     }
   }
 }

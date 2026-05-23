@@ -8,15 +8,14 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.TypedValue;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
 import app.zipper.knot.Main;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
 import app.zipper.knot.utils.ModuleStrings;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
@@ -40,7 +39,7 @@ public class PlusMenuHook implements BaseHook {
   private static final Map<Integer, Bitmap> iconStorage = new HashMap<>();
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
 
     final Class<?> pCls;
@@ -51,23 +50,19 @@ public class PlusMenuHook implements BaseHook {
     final Class<?> clickItemCls;
 
     try {
-      pCls = XposedHelpers.findClass(cfg.plusMenu.plusMenuComponentClass, lpparam.classLoader);
-      composerCls =
-          XposedHelpers.findClass(cfg.plusMenu.plusMenuComposerClass, lpparam.classLoader);
+      pCls = Reflect.findClass(cfg.plusMenu.plusMenuComponentClass, lpparam.classLoader);
+      composerCls = Reflect.findClass(cfg.plusMenu.plusMenuComposerClass, lpparam.classLoader);
       composerImplCls =
-          XposedHelpers.findClass(cfg.plusMenu.plusMenuComposerImplClass, lpparam.classLoader);
-      callbackCls =
-          XposedHelpers.findClass(cfg.plusMenu.plusMenuCallbackClass, lpparam.classLoader);
-      modifierCls =
-          XposedHelpers.findClass(cfg.plusMenu.plusMenuModifierClass, lpparam.classLoader);
-      clickItemCls =
-          XposedHelpers.findClass(cfg.plusMenu.plusMenuOnClickItemClass, lpparam.classLoader);
+          Reflect.findClass(cfg.plusMenu.plusMenuComposerImplClass, lpparam.classLoader);
+      callbackCls = Reflect.findClass(cfg.plusMenu.plusMenuCallbackClass, lpparam.classLoader);
+      modifierCls = Reflect.findClass(cfg.plusMenu.plusMenuModifierClass, lpparam.classLoader);
+      clickItemCls = Reflect.findClass(cfg.plusMenu.plusMenuOnClickItemClass, lpparam.classLoader);
     } catch (Throwable t) {
       return;
     }
 
     final Method mainEntry =
-        XposedHelpers.findMethodExact(
+        Reflect.findMethodExact(
             pCls,
             cfg.plusMenu.methodAddMenuItem,
             int.class,
@@ -77,7 +72,7 @@ public class PlusMenuHook implements BaseHook {
             boolean.class);
 
     final Method itemEntry =
-        XposedHelpers.findMethodExact(
+        Reflect.findMethodExact(
             pCls,
             cfg.plusMenu.methodCreateMenu,
             int.class,
@@ -104,131 +99,123 @@ public class PlusMenuHook implements BaseHook {
             false,
             "prevent_read_state");
 
-    XposedBridge.hookMethod(
-        mainEntry,
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam param) {
-            isMenuDisplayed = true;
-            currentReadState = SettingsStore.get("prevent_read_state", true);
-            currentSendMarkState = SettingsStore.get("send_mark_state", false);
-          }
-
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) {
-            isMenuDisplayed = false;
-          }
-        });
-
-    XposedHelpers.findAndHookMethod(
-        composerImplCls,
-        cfg.plusMenu.methodExecuteAction,
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) {
-            if (isMenuDisplayed && param.getResult() != null) {
-              menuContextScope = param.getResult();
-            }
-          }
-        });
-
-    XposedBridge.hookMethod(
-        itemEntry,
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) {
-            if (!isMenuDisplayed || injectionActive) return;
-            LineVersion.Config c = LineVersion.get();
-
-            if (targetDrawableId == 0) {
+    Knot.module
+        .hook(mainEntry)
+        .intercept(
+            chain -> {
+              isMenuDisplayed = true;
+              currentReadState = SettingsStore.get("prevent_read_state", true);
+              currentSendMarkState = SettingsStore.get("send_mark_state", false);
               try {
-                Context ctx = fetchApplicationContext();
-                if (ctx != null) {
-                  targetDrawableId =
-                      ctx.getResources()
-                          .getIdentifier(
-                              c.plusMenu.editChatDrawable, "drawable", c.plusMenu.targetPkg);
-                }
-              } catch (Throwable ignored) {
+                return chain.proceed();
+              } finally {
+                isMenuDisplayed = false;
               }
-            }
-            if (targetDrawableId == 0) return;
+            });
 
-            int iconId = (int) param.args[0];
-            if (iconId != targetDrawableId) return;
+    Knot.module
+        .hook(Reflect.findMethodExact(composerImplCls, cfg.plusMenu.methodExecuteAction))
+        .intercept(
+            chain -> {
+              Object result = chain.proceed();
+              if (isMenuDisplayed && result != null) {
+                menuContextScope = result;
+              }
+              return result;
+            });
 
-            Object composer = param.args[4];
-            injectionActive = true;
-            try {
-              if (Main.options.preventMarkAsRead.enabled) {
-                boolean readOn = currentReadState;
-                String labelR = ModuleStrings.LABEL_PREVENT_READ + ": " + (readOn ? "ON" : "OFF");
+    Knot.module
+        .hook(itemEntry)
+        .intercept(
+            chain -> {
+              Object result = chain.proceed();
+              if (!isMenuDisplayed || injectionActive) return result;
 
-                itemEntry.invoke(
-                    null,
-                    readOn ? ID_READ_ON : ID_READ_OFF,
-                    0,
-                    null,
-                    labelR,
-                    composer,
-                    readToggleCallback);
+              if (targetDrawableId == 0) {
+                try {
+                  Context ctx = fetchApplicationContext();
+                  if (ctx != null) {
+                    targetDrawableId =
+                        ctx.getResources()
+                            .getIdentifier(
+                                cfg.plusMenu.editChatDrawable, "drawable", cfg.plusMenu.targetPkg);
+                  }
+                } catch (Throwable ignored) {
+                }
+              }
+              if (targetDrawableId == 0) return result;
 
-                if (readOn) {
-                  boolean markOn = currentSendMarkState;
-                  String labelM =
-                      ModuleStrings.LABEL_SEND_MARK_READ + ": " + (markOn ? "ON" : "OFF");
+              int iconId = (int) chain.getArg(0);
+              if (iconId != targetDrawableId) return result;
+
+              Object composer = chain.getArg(4);
+              injectionActive = true;
+              try {
+                if (Main.options.preventMarkAsRead.enabled) {
+                  boolean readOn = currentReadState;
+                  String labelR = ModuleStrings.LABEL_PREVENT_READ + ": " + (readOn ? "ON" : "OFF");
 
                   itemEntry.invoke(
                       null,
-                      markOn ? ID_MARK_ON : ID_MARK_OFF,
+                      readOn ? ID_READ_ON : ID_READ_OFF,
                       0,
                       null,
-                      labelM,
+                      labelR,
                       composer,
-                      markToggleCallback);
-                }
-              }
-            } catch (Throwable t) {
-              XposedBridge.log("Knot: PlusMenu error: " + t);
-            } finally {
-              injectionActive = false;
-            }
-          }
-        });
+                      readToggleCallback);
 
-    XposedHelpers.findAndHookMethod(
-        Resources.class,
-        "getValue",
-        int.class,
-        TypedValue.class,
-        boolean.class,
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam p) {
-            int id = (int) p.args[0];
-            if ((id >>> 24) != 0x64) return;
-            ((TypedValue) p.args[1]).string = "knot_res_" + Integer.toHexString(id) + ".png";
-            ((TypedValue) p.args[1]).type = TypedValue.TYPE_STRING;
-            p.setResult(null);
-          }
-        });
-    XposedHelpers.findAndHookMethod(
-        Resources.class,
-        "getDrawable",
-        int.class,
-        Resources.Theme.class,
-        new XC_MethodHook() {
-          @Override
-          protected void beforeHookedMethod(MethodHookParam p) {
-            int id = (int) p.args[0];
-            if ((id >>> 24) != 0x64) return;
-            try {
-              Bitmap b = retrieveModuleIcon(id, cfg);
-              if (b != null) p.setResult(new BitmapDrawable((Resources) p.thisObject, b));
-            } catch (Throwable ignored) {
-            }
-          }
-        });
+                  if (readOn) {
+                    boolean markOn = currentSendMarkState;
+                    String labelM =
+                        ModuleStrings.LABEL_SEND_MARK_READ + ": " + (markOn ? "ON" : "OFF");
+
+                    itemEntry.invoke(
+                        null,
+                        markOn ? ID_MARK_ON : ID_MARK_OFF,
+                        0,
+                        null,
+                        labelM,
+                        composer,
+                        markToggleCallback);
+                  }
+                }
+              } catch (Throwable t) {
+                Knot.log("Knot: PlusMenu error: " + t);
+              } finally {
+                injectionActive = false;
+              }
+              return result;
+            });
+
+    Knot.module
+        .hook(
+            Reflect.findMethodExact(
+                Resources.class, "getValue", int.class, TypedValue.class, boolean.class))
+        .intercept(
+            chain -> {
+              int id = (int) chain.getArg(0);
+              if ((id >>> 24) != 0x64) return chain.proceed();
+              TypedValue tv = (TypedValue) chain.getArg(1);
+              tv.string = "knot_res_" + Integer.toHexString(id) + ".png";
+              tv.type = TypedValue.TYPE_STRING;
+              return null;
+            });
+
+    Knot.module
+        .hook(
+            Reflect.findMethodExact(
+                Resources.class, "getDrawable", int.class, Resources.Theme.class))
+        .intercept(
+            chain -> {
+              int id = (int) chain.getArg(0);
+              if ((id >>> 24) != 0x64) return chain.proceed();
+              try {
+                Bitmap b = retrieveModuleIcon(id, cfg);
+                if (b != null) return new BitmapDrawable((Resources) chain.getThisObject(), b);
+              } catch (Throwable ignored) {
+              }
+              return chain.proceed();
+            });
   }
 
   private static Object generateToggleHandler(
@@ -253,7 +240,7 @@ public class PlusMenuHook implements BaseHook {
                     () -> {
                       if (menuContextScope != null) {
                         try {
-                          XposedHelpers.callMethod(menuContextScope, "invalidate");
+                          Reflect.callMethod(menuContextScope, "invalidate");
                         } catch (Throwable ignored) {
                         }
                       }
@@ -291,11 +278,6 @@ public class PlusMenuHook implements BaseHook {
   }
 
   private static Context fetchApplicationContext() {
-    try {
-      return (Context)
-          Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null);
-    } catch (Throwable t) {
-      return null;
-    }
+    return Knot.currentApplication();
   }
 }

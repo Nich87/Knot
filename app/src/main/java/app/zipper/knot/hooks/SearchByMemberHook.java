@@ -17,15 +17,15 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
 import app.zipper.knot.utils.LineDBUtils;
 import app.zipper.knot.utils.ModuleStrings;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public class SearchByMemberHook implements BaseHook {
   }
 
   @Override
-  public void hook(KnotConfig options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig options, LoadParam lpparam) throws Throwable {
     if (!options.searchByMember.enabled) return;
 
     appClassLoader = lpparam.classLoader;
@@ -105,25 +105,23 @@ public class SearchByMemberHook implements BaseHook {
 
   private void setupHeaderHook(LineVersion.Config config, ClassLoader classLoader) {
     try {
-      Class<?> helperCls =
-          XposedHelpers.findClass(config.chat.searchHeaderHelperClass, classLoader);
-      XposedHelpers.findAndHookMethod(
-          helperCls,
-          "a",
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              handleHeaderCreated(param.thisObject, config);
-            }
-          });
+      Class<?> helperCls = Reflect.findClass(config.chat.searchHeaderHelperClass, classLoader);
+      Knot.module
+          .hook(Reflect.findMethodExact(helperCls, "a"))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                handleHeaderCreated(chain.getThisObject(), config);
+                return result;
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchByMember setupHeaderHook error: " + t);
+      Knot.log("Knot: SearchByMember setupHeaderHook error: " + t);
     }
   }
 
   private void handleHeaderCreated(Object helper, LineVersion.Config config) {
     try {
-      View headerView = (View) XposedHelpers.getObjectField(helper, "a");
+      View headerView = (View) Reflect.getObjectField(helper, "a");
       if (headerView == null) return;
 
       Activity activity = unwrapActivity(headerView.getContext());
@@ -133,7 +131,7 @@ public class SearchByMemberHook implements BaseHook {
       setupTextWatcherIfNeeded(activity, config);
       injectMemberSearchIcon(activity, headerView, config);
     } catch (Throwable t) {
-      XposedBridge.log("Knot: handleHeaderCreated error: " + t);
+      Knot.log("Knot: handleHeaderCreated error: " + t);
     }
   }
 
@@ -192,7 +190,7 @@ public class SearchByMemberHook implements BaseHook {
         showMemberPicker(activity, chatId, members, icon);
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: onMemberIconClicked error: " + t);
+      Knot.log("Knot: onMemberIconClicked error: " + t);
     }
   }
 
@@ -210,99 +208,96 @@ public class SearchByMemberHook implements BaseHook {
 
   private void setupSearchBoxHook(LineVersion.Config config, ClassLoader classLoader) {
     try {
-      Class<?> sbCls = XposedHelpers.findClass(config.chat.searchBoxViewClass, classLoader);
-      XposedHelpers.findAndHookMethod(
-          sbCls,
-          "setEditingLayout",
-          boolean.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              ImageView icon = (ImageView) XposedHelpers.getObjectField(param.thisObject, "d");
-              if (icon != null && MEMBER_ICON_TAG.equals(icon.getTag())) icon.setEnabled(true);
-            }
-          });
+      Class<?> sbCls = Reflect.findClass(config.chat.searchBoxViewClass, classLoader);
+      Knot.module
+          .hook(Reflect.findMethodExact(sbCls, "setEditingLayout", boolean.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                ImageView icon = (ImageView) Reflect.getObjectField(chain.getThisObject(), "d");
+                if (icon != null && MEMBER_ICON_TAG.equals(icon.getTag())) icon.setEnabled(true);
+                return result;
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: setupSearchBoxHook error: " + t);
+      Knot.log("Knot: setupSearchBoxHook error: " + t);
     }
   }
 
   private void setupSearchPresenterHook(LineVersion.Config config, ClassLoader classLoader) {
     try {
-      Class<?> presenterCls =
-          XposedHelpers.findClass(config.chat.searchPresenterClass, classLoader);
-      Class<?> eventCls = XposedHelpers.findClass(config.chat.searchKeywordEventClass, classLoader);
-      XposedHelpers.findAndHookMethod(
-          presenterCls,
-          config.chat.searchPresenterKeywordChangedMethod,
-          eventCls,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              handleForcedKeywordRefresh(param, config);
-            }
-          });
+      Class<?> presenterCls = Reflect.findClass(config.chat.searchPresenterClass, classLoader);
+      Class<?> eventCls = Reflect.findClass(config.chat.searchKeywordEventClass, classLoader);
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  presenterCls, config.chat.searchPresenterKeywordChangedMethod, eventCls))
+          .intercept(
+              chain -> {
+                handleForcedKeywordRefresh(chain, config);
+                return chain.proceed();
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: setupSearchPresenterHook error: " + t);
+      Knot.log("Knot: setupSearchPresenterHook error: " + t);
     }
   }
 
   private void setupSearchResultHook(LineVersion.Config config, ClassLoader classLoader) {
     try {
-      XposedHelpers.findAndHookConstructor(
-          config.chat.searchResultClass,
-          classLoader,
-          String.class,
-          int.class,
-          String.class,
-          List.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              handleSearchResultCreation(param);
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findConstructorExact(
+                  config.chat.searchResultClass,
+                  classLoader,
+                  String.class,
+                  int.class,
+                  String.class,
+                  List.class))
+          .intercept(
+              chain -> {
+                Object[] args = chain.getArgs().toArray();
+                handleSearchResultCreation(args);
+                return chain.proceed(args);
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: setupSearchResultHook error: " + t);
+      Knot.log("Knot: setupSearchResultHook error: " + t);
     }
   }
 
   @SuppressWarnings("unchecked")
-  private void handleSearchResultCreation(XC_MethodHook.MethodHookParam param) {
+  private void handleSearchResultCreation(Object[] args) {
     try {
       if (Boolean.TRUE.equals(creatingResult.get())) return;
 
-      String chatId = (String) param.args[0];
+      String chatId = (String) args[0];
       if (chatId == null) return;
 
       String senderMid = chatMemberFilter.get(chatId);
       if (senderMid == null) return;
 
-      String keyword = (String) param.args[2];
-      List<Long> ids = (List<Long>) param.args[3];
+      String keyword = (String) args[2];
+      List<Long> ids = (List<Long>) args[3];
       if (ids == null || ids.isEmpty()) {
-        handleEmptyIds(chatId, senderMid, keyword, param);
+        handleEmptyIds(chatId, senderMid, keyword, args);
       } else {
         List<Long> filtered = filterLocalIdsByMid(ids, senderMid);
         cachedResults.put(chatId, filtered);
         cachedKeywords.put(chatId, normalizeKeyword(keyword));
-        param.args[3] = filtered;
-        param.args[1] = filtered.size();
+        args[3] = filtered;
+        args[1] = filtered.size();
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: handleSearchResultCreation error: " + t);
+      Knot.log("Knot: handleSearchResultCreation error: " + t);
     }
   }
 
-  private void handleEmptyIds(
-      String chatId, String senderMid, String keyword, XC_MethodHook.MethodHookParam param) {
+  private void handleEmptyIds(String chatId, String senderMid, String keyword, Object[] args) {
     boolean emptyKeyword = !hasMeaningfulKeyword(keyword);
     if (pendingFetchAll.remove(chatId) || emptyKeyword) {
       List<Long> allIds = fetchAllMemberLocalIds(chatId, senderMid);
       cachedResults.put(chatId, allIds);
       cachedKeywords.put(chatId, normalizeKeyword(keyword));
-      param.args[3] = allIds;
-      param.args[1] = allIds.size();
+      args[3] = allIds;
+      args[1] = allIds.size();
     } else {
       cachedResults.remove(chatId);
       cachedKeywords.put(chatId, normalizeKeyword(keyword));
@@ -311,31 +306,29 @@ public class SearchByMemberHook implements BaseHook {
 
   private void setupSearchResultWrapperHook(LineVersion.Config config, ClassLoader classLoader) {
     try {
-      Class<?> resultCls = XposedHelpers.findClass(config.chat.searchResultClass, classLoader);
-      XposedHelpers.findAndHookConstructor(
-          config.chat.searchResultWrapperClass,
-          classLoader,
-          String.class,
-          String.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              handleSearchResultWrapperCreated(param, resultCls);
-            }
-          });
+      Class<?> resultCls = Reflect.findClass(config.chat.searchResultClass, classLoader);
+      Knot.module
+          .hook(
+              Reflect.findConstructorExact(
+                  config.chat.searchResultWrapperClass, classLoader, String.class, String.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                handleSearchResultWrapperCreated(chain, resultCls);
+                return result;
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: setupSearchResultWrapperHook error: " + t);
+      Knot.log("Knot: setupSearchResultWrapperHook error: " + t);
     }
   }
 
-  private void handleSearchResultWrapperCreated(
-      XC_MethodHook.MethodHookParam param, Class<?> resultCls) {
+  private void handleSearchResultWrapperCreated(XposedInterface.Chain chain, Class<?> resultCls) {
     try {
-      String chatId = (String) param.args[0];
+      String chatId = (String) chain.getArg(0);
       if (chatId == null) return;
       String senderMid = chatMemberFilter.get(chatId);
       if (senderMid == null) return;
-      String keyword = (String) param.args[1];
+      String keyword = (String) chain.getArg(1);
       String resultKeyword = keyword != null ? keyword : "";
       String normalizedKeyword = normalizeKeyword(resultKeyword);
 
@@ -353,23 +346,22 @@ public class SearchByMemberHook implements BaseHook {
 
       creatingResult.set(Boolean.TRUE);
       try {
-        Object result =
-            XposedHelpers.newInstance(resultCls, chatId, ids.size(), resultKeyword, ids);
-        XposedHelpers.setObjectField(
-            param.thisObject,
+        Object result = Reflect.newInstance(resultCls, chatId, ids.size(), resultKeyword, ids);
+        Reflect.setObjectField(
+            chain.getThisObject(),
             lineVersionConfig.chat.searchResultWrapperResultOptionalField,
             Optional.of(result));
       } finally {
         creatingResult.remove();
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: handleSearchResultWrapperCreated error: " + t);
+      Knot.log("Knot: handleSearchResultWrapperCreated error: " + t);
     }
   }
 
   private static List<Long> filterLocalIdsByMid(List<Long> ids, String senderMid) {
     try {
-      android.app.Application app = android.app.AndroidAppHelper.currentApplication();
+      android.app.Application app = Knot.currentApplication();
       if (app == null) return ids;
       File dbFile = app.getDatabasePath("naver_line");
       if (!dbFile.exists()) return ids;
@@ -401,14 +393,14 @@ public class SearchByMemberHook implements BaseHook {
         return result;
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: filterLocalIdsByMid error: " + t);
+      Knot.log("Knot: filterLocalIdsByMid error: " + t);
       return ids;
     }
   }
 
   private static List<Long> fetchAllMemberLocalIds(String chatId, String senderMid) {
     try {
-      android.app.Application app = android.app.AndroidAppHelper.currentApplication();
+      android.app.Application app = Knot.currentApplication();
       if (app == null) return new ArrayList<>();
       File dbFile = app.getDatabasePath("naver_line");
       if (!dbFile.exists()) return new ArrayList<>();
@@ -429,7 +421,7 @@ public class SearchByMemberHook implements BaseHook {
         return result;
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: fetchAllMemberLocalIds error: " + t);
+      Knot.log("Knot: fetchAllMemberLocalIds error: " + t);
       return new ArrayList<>();
     }
   }
@@ -484,9 +476,9 @@ public class SearchByMemberHook implements BaseHook {
       Object sbView = getSearchBoxView(controller);
       if (sbView == null) return null;
       return (EditText)
-          XposedHelpers.getObjectField(sbView, lineVersionConfig.chat.searchBoxEditTextField);
+          Reflect.getObjectField(sbView, lineVersionConfig.chat.searchBoxEditTextField);
     } catch (Throwable t) {
-      XposedBridge.log("Knot: getSearchEditText error: " + t);
+      Knot.log("Knot: getSearchEditText error: " + t);
       return null;
     }
   }
@@ -519,7 +511,7 @@ public class SearchByMemberHook implements BaseHook {
       if (controller == null) return;
       Object sbView = getSearchBoxView(controller);
       if (sbView == null) return;
-      String currentText = (String) XposedHelpers.callMethod(sbView, "getSearchText");
+      String currentText = (String) Reflect.callMethod(sbView, "getSearchText");
       if (currentText == null) currentText = "";
 
       boolean filterActive = chatId != null && chatMemberFilter.containsKey(chatId);
@@ -530,27 +522,27 @@ public class SearchByMemberHook implements BaseHook {
       }
 
       if (!postSearchKeywordEvent(helper, currentText)) {
-        XposedBridge.log("Knot: triggerReSearch failed to dispatch keyword");
+        Knot.log("Knot: triggerReSearch failed to dispatch keyword");
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: triggerReSearch error: " + t);
+      Knot.log("Knot: triggerReSearch error: " + t);
     }
   }
 
   private boolean postSearchKeywordEvent(Object helper, String keyword) {
     try {
       Object eventBus =
-          XposedHelpers.getObjectField(helper, lineVersionConfig.chat.searchHeaderEventBusField);
+          Reflect.getObjectField(helper, lineVersionConfig.chat.searchHeaderEventBusField);
       if (eventBus == null) return false;
 
-      Class<?> eventClass = XposedHelpers.findClass(searchKeywordEventClass, appClassLoader);
-      Object event = XposedHelpers.newInstance(eventClass, keyword);
+      Class<?> eventClass = Reflect.findClass(searchKeywordEventClass, appClassLoader);
+      Object event = Reflect.newInstance(eventClass, keyword);
       requestForcedKeywordRefresh(keyword);
-      XposedHelpers.callMethod(eventBus, "b", event);
+      Reflect.callMethod(eventBus, "b", event);
       return true;
     } catch (Throwable t) {
       forcedKeywordRefreshes.remove(keyword != null ? keyword : "");
-      XposedBridge.log("Knot: postSearchKeywordEvent error: " + t);
+      Knot.log("Knot: postSearchKeywordEvent error: " + t);
       return false;
     }
   }
@@ -559,23 +551,22 @@ public class SearchByMemberHook implements BaseHook {
     forcedKeywordRefreshes.put(keyword != null ? keyword : "", System.nanoTime());
   }
 
-  private void handleForcedKeywordRefresh(
-      XC_MethodHook.MethodHookParam param, LineVersion.Config config) {
+  private void handleForcedKeywordRefresh(XposedInterface.Chain chain, LineVersion.Config config) {
     try {
-      Object event = param.args[0];
+      Object event = chain.getArg(0);
       String keyword =
-          (String) XposedHelpers.getObjectField(event, config.chat.searchKeywordEventKeywordField);
+          (String) Reflect.getObjectField(event, config.chat.searchKeywordEventKeywordField);
       if (!consumeForcedKeywordRefresh(keyword)) return;
 
       Object keywordSubject =
-          XposedHelpers.getObjectField(
-              param.thisObject, config.chat.searchPresenterKeywordSubjectField);
+          Reflect.getObjectField(
+              chain.getThisObject(), config.chat.searchPresenterKeywordSubjectField);
       AtomicReference<Object> currentValueRef = getBehaviorSubjectCurrentValueRef(keywordSubject);
       if (currentValueRef == null) return;
 
       currentValueRef.lazySet("__knot_force_refresh__" + System.nanoTime());
     } catch (Throwable t) {
-      XposedBridge.log("Knot: handleForcedKeywordRefresh error: " + t);
+      Knot.log("Knot: handleForcedKeywordRefresh error: " + t);
     }
   }
 
@@ -595,7 +586,7 @@ public class SearchByMemberHook implements BaseHook {
   private AtomicReference<Object> getBehaviorSubjectCurrentValueRef(Object subject) {
     if (subject == null) return null;
     try {
-      Object currentValue = XposedHelpers.callMethod(subject, "v");
+      Object currentValue = Reflect.callMethod(subject, "v");
       for (Field field : subject.getClass().getDeclaredFields()) {
         if (!AtomicReference.class.isAssignableFrom(field.getType())) continue;
         field.setAccessible(true);
@@ -605,18 +596,17 @@ public class SearchByMemberHook implements BaseHook {
         if (Objects.equals(atomicRef.get(), currentValue)) return (AtomicReference<Object>) ref;
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: getBehaviorSubjectCurrentValueRef error: " + t);
+      Knot.log("Knot: getBehaviorSubjectCurrentValueRef error: " + t);
     }
     return null;
   }
 
   private Object getSearchController(Object helper) {
-    return XposedHelpers.getObjectField(helper, lineVersionConfig.chat.searchHeaderControllerField);
+    return Reflect.getObjectField(helper, lineVersionConfig.chat.searchHeaderControllerField);
   }
 
   private Object getSearchBoxView(Object controller) {
-    return XposedHelpers.callMethod(
-        controller, lineVersionConfig.chat.searchControllerSearchBoxMethod);
+    return Reflect.callMethod(controller, lineVersionConfig.chat.searchControllerSearchBoxMethod);
   }
 
   private static boolean hasMeaningfulKeyword(String keyword) {
@@ -699,7 +689,7 @@ public class SearchByMemberHook implements BaseHook {
             popup.showAsDropDown(anchor, 0, 0);
             activeTooltip = popup;
           } catch (Throwable t) {
-            XposedBridge.log("Knot: SearchByMember tooltip error: " + t);
+            Knot.log("Knot: SearchByMember tooltip error: " + t);
           }
         });
   }
@@ -729,7 +719,7 @@ public class SearchByMemberHook implements BaseHook {
       if (extras != null) {
         android.os.Parcelable req = extras.getParcelable("chat-history-request");
         if (req != null) {
-          Object id = XposedHelpers.callMethod(req, "getChatId");
+          Object id = Reflect.callMethod(req, "getChatId");
           if (id instanceof String && !((String) id).isEmpty()) return (String) id;
         }
       }
@@ -741,9 +731,8 @@ public class SearchByMemberHook implements BaseHook {
     }
     if (config != null) {
       try {
-        Object field = XposedHelpers.getObjectField(activity, config.chat.chatIdField);
-        if (field != null)
-          return (String) XposedHelpers.callMethod(field, config.chat.methodGetChatId);
+        Object field = Reflect.getObjectField(activity, config.chat.chatIdField);
+        if (field != null) return (String) Reflect.callMethod(field, config.chat.methodGetChatId);
       } catch (Throwable ignored) {
       }
     }

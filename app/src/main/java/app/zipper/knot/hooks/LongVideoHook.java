@@ -1,17 +1,18 @@
 package app.zipper.knot.hooks;
 
 import android.net.Uri;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
+import io.github.libxposed.api.XposedInterface;
 import java.util.Map;
 
 public class LongVideoHook implements BaseHook {
 
   @Override
-  public void hook(KnotConfig options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig options, LoadParam lpparam) throws Throwable {
     if (!options.longVideo.enabled) return;
 
     LineVersion.Config v = LineVersion.get();
@@ -29,28 +30,24 @@ public class LongVideoHook implements BaseHook {
   private void hookDurationCheck(ClassLoader cl, LineVersion.Config v) {
     if (v.media.videoDurationCheckClass.isEmpty()) return;
     try {
-      Class<?> checkClass = XposedHelpers.findClass(v.media.videoDurationCheckClass, cl);
-      Class<?> resultClass = XposedHelpers.findClass(v.media.videoDurationSuccessClass, cl);
-      Object success =
-          XposedHelpers.getStaticObjectField(resultClass, v.media.fieldVideoDurationSuccess);
+      Class<?> checkClass = Reflect.findClass(v.media.videoDurationCheckClass, cl);
+      Class<?> resultClass = Reflect.findClass(v.media.videoDurationSuccessClass, cl);
+      final Object success =
+          Reflect.getStaticObjectField(resultClass, v.media.fieldVideoDurationSuccess);
 
-      XC_MethodHook bypassHook =
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              param.setResult(success);
-            }
-          };
+      XposedInterface.Hooker bypassHook = chain -> success;
 
-      XposedHelpers.findAndHookMethod(
-          checkClass,
-          v.media.videoDurationCheckMethod,
-          Uri.class,
-          Map.class,
-          boolean.class,
-          bypassHook);
-      XposedHelpers.findAndHookMethod(checkClass, "a", Uri.class, bypassHook);
-      XposedHelpers.findAndHookMethod(checkClass, "b", Uri.class, bypassHook);
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  checkClass,
+                  v.media.videoDurationCheckMethod,
+                  Uri.class,
+                  Map.class,
+                  boolean.class))
+          .intercept(bypassHook);
+      Knot.module.hook(Reflect.findMethodExact(checkClass, "a", Uri.class)).intercept(bypassHook);
+      Knot.module.hook(Reflect.findMethodExact(checkClass, "b", Uri.class)).intercept(bypassHook);
     } catch (Throwable ignored) {
     }
   }
@@ -58,18 +55,18 @@ public class LongVideoHook implements BaseHook {
   private void hookMediaPickerParams(ClassLoader cl, LineVersion.Config v) {
     if (v.media.mediaPickerParamsClass.isEmpty()) return;
     try {
-      Class<?> paramsClass = XposedHelpers.findClass(v.media.mediaPickerParamsClass, cl);
-      XposedHelpers.findAndHookConstructor(
-          paramsClass,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              XposedHelpers.setLongField(
-                  param.thisObject,
-                  v.media.fieldMediaPickerMaxVideoDuration,
-                  (long) Integer.MAX_VALUE);
-            }
-          });
+      Class<?> paramsClass = Reflect.findClass(v.media.mediaPickerParamsClass, cl);
+      Knot.module
+          .hook(Reflect.findConstructorExact(paramsClass))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                Reflect.setLongField(
+                    chain.getThisObject(),
+                    v.media.fieldMediaPickerMaxVideoDuration,
+                    (long) Integer.MAX_VALUE);
+                return result;
+              });
     } catch (Throwable ignored) {
     }
   }
@@ -77,8 +74,8 @@ public class LongVideoHook implements BaseHook {
   private void hookGalleryController(ClassLoader cl, LineVersion.Config v) {
     if (v.media.galleryViewClass.isEmpty()) return;
     try {
-      Class<?> galleryViewClass = XposedHelpers.findClass(v.media.galleryViewClass, cl);
-      XposedHelpers.setStaticLongField(
+      Class<?> galleryViewClass = Reflect.findClass(v.media.galleryViewClass, cl);
+      Reflect.setStaticLongField(
           galleryViewClass, v.media.fieldGalleryDurationLimit, (long) Integer.MAX_VALUE);
     } catch (Throwable ignored) {
     }
@@ -86,54 +83,52 @@ public class LongVideoHook implements BaseHook {
 
   private void hookSmartDurationBypass(ClassLoader cl, LineVersion.Config v) {
     try {
-      XposedHelpers.findAndHookMethod(
-          android.media.MediaPlayer.class,
-          "getDuration",
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              applySpoof(param, v);
-            }
-          });
+      Knot.module
+          .hook(Reflect.findMethodExact(android.media.MediaPlayer.class, "getDuration"))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                return applySpoof(result, v);
+              });
 
-      XposedHelpers.findAndHookMethod(
-          android.media.MediaMetadataRetriever.class,
-          "extractMetadata",
-          int.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              if ((int) param.args[0] == 9) {
-                applySpoof(param, v);
-              }
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  android.media.MediaMetadataRetriever.class, "extractMetadata", int.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                if ((int) chain.getArg(0) == 9) {
+                  return applySpoof(result, v);
+                }
+                return result;
+              });
     } catch (Throwable ignored) {
     }
   }
 
-  private void applySpoof(XC_MethodHook.MethodHookParam param, LineVersion.Config v) {
-    Object result = param.getResult();
-    long duration = 0;
+  private Object applySpoof(Object result, LineVersion.Config v) {
+    long duration;
     if (result instanceof Integer) {
       duration = (int) result;
     } else if (result instanceof String) {
       try {
         duration = Long.parseLong((String) result);
       } catch (Exception e) {
-        return;
+        return result;
       }
     } else {
-      return;
+      return result;
     }
 
     if (duration > 300000 && shouldSpoof(v)) {
       if (result instanceof Integer) {
-        param.setResult(1000);
+        return 1000;
       } else {
-        param.setResult("1000");
+        return "1000";
       }
     }
+    return result;
   }
 
   private boolean shouldSpoof(LineVersion.Config v) {
@@ -171,20 +166,18 @@ public class LongVideoHook implements BaseHook {
   private void hookDroppedMediaPreprocessor(ClassLoader cl, LineVersion.Config v) {
     if (v.media.droppedMediaPreprocessorClass.isEmpty()) return;
     try {
-      XposedHelpers.findAndHookMethod(
-          v.media.droppedMediaPreprocessorClass,
-          cl,
-          "invokeSuspend",
-          Object.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              Object result = param.getResult();
-              if (result != null && result.toString().equals("EXCEEDS_LIMIT")) {
-                param.setResult(null);
-              }
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  v.media.droppedMediaPreprocessorClass, cl, "invokeSuspend", Object.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                if (result != null && result.toString().equals("EXCEEDS_LIMIT")) {
+                  return null;
+                }
+                return result;
+              });
     } catch (Throwable ignored) {
     }
   }
@@ -192,17 +185,14 @@ public class LongVideoHook implements BaseHook {
   private void hookPickerSelectionValidator(ClassLoader cl, LineVersion.Config v) {
     if (v.media.selectionValidatorClass.isEmpty()) return;
     try {
-      XposedHelpers.findAndHookMethod(
-          v.media.selectionValidatorClass,
-          cl,
-          v.media.selectionValidatorMethod,
-          v.media.selectionValidatorParamClass,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              param.setResult(false);
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  v.media.selectionValidatorClass,
+                  cl,
+                  v.media.selectionValidatorMethod,
+                  v.media.selectionValidatorParamClass))
+          .intercept(chain -> false);
     } catch (Throwable ignored) {
     }
   }
@@ -210,18 +200,22 @@ public class LongVideoHook implements BaseHook {
   private void hookProfileTrimmer(ClassLoader cl, LineVersion.Config v) {
     if (v.media.videoProfileTrimmerActivityClass.isEmpty()) return;
     try {
-      XposedHelpers.findAndHookMethod(
-          v.media.videoProfileTrimmerActivityClass,
-          cl,
-          "onCreate",
-          android.os.Bundle.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              XposedHelpers.setIntField(
-                  param.thisObject, v.media.fieldVideoProfileTrimmerLimit, Integer.MAX_VALUE);
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  v.media.videoProfileTrimmerActivityClass,
+                  cl,
+                  "onCreate",
+                  android.os.Bundle.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                Reflect.setIntField(
+                    chain.getThisObject(),
+                    v.media.fieldVideoProfileTrimmerLimit,
+                    Integer.MAX_VALUE);
+                return result;
+              });
     } catch (Throwable ignored) {
     }
   }

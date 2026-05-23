@@ -2,13 +2,13 @@ package app.zipper.knot.hooks;
 
 import android.content.Context;
 import android.view.View;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
 import app.zipper.knot.Main;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.Reflect;
+import io.github.libxposed.api.XposedInterface;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 public class RemoveHeaderButtons implements BaseHook {
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
     if (cfg == null) return;
 
@@ -31,9 +31,8 @@ public class RemoveHeaderButtons implements BaseHook {
     if (cfg.talkTabHeader.chatTabHeaderStateClass.isEmpty()) return;
 
     Class<?> cls =
-        XposedHelpers.findClass(cfg.talkTabHeader.chatTabHeaderStateClass, lpparam.classLoader);
-    Class<?> iconTypeCls =
-        XposedHelpers.findClass(cfg.talkTabHeader.iconTypeClass, lpparam.classLoader);
+        Reflect.findClass(cfg.talkTabHeader.chatTabHeaderStateClass, lpparam.classLoader);
+    Class<?> iconTypeCls = Reflect.findClass(cfg.talkTabHeader.iconTypeClass, lpparam.classLoader);
 
     final Object aiFriend = firstAvailableValueOf(iconTypeCls, "AI_FRIEND", "AI_FRIENDS");
     Object album = safeValueOf(iconTypeCls, "ALBUM");
@@ -43,36 +42,35 @@ public class RemoveHeaderButtons implements BaseHook {
       hookSearchBarAiButton(cfg, cls);
     }
 
-    XposedBridge.hookAllConstructors(
+    Knot.hookAllCtors(
         cls,
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            if (!Main.options.removeAiFriendsButton.enabled
-                && !Main.options.removeOpenChatButton.enabled) return;
+        chain -> {
+          Object result = chain.proceed();
+          if (Main.options.removeAiFriendsButton.enabled
+              || Main.options.removeOpenChatButton.enabled) {
             try {
-              patchState(param.thisObject, cfg, aiFriend, album, openChat);
+              patchState(chain.getThisObject(), cfg, aiFriend, album, openChat);
             } catch (Exception e) {
-              XposedBridge.log("Knot: RemoveHeaderButtons constructor error: " + e);
+              Knot.log("Knot: RemoveHeaderButtons constructor error: " + e);
             }
           }
+          return result;
         });
 
-    XposedBridge.hookAllMethods(
+    Knot.hookAll(
         cls,
         "createEndButtons",
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            if (!Main.options.removeAiFriendsButton.enabled
-                && !Main.options.removeOpenChatButton.enabled) return;
-            List<?> result = (List<?>) param.getResult();
-            if (result == null || result.isEmpty()) return;
-            try {
-              param.setResult(filterButtons(result, cfg, aiFriend, album, openChat));
-            } catch (Exception e) {
-              XposedBridge.log("Knot: RemoveHeaderButtons createEndButtons error: " + e);
-            }
+        chain -> {
+          Object result = chain.proceed();
+          if (!Main.options.removeAiFriendsButton.enabled
+              && !Main.options.removeOpenChatButton.enabled) return result;
+          List<?> list = (List<?>) result;
+          if (list == null || list.isEmpty()) return result;
+          try {
+            return filterButtons(list, cfg, aiFriend, album, openChat);
+          } catch (Exception e) {
+            Knot.log("Knot: RemoveHeaderButtons createEndButtons error: " + e);
+            return result;
           }
         });
   }
@@ -80,17 +78,15 @@ public class RemoveHeaderButtons implements BaseHook {
   private static void patchState(
       Object instance, LineVersion.Config cfg, Object aiFriend, Object album, Object openChat)
       throws Exception {
-    Object iconState = XposedHelpers.getObjectField(instance, cfg.talkTabHeader.iconListStateField);
-    List<?> icons = (List<?>) XposedHelpers.callMethod(iconState, "getValue");
+    Object iconState = Reflect.getObjectField(instance, cfg.talkTabHeader.iconListStateField);
+    List<?> icons = (List<?>) Reflect.callMethod(iconState, "getValue");
     if (icons != null)
-      XposedHelpers.callMethod(
-          iconState, "setValue", filterIcons(icons, aiFriend, album, openChat));
+      Reflect.callMethod(iconState, "setValue", filterIcons(icons, aiFriend, album, openChat));
 
-    Object btnState =
-        XposedHelpers.getObjectField(instance, cfg.talkTabHeader.buttonListStateField);
-    List<?> buttons = (List<?>) XposedHelpers.callMethod(btnState, "getValue");
+    Object btnState = Reflect.getObjectField(instance, cfg.talkTabHeader.buttonListStateField);
+    List<?> buttons = (List<?>) Reflect.callMethod(btnState, "getValue");
     if (buttons != null)
-      XposedHelpers.callMethod(
+      Reflect.callMethod(
           btnState, "setValue", filterButtons(buttons, cfg, aiFriend, album, openChat));
   }
 
@@ -114,7 +110,7 @@ public class RemoveHeaderButtons implements BaseHook {
     boolean removeOc = Main.options.removeOpenChatButton.enabled;
     List<Object> out = new ArrayList<>();
     for (Object btn : buttons) {
-      Object type = XposedHelpers.getObjectField(btn, cfg.talkTabHeader.iconTypeFieldInButton);
+      Object type = Reflect.getObjectField(btn, cfg.talkTabHeader.iconTypeFieldInButton);
       if (removeAi && (type == aiFriend || type == album)) continue;
       if (removeOc && type == openChat) continue;
       out.add(btn);
@@ -124,7 +120,7 @@ public class RemoveHeaderButtons implements BaseHook {
 
   private static Object safeValueOf(Class<?> cls, String name) {
     try {
-      return XposedHelpers.callStaticMethod(cls, "valueOf", name);
+      return Reflect.callStaticMethod(cls, "valueOf", name);
     } catch (Exception e) {
       return null;
     }
@@ -145,31 +141,29 @@ public class RemoveHeaderButtons implements BaseHook {
         findZeroArgMethod(cls, cfg.searchBarAgentI.talkClickMethod, void.class);
 
     if (searchBarAiVisible != null) {
-      XposedBridge.hookMethod(
-          searchBarAiVisible,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (Main.options.removeSearchBarAgentIButton.enabled) param.setResult(false);
-            }
-          });
+      Knot.module
+          .hook(searchBarAiVisible)
+          .intercept(
+              chain -> {
+                if (Main.options.removeSearchBarAgentIButton.enabled) return false;
+                return chain.proceed();
+              });
     } else {
-      XposedBridge.log("Knot: RemoveHeaderButtons could not find search bar AI visibility method.");
+      Knot.log("Knot: RemoveHeaderButtons could not find search bar AI visibility method.");
     }
 
     if (searchBarAiClick != null) {
-      XposedBridge.hookMethod(
-          searchBarAiClick,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-              if (Main.options.removeSearchBarAgentIButton.enabled) param.setResult(null);
-            }
-          });
+      Knot.module
+          .hook(searchBarAiClick)
+          .intercept(
+              chain -> {
+                if (Main.options.removeSearchBarAgentIButton.enabled) return null;
+                return chain.proceed();
+              });
     }
 
     if (searchBarAiVisible != null || searchBarAiClick != null) {
-      XposedBridge.log("Knot: RemoveHeaderButtons hooked Talk search bar Agent i button.");
+      Knot.log("Knot: RemoveHeaderButtons hooked Talk search bar Agent i button.");
     }
   }
 
@@ -177,7 +171,10 @@ public class RemoveHeaderButtons implements BaseHook {
     if (methodName == null || methodName.isEmpty()) return null;
     try {
       Method method = cls.getDeclaredMethod(methodName);
-      if (method.getReturnType() == returnType) return method;
+      if (method.getReturnType() == returnType) {
+        method.setAccessible(true);
+        return method;
+      }
     } catch (NoSuchMethodException e) {
     }
     return null;
@@ -189,35 +186,34 @@ public class RemoveHeaderButtons implements BaseHook {
 
     Class<?> cls;
     try {
-      cls = XposedHelpers.findClass(cfg.searchBarAgentI.homeSearchBarClass, classLoader);
+      cls = Reflect.findClass(cfg.searchBarAgentI.homeSearchBarClass, classLoader);
     } catch (Throwable t) {
-      XposedBridge.log("Knot: RemoveHeaderButtons could not find Home search bar class.");
+      Knot.log("Knot: RemoveHeaderButtons could not find Home search bar class.");
       return;
     }
 
-    XC_MethodHook patchHook =
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            if (!Main.options.removeSearchBarAgentIButton.enabled) return;
+    XposedInterface.Hooker patchHook =
+        chain -> {
+          Object result = chain.proceed();
+          if (Main.options.removeSearchBarAgentIButton.enabled) {
             try {
-              patchHomeSearchBarAiButton(cfg, param.thisObject);
+              patchHomeSearchBarAiButton(cfg, chain.getThisObject());
             } catch (Exception e) {
-              XposedBridge.log("Knot: RemoveHeaderButtons Home search bar error: " + e);
+              Knot.log("Knot: RemoveHeaderButtons Home search bar error: " + e);
             }
           }
+          return result;
         };
 
-    XposedBridge.hookAllConstructors(cls, patchHook);
-    XposedBridge.hookAllMethods(cls, cfg.searchBarAgentI.homeRefreshMethod, patchHook);
-    XposedBridge.log("Knot: RemoveHeaderButtons hooked Home search bar Agent i button.");
+    Knot.hookAllCtors(cls, patchHook);
+    Knot.hookAll(cls, cfg.searchBarAgentI.homeRefreshMethod, patchHook);
+    Knot.log("Knot: RemoveHeaderButtons hooked Home search bar Agent i button.");
   }
 
   private static void patchHomeSearchBarAiButton(LineVersion.Config cfg, Object instance) {
     if (!isHomeSearchBar(cfg, instance)) return;
 
-    View rootView =
-        (View) XposedHelpers.getObjectField(instance, cfg.searchBarAgentI.homeRootViewField);
+    View rootView = (View) Reflect.getObjectField(instance, cfg.searchBarAgentI.homeRootViewField);
     if (rootView == null) return;
 
     Context context = rootView.getContext();
@@ -236,12 +232,12 @@ public class RemoveHeaderButtons implements BaseHook {
     if (guidelineView != null && cfg.searchBarAgentI.homeGuidelineEndDp > 0) {
       if (cfg.searchBarAgentI.homeGuidelineClass.equals(guidelineView.getClass().getName())) {
         try {
-          XposedHelpers.callMethod(
+          Reflect.callMethod(
               guidelineView,
               "setGuidelineEnd",
               dpToPx(context, cfg.searchBarAgentI.homeGuidelineEndDp));
         } catch (Throwable t) {
-          XposedBridge.log("Knot: RemoveHeaderButtons guideline error: " + t);
+          Knot.log("Knot: RemoveHeaderButtons guideline error: " + t);
         }
       }
     }
@@ -250,7 +246,7 @@ public class RemoveHeaderButtons implements BaseHook {
   private static boolean isHomeSearchBar(LineVersion.Config cfg, Object instance) {
     if (cfg.searchBarAgentI.homeTabTypeField.isEmpty()) return false;
 
-    Object tabType = XposedHelpers.getObjectField(instance, cfg.searchBarAgentI.homeTabTypeField);
+    Object tabType = Reflect.getObjectField(instance, cfg.searchBarAgentI.homeTabTypeField);
     if (!(tabType instanceof Enum<?>)) return false;
     String name = ((Enum<?>) tabType).name();
     return name.equals(cfg.searchBarAgentI.homeTabName)

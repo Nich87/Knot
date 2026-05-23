@@ -1,51 +1,63 @@
 package app.zipper.knot;
 
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.util.Log;
+import androidx.annotation.NonNull;
 import app.zipper.knot.hooks.*;
 import app.zipper.knot.utils.ModuleStrings;
-import de.robv.android.xposed.IXposedHookInitPackageResources;
-import de.robv.android.xposed.IXposedHookLoadPackage;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedModule;
+import java.lang.reflect.Method;
 
-public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResources {
+public class Main extends XposedModule {
 
   public static final String TAG = "Knot";
   public static final KnotConfig options = new KnotConfig();
+  private static final String LINE_PKG = "jp.naver.line.android";
 
   @Override
-  public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-    if (!lpparam.packageName.equals("jp.naver.line.android")) return;
-
-    XposedHelpers.findAndHookMethod(
-        "android.content.ContextWrapper",
-        lpparam.classLoader,
-        "attachBaseContext",
-        Context.class,
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            Context context = (Context) param.args[0];
-            if (context == null) return;
-
-            LineVersion.Config cfg = LineVersion.detectWithContext(context);
-            if (cfg == null) {
-              cfg = LineVersion.detect(lpparam.classLoader);
-            }
-
-            if (cfg == null) {
-              handleUnsupportedVersion(lpparam, context);
-              return;
-            }
-
-            initializeModule(context, lpparam);
-          }
-        });
+  public void onModuleLoaded(@NonNull ModuleLoadedParam param) {
+    Knot.module = this;
+    Knot.processName = param.getProcessName();
+    log(Log.INFO, TAG, "Knot loaded in " + param.getProcessName());
   }
 
-  private void initializeModule(Context context, XC_LoadPackage.LoadPackageParam lpparam) {
+  @Override
+  public void onPackageReady(@NonNull PackageReadyParam param) {
+    if (!LINE_PKG.equals(param.getPackageName())) return;
+    Knot.module = this;
+    bootstrap(param.getClassLoader(), param.getPackageName());
+  }
+
+  private void bootstrap(ClassLoader classLoader, String packageName) {
+    LoadParam lpparam = new LoadParam(classLoader, packageName, Knot.processName);
+    try {
+      Method attachBaseContext =
+          ContextWrapper.class.getDeclaredMethod("attachBaseContext", Context.class);
+      hook(attachBaseContext)
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                Context context = (Context) chain.getArg(0);
+                if (context == null) return result;
+
+                LineVersion.Config cfg = LineVersion.detectWithContext(context);
+                if (cfg == null) {
+                  cfg = LineVersion.detect(lpparam.classLoader);
+                }
+                if (cfg == null) {
+                  handleUnsupportedVersion(lpparam, context);
+                } else {
+                  initializeModule(context, lpparam);
+                }
+                return result;
+              });
+    } catch (Throwable t) {
+      Knot.log("Knot: bootstrap failed: " + t);
+    }
+  }
+
+  private void initializeModule(Context context, LoadParam lpparam) {
     synchronized (Main.class) {
       if (SettingsStore.isLoaded()) return;
 
@@ -53,7 +65,7 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
       SettingsStore.load(options);
       SettingsStore.setLoaded(true);
 
-      XposedBridge.log("Knot: Initializing Knot hooks...");
+      Knot.log("Knot: Initializing Knot hooks...");
 
       applyHook(new SettingsUIInjector(), lpparam);
       applyHook(new SettingsButtonLongPress(), lpparam);
@@ -138,39 +150,40 @@ public class Main implements IXposedHookLoadPackage, IXposedHookInitPackageResou
     }
   }
 
-  private void applyHook(BaseHook hook, XC_LoadPackage.LoadPackageParam lpparam) {
+  private void applyHook(BaseHook hook, LoadParam lpparam) {
     try {
       hook.hook(options, lpparam);
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Hook failed for " + hook.getClass().getSimpleName() + ": " + t);
+      Knot.log("Knot: Hook failed for " + hook.getClass().getSimpleName() + ": " + t);
     }
   }
 
-  private void handleUnsupportedVersion(XC_LoadPackage.LoadPackageParam lpparam, Context context) {
+  private void handleUnsupportedVersion(LoadParam lpparam, Context context) {
     final String supported = LineVersion.getSupportedVersions();
     final String msg = ModuleStrings.UNSUPPORTED_VERSION_MSG + " (Supported: " + supported + ")";
 
-    XposedHelpers.findAndHookMethod(
-        "jp.naver.line.android.activity.main.MainActivity",
-        lpparam.classLoader,
-        "onCreate",
-        android.os.Bundle.class,
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            android.app.Activity activity = (android.app.Activity) param.thisObject;
-            new android.app.AlertDialog.Builder(
-                    activity, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                .setTitle(ModuleStrings.UNSUPPORTED_VERSION_TITLE)
-                .setMessage(msg)
-                .setPositiveButton("OK", null)
-                .show();
-          }
-        });
+    try {
+      Method onCreate =
+          Reflect.findMethodExact(
+              "jp.naver.line.android.activity.main.MainActivity",
+              lpparam.classLoader,
+              "onCreate",
+              android.os.Bundle.class);
+      hook(onCreate)
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                android.app.Activity activity = (android.app.Activity) chain.getThisObject();
+                new android.app.AlertDialog.Builder(
+                        activity, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                    .setTitle(ModuleStrings.UNSUPPORTED_VERSION_TITLE)
+                    .setMessage(msg)
+                    .setPositiveButton("OK", null)
+                    .show();
+                return result;
+              });
+    } catch (Throwable t) {
+      Knot.log("Knot: unsupported-version dialog hook failed: " + t);
+    }
   }
-
-  @Override
-  public void handleInitPackageResources(
-      de.robv.android.xposed.callbacks.XC_InitPackageResources.InitPackageResourcesParam resParam)
-      throws Throwable {}
 }

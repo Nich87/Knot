@@ -1,6 +1,6 @@
 package app.zipper.knot.utils;
 
-import de.robv.android.xposed.XposedBridge;
+import app.zipper.knot.Knot;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -22,10 +22,10 @@ public class DexScanner {
         while (entries.hasMoreElements()) names.add(entries.nextElement());
         dex.close();
       } catch (Throwable t) {
-        XposedBridge.log("Knot: failed to scan " + apkPath + ": " + t);
+        Knot.log("Knot: failed to scan " + apkPath + ": " + t);
       }
       sAllClasses = Collections.unmodifiableList(names);
-      XposedBridge.log("Knot: scanned " + sAllClasses.size() + " classes");
+      Knot.log("Knot: scanned " + sAllClasses.size() + " classes");
     }
     return sAllClasses;
   }

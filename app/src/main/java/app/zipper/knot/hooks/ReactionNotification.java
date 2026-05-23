@@ -13,15 +13,15 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.service.notification.StatusBarNotification;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
 import app.zipper.knot.Main;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.utils.LineDBUtils;
 import app.zipper.knot.utils.ModuleStrings;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import io.github.libxposed.api.XposedInterface;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -42,81 +42,84 @@ public class ReactionNotification implements BaseHook {
   private static volatile String currentChatMid = null;
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     if (!config.reactionNotification.enabled) return;
 
     LineVersion.Config cfg = LineVersion.get();
 
-    XC_MethodHook activityTracker =
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) {
-            boolean isChat =
-                param.thisObject.getClass().getName().equals(cfg.chatHeader.chatHistoryActivity);
+    XposedInterface.Hooker activityTracker =
+        chain -> {
+          Object result = chain.proceed();
+          boolean isChat =
+              chain.getThisObject().getClass().getName().equals(cfg.chatHeader.chatHistoryActivity);
 
-            if (param.method.getName().equals("onResume")) {
-              if (isChat) {
-                try {
-                  android.app.Activity activity = (android.app.Activity) param.thisObject;
-                  String chatId = activity.getIntent().getStringExtra("chatId");
-                  if (chatId == null) chatId = activity.getIntent().getStringExtra("chat_id");
+          if (chain.getExecutable().getName().equals("onResume")) {
+            if (isChat) {
+              try {
+                android.app.Activity activity = (android.app.Activity) chain.getThisObject();
+                String chatId = activity.getIntent().getStringExtra("chatId");
+                if (chatId == null) chatId = activity.getIntent().getStringExtra("chat_id");
 
-                  if (chatId == null) {
-                    Object request = XposedHelpers.getObjectField(activity, cfg.chat.chatIdField);
-                    if (request != null) {
-                      chatId = (String) XposedHelpers.callMethod(request, cfg.chat.methodGetChatId);
-                    }
+                if (chatId == null) {
+                  Object request = Reflect.getObjectField(activity, cfg.chat.chatIdField);
+                  if (request != null) {
+                    chatId = (String) Reflect.callMethod(request, cfg.chat.methodGetChatId);
                   }
-                  currentChatMid = chatId;
-                  clearChatNotifications(activity, chatId);
-                } catch (Throwable ignored) {
                 }
-              } else {
-                currentChatMid = null;
+                currentChatMid = chatId;
+                clearChatNotifications(activity, chatId);
+              } catch (Throwable ignored) {
               }
-            } else if (isChat) {
+            } else {
               currentChatMid = null;
             }
+          } else if (isChat) {
+            currentChatMid = null;
           }
+          return result;
         };
 
     try {
-      XposedHelpers.findAndHookMethod(android.app.Activity.class, "onResume", activityTracker);
-      XposedHelpers.findAndHookMethod(android.app.Activity.class, "onPause", activityTracker);
+      Knot.module
+          .hook(Reflect.findMethodExact(android.app.Activity.class, "onResume"))
+          .intercept(activityTracker);
+      Knot.module
+          .hook(Reflect.findMethodExact(android.app.Activity.class, "onPause"))
+          .intercept(activityTracker);
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Chat tracking hook failed: " + t.getMessage());
+      Knot.log("Knot: Chat tracking hook failed: " + t.getMessage());
     }
 
     try {
-      XposedBridge.hookAllMethods(
-          XposedHelpers.findClass(cfg.unsend.talkServiceHookClass, lpparam.classLoader),
+      Knot.hookAll(
+          Reflect.findClass(cfg.unsend.talkServiceHookClass, lpparam.classLoader),
           cfg.unsend.methodReadBuffer,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-              if (!Main.options.reactionNotification.enabled) return;
+          chain -> {
+            Object result = chain.proceed();
+            if (Main.options.reactionNotification.enabled) {
               try {
-                processOperation(param);
+                processOperation(chain);
               } catch (Exception ignored) {
               }
             }
+            return result;
           });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: Reaction hook failed: " + t.getMessage());
+      Knot.log("Knot: Reaction hook failed: " + t.getMessage());
     }
   }
 
-  private void processOperation(XC_MethodHook.MethodHookParam param) throws Exception {
+  private void processOperation(XposedInterface.Chain chain) throws Exception {
     LineVersion.Config cfg = LineVersion.get();
-    Object op = param.args[1];
+    Object op = chain.getArg(1);
     if (op == null || op.getClass().getName().startsWith("java.")) return;
 
-    Object type = XposedHelpers.getObjectField(op, cfg.unsend.operationTypeField);
+    Object type = Reflect.getObjectField(op, cfg.unsend.operationTypeField);
     if (type == null || !OP_TYPE_REACTION.equals(type.toString())) return;
 
-    String messageId = (String) XposedHelpers.getObjectField(op, cfg.unsend.operationParam1Field);
-    String dataJson = (String) XposedHelpers.getObjectField(op, cfg.unsend.operationParam2Field);
-    String reactorMid = (String) XposedHelpers.getObjectField(op, cfg.unsend.operationParam3Field);
+    String messageId = (String) Reflect.getObjectField(op, cfg.unsend.operationParam1Field);
+    String dataJson = (String) Reflect.getObjectField(op, cfg.unsend.operationParam2Field);
+    String reactorMid = (String) Reflect.getObjectField(op, cfg.unsend.operationParam3Field);
 
     if (dataJson == null || reactorMid == null) return;
 
@@ -137,7 +140,7 @@ public class ReactionNotification implements BaseHook {
             || curr.has("paidReaction");
     if (!hasReaction) return;
 
-    Context context = android.app.AndroidAppHelper.currentApplication();
+    Context context = Knot.currentApplication();
     if (context == null) return;
 
     Bitmap reactionIcon = resolveReactionIcon(context, curr);
@@ -153,7 +156,7 @@ public class ReactionNotification implements BaseHook {
       messageSnippet = ModuleStrings.READ_HISTORY_UNKNOWN_MSG;
     }
 
-    long timestamp = XposedHelpers.getLongField(op, cfg.unsend.operationCreatedTimeField);
+    long timestamp = Reflect.getLongField(op, cfg.unsend.operationCreatedTimeField);
     int notifId = NOTIFICATION_BASE_ID + (chatMid + messageId + reactorMid).hashCode();
 
     String title = String.format(ModuleStrings.REACTION_NOTIF_TITLE, reactorName);
@@ -246,7 +249,7 @@ public class ReactionNotification implements BaseHook {
     try {
       Class<?> verCls =
           context.getClassLoader().loadClass(LineVersion.get().notification.lineAppVersionClass);
-      String verName = (String) XposedHelpers.callStaticMethod(verCls, "getVerName");
+      String verName = (String) Reflect.callStaticMethod(verCls, "getVerName");
       if (verName != null && !verName.isEmpty()) ua = "Line/" + verName;
     } catch (Throwable ignored) {
     }
@@ -322,7 +325,7 @@ public class ReactionNotification implements BaseHook {
       ClassLoader cl = context.getClassLoader();
       Class<?> reqCls = cl.loadClass(LineVersion.get().notification.chatHistoryRequestClass);
       boolean isGroup = chatMid.startsWith("g") || chatMid.startsWith("c");
-      Object request = XposedHelpers.newInstance(reqCls, chatMid, isGroup);
+      Object request = Reflect.newInstance(reqCls, chatMid, isGroup);
 
       intent.setClassName(
           PKG_LINE, LineVersion.get().notification.chatHistoryActivityLaunchActivityClass);

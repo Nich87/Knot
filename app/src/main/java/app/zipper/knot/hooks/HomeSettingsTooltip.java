@@ -13,14 +13,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
 import app.zipper.knot.utils.ModuleStrings;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class HomeSettingsTooltip implements BaseHook {
 
@@ -28,38 +27,40 @@ public class HomeSettingsTooltip implements BaseHook {
   private static volatile PopupWindow activePopup = null;
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
     if (cfg == null
         || cfg.res.resSettingsHeaderBtn.isEmpty()
         || cfg.searchBarAgentI.homeSearchBarClass.isEmpty()
         || cfg.searchBarAgentI.homeRefreshMethod.isEmpty()) return;
 
-    XposedHelpers.findAndHookMethod(
-        cfg.searchBarAgentI.homeSearchBarClass,
-        lpparam.classLoader,
-        cfg.searchBarAgentI.homeRefreshMethod,
-        new XC_MethodHook() {
-          @Override
-          protected void afterHookedMethod(MethodHookParam param) {
-            if (isHomeSearchBar(cfg, param.thisObject)) {
-              View rootView =
-                  (View)
-                      XposedHelpers.getObjectField(
-                          param.thisObject, cfg.searchBarAgentI.homeRootViewField);
-              if (rootView != null) {
-                onHomeTabEntered(rootView, cfg);
+    Knot.module
+        .hook(
+            Reflect.findMethodExact(
+                cfg.searchBarAgentI.homeSearchBarClass,
+                lpparam.classLoader,
+                cfg.searchBarAgentI.homeRefreshMethod))
+        .intercept(
+            chain -> {
+              Object result = chain.proceed();
+              if (isHomeSearchBar(cfg, chain.getThisObject())) {
+                View rootView =
+                    (View)
+                        Reflect.getObjectField(
+                            chain.getThisObject(), cfg.searchBarAgentI.homeRootViewField);
+                if (rootView != null) {
+                  onHomeTabEntered(rootView, cfg);
+                }
+              } else {
+                dismissSilently();
               }
-            } else {
-              dismissSilently();
-            }
-          }
-        });
+              return result;
+            });
   }
 
   private static boolean isHomeSearchBar(LineVersion.Config cfg, Object instance) {
     if (cfg.searchBarAgentI.homeTabTypeField.isEmpty()) return false;
-    Object tabType = XposedHelpers.getObjectField(instance, cfg.searchBarAgentI.homeTabTypeField);
+    Object tabType = Reflect.getObjectField(instance, cfg.searchBarAgentI.homeTabTypeField);
     if (!(tabType instanceof Enum<?>)) return false;
     String name = ((Enum<?>) tabType).name();
     return name.equals(cfg.searchBarAgentI.homeTabName)
@@ -237,7 +238,7 @@ public class HomeSettingsTooltip implements BaseHook {
               });
 
     } catch (Throwable t) {
-      XposedBridge.log("Knot: HomeSettingsTooltip error: " + t);
+      Knot.log("Knot: HomeSettingsTooltip error: " + t);
     }
   }
 }

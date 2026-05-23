@@ -1,8 +1,8 @@
 package app.zipper.knot.hooks;
 
 import app.zipper.knot.KnotConfig;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
 
 public interface BaseHook {
-  void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable;
+  void hook(KnotConfig config, LoadParam lpparam) throws Throwable;
 }

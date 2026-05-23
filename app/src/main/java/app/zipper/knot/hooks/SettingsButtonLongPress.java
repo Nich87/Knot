@@ -2,59 +2,59 @@ package app.zipper.knot.hooks;
 
 import android.app.Activity;
 import android.view.View;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 
 public class SettingsButtonLongPress implements BaseHook {
 
   @Override
-  public void hook(KnotConfig config, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
 
     try {
-      XposedHelpers.findAndHookMethod(
-          cfg.main.headerButton,
-          lpparam.classLoader,
-          "setButtonOnClickListener",
-          View.OnClickListener.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              attachInteractionHandler((View) param.thisObject);
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  cfg.main.headerButton,
+                  lpparam.classLoader,
+                  "setButtonOnClickListener",
+                  View.OnClickListener.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                attachInteractionHandler((View) chain.getThisObject());
+                return result;
+              });
     } catch (Throwable ignored) {
     }
 
     try {
-      XposedHelpers.findAndHookMethod(
-          View.class,
-          "setOnClickListener",
-          View.OnClickListener.class,
-          new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-              View target = (View) param.thisObject;
-              if (target == null) return;
-              int id = target.getId();
-              if (id != View.NO_ID) {
-                LineVersion.Config c = LineVersion.get();
-                String entry = "";
-                try {
-                  entry = target.getResources().getResourceEntryName(id);
-                } catch (Throwable ignored) {
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(View.class, "setOnClickListener", View.OnClickListener.class))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                View target = (View) chain.getThisObject();
+                if (target == null) return result;
+                int id = target.getId();
+                if (id != View.NO_ID) {
+                  LineVersion.Config c = LineVersion.get();
+                  String entry = "";
+                  try {
+                    entry = target.getResources().getResourceEntryName(id);
+                  } catch (Throwable ignored) {
+                  }
+                  if (c.res.resSettingsHeaderBtn.equals(entry)
+                      || c.res.resSettingsBtn.equals(entry)) {
+                    attachInteractionHandler(target);
+                  }
                 }
-                if (c.res.resSettingsHeaderBtn.equals(entry)
-                    || c.res.resSettingsBtn.equals(entry)) {
-                  attachInteractionHandler(target);
-                }
-              }
-            }
-          });
+                return result;
+              });
     } catch (Throwable ignored) {
     }
   }
@@ -64,7 +64,7 @@ public class SettingsButtonLongPress implements BaseHook {
     LineVersion.Config cfg = LineVersion.get();
     if (root.getClass().getName().contains("HeaderButton")) {
       try {
-        View inner = (View) XposedHelpers.getObjectField(root, cfg.main.headerButtonInnerField);
+        View inner = (View) Reflect.getObjectField(root, cfg.main.headerButtonInnerField);
         if (inner != null) {
           inner.setOnLongClickListener(interactionListener);
           return;
@@ -85,7 +85,7 @@ public class SettingsButtonLongPress implements BaseHook {
             return true;
           }
         } catch (Throwable t) {
-          XposedBridge.log("Knot: Interaction error: " + t);
+          Knot.log("Knot: Interaction error: " + t);
         }
         return false;
       };

@@ -3,13 +3,12 @@ package app.zipper.knot.hooks;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
+import app.zipper.knot.LoadParam;
+import app.zipper.knot.Reflect;
 import app.zipper.knot.utils.LineDBUtils;
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +53,7 @@ public class SearchMin1CharHook implements BaseHook {
   }
 
   @Override
-  public void hook(KnotConfig options, XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+  public void hook(KnotConfig options, LoadParam lpparam) throws Throwable {
     if (!options.searchMin1Char.enabled) return;
 
     LineVersion.Config config = LineVersion.get();
@@ -63,19 +62,16 @@ public class SearchMin1CharHook implements BaseHook {
         || config.chat.searchKeywordTypeMethod.isEmpty()) return;
 
     try {
-      XposedHelpers.findAndHookMethod(
-          config.chat.searchKeywordTypeClass,
-          lpparam.classLoader,
-          config.chat.searchKeywordTypeMethod,
-          String.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              param.setResult(hasMeaningfulKeyword((String) param.args[0]));
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findMethodExact(
+                  config.chat.searchKeywordTypeClass,
+                  lpparam.classLoader,
+                  config.chat.searchKeywordTypeMethod,
+                  String.class))
+          .intercept(chain -> hasMeaningfulKeyword((String) chain.getArg(0)));
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchMin1CharHook error: " + t);
+      Knot.log("Knot: SearchMin1CharHook error: " + t);
     }
 
     if (!config.chat.searchResultClass.isEmpty())
@@ -84,43 +80,45 @@ public class SearchMin1CharHook implements BaseHook {
 
   private void hookOneCharacterResults(LineVersion.Config config, ClassLoader classLoader) {
     try {
-      XposedHelpers.findAndHookConstructor(
-          config.chat.searchResultClass,
-          classLoader,
-          String.class,
-          int.class,
-          String.class,
-          List.class,
-          new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) {
-              replaceOneCharacterResults(param);
-            }
-          });
+      Knot.module
+          .hook(
+              Reflect.findConstructorExact(
+                  config.chat.searchResultClass,
+                  classLoader,
+                  String.class,
+                  int.class,
+                  String.class,
+                  List.class))
+          .intercept(
+              chain -> {
+                Object[] args = chain.getArgs().toArray();
+                replaceOneCharacterResults(args);
+                return chain.proceed(args);
+              });
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchMin1CharHook result hook error: " + t);
+      Knot.log("Knot: SearchMin1CharHook result hook error: " + t);
     }
   }
 
-  private static void replaceOneCharacterResults(XC_MethodHook.MethodHookParam param) {
+  private static void replaceOneCharacterResults(Object[] args) {
     try {
-      String chatId = (String) param.args[0];
-      String keyword = normalizeOneCharacterKeyword((String) param.args[2]);
+      String chatId = (String) args[0];
+      String keyword = normalizeOneCharacterKeyword((String) args[2]);
       if (chatId == null || keyword == null) return;
 
       List<Long> localIds = fetchExactOneCharacterLocalIds(chatId, keyword);
       if (localIds == null) return;
 
-      param.args[1] = localIds.size();
-      param.args[3] = localIds;
+      args[1] = localIds.size();
+      args[3] = localIds;
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchMin1CharHook replace results error: " + t);
+      Knot.log("Knot: SearchMin1CharHook replace results error: " + t);
     }
   }
 
   private static List<Long> fetchExactOneCharacterLocalIds(String chatId, String keyword) {
     try {
-      Context context = android.app.AndroidAppHelper.currentApplication();
+      Context context = Knot.currentApplication();
       if (context == null) return null;
 
       File dbFile = context.getDatabasePath("naver_line");
@@ -158,7 +156,7 @@ public class SearchMin1CharHook implements BaseHook {
         return result;
       }
     } catch (Throwable t) {
-      XposedBridge.log("Knot: SearchMin1CharHook fetch local ids error: " + t);
+      Knot.log("Knot: SearchMin1CharHook fetch local ids error: " + t);
       return null;
     }
   }
