@@ -354,6 +354,8 @@ public class Version2660 {
     v.chatTimestamp.displayTimeInterface = "g21.f";
     v.chatTimestamp.methodCreatedMillis = "a";
 
+    v.iab.inAppBrowserActivityClass = "jp.naver.line.android.activity.iab.InAppBrowserActivity";
+
     return v;
   }
 }

@@ -62,7 +62,7 @@ public class PlusMenuHook implements BaseHook {
     }
 
     final Method mainEntry =
-        Reflect.findMethodExact(
+        findMethodByParamSet(
             pCls,
             cfg.plusMenu.methodAddMenuItem,
             int.class,
@@ -72,7 +72,7 @@ public class PlusMenuHook implements BaseHook {
             boolean.class);
 
     final Method itemEntry =
-        Reflect.findMethodExact(
+        findMethodByParamSet(
             pCls,
             cfg.plusMenu.methodCreateMenu,
             int.class,
@@ -81,6 +81,11 @@ public class PlusMenuHook implements BaseHook {
             String.class,
             composerCls,
             callbackCls);
+
+    if (mainEntry == null || itemEntry == null) return;
+
+    final MenuItemFactory menu = new MenuItemFactory(itemEntry, composerCls, callbackCls);
+    if (!menu.valid()) return;
 
     final Object readToggleCallback =
         generateToggleHandler(
@@ -148,35 +153,20 @@ public class PlusMenuHook implements BaseHook {
               int iconId = (int) chain.getArg(0);
               if (iconId != targetDrawableId) return result;
 
-              Object composer = chain.getArg(4);
+              Object composer = chain.getArg(menu.composerIdx);
               injectionActive = true;
               try {
                 if (Main.options.preventMarkAsRead.enabled) {
                   boolean readOn = currentReadState;
                   String labelR = ModuleStrings.LABEL_PREVENT_READ + ": " + (readOn ? "ON" : "OFF");
-
-                  itemEntry.invoke(
-                      null,
-                      readOn ? ID_READ_ON : ID_READ_OFF,
-                      0,
-                      null,
-                      labelR,
-                      composer,
-                      readToggleCallback);
+                  menu.add(readOn ? ID_READ_ON : ID_READ_OFF, labelR, composer, readToggleCallback);
 
                   if (readOn) {
                     boolean markOn = currentSendMarkState;
                     String labelM =
                         ModuleStrings.LABEL_SEND_MARK_READ + ": " + (markOn ? "ON" : "OFF");
-
-                    itemEntry.invoke(
-                        null,
-                        markOn ? ID_MARK_ON : ID_MARK_OFF,
-                        0,
-                        null,
-                        labelM,
-                        composer,
-                        markToggleCallback);
+                    menu.add(
+                        markOn ? ID_MARK_ON : ID_MARK_OFF, labelM, composer, markToggleCallback);
                   }
                 }
               } catch (Throwable t) {
@@ -216,6 +206,65 @@ public class PlusMenuHook implements BaseHook {
               }
               return chain.proceed();
             });
+  }
+
+  private static Method findMethodByParamSet(Class<?> cls, String name, Class<?>... types) {
+    for (Method m : cls.getDeclaredMethods()) {
+      if (m.getName().equals(name) && sameTypeMultiset(m.getParameterTypes(), types)) return m;
+    }
+    return null;
+  }
+
+  private static boolean sameTypeMultiset(Class<?>[] a, Class<?>[] b) {
+    if (a.length != b.length) return false;
+    boolean[] used = new boolean[b.length];
+    for (Class<?> t : a) {
+      boolean found = false;
+      for (int i = 0; i < b.length; i++) {
+        if (!used[i] && b[i] == t) {
+          used[i] = true;
+          found = true;
+          break;
+        }
+      }
+      if (!found) return false;
+    }
+    return true;
+  }
+
+  private static int indexOfType(Class<?>[] params, Class<?> type) {
+    for (int i = 0; i < params.length; i++) if (params[i] == type) return i;
+    return -1;
+  }
+
+  private static final class MenuItemFactory {
+    private final Method method;
+    private final int paramCount;
+    final int composerIdx;
+    private final int callbackIdx;
+
+    MenuItemFactory(Method method, Class<?> composerCls, Class<?> callbackCls) {
+      this.method = method;
+      Class<?>[] params = method.getParameterTypes();
+      this.paramCount = params.length;
+      this.composerIdx = indexOfType(params, composerCls);
+      this.callbackIdx = indexOfType(params, callbackCls);
+    }
+
+    boolean valid() {
+      return composerIdx >= 0 && callbackIdx >= 0;
+    }
+
+    void add(int id, String label, Object composer, Object callback) throws Exception {
+      Object[] args = new Object[paramCount];
+      args[0] = id;
+      args[1] = 0;
+      args[2] = null;
+      args[3] = label;
+      args[composerIdx] = composer;
+      args[callbackIdx] = callback;
+      method.invoke(null, args);
+    }
   }
 
   private static Object generateToggleHandler(

@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
+import app.zipper.knot.LineVersion;
 import app.zipper.knot.LoadParam;
 import app.zipper.knot.Reflect;
 
@@ -15,14 +16,14 @@ public class OpenInExternalBrowserHook implements BaseHook {
   public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     if (config == null || !config.openUrlInDefaultBrowser.enabled) return;
 
+    LineVersion.Config cfg = LineVersion.get();
+    if (cfg == null || cfg.iab.inAppBrowserActivityClass.isEmpty()) return;
+
     try {
       Knot.module
           .hook(
               Reflect.findMethodExact(
-                  "jp.naver.line.android.activity.iab.InAppBrowserActivity",
-                  lpparam.classLoader,
-                  "onCreate",
-                  Bundle.class))
+                  cfg.iab.inAppBrowserActivityClass, lpparam.classLoader, "onCreate", Bundle.class))
           .intercept(
               chain -> {
                 Object result = chain.proceed();

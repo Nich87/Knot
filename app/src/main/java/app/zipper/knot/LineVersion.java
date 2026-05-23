@@ -34,10 +34,15 @@ public class LineVersion {
     public AnnouncementFix announcementFix = new AnnouncementFix();
     public ChatJump chatJump = new ChatJump();
     public ChatTimestamp chatTimestamp = new ChatTimestamp();
+    public Iab iab = new Iab();
 
     public static class ChatTimestamp {
       public String displayTimeInterface = "";
       public String methodCreatedMillis = "";
+    }
+
+    public static class Iab {
+      public String inAppBrowserActivityClass = "";
     }
 
     public static class AnnouncementFix {
@@ -440,6 +445,7 @@ public class LineVersion {
     VERSION_TABLE.put("26.6.0", app.zipper.knot.versions.Version2660.create());
     VERSION_TABLE.put("26.6.1", app.zipper.knot.versions.Version2661.create());
     VERSION_TABLE.put("26.6.2", app.zipper.knot.versions.Version2662.create());
+    VERSION_TABLE.put("26.7.0", app.zipper.knot.versions.Version2670.create());
   }
 
   private static volatile Config cachedConfig = null;
