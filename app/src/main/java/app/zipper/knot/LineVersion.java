@@ -1,6 +1,9 @@
 package app.zipper.knot;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class LineVersion {
@@ -500,13 +503,14 @@ public class LineVersion {
   }
 
   public static String getSupportedVersions() {
-    StringBuilder sb = new StringBuilder();
-    int count = 0;
-    for (String key : VERSION_TABLE.keySet()) {
-      if (count > 0) sb.append(", ");
-      sb.append(key);
-      count++;
-    }
-    return sb.toString();
+    List<String> keys = new ArrayList<>(VERSION_TABLE.keySet());
+    keys.sort(Comparator.comparingInt(LineVersion::versionScore));
+    return String.join(", ", keys);
+  }
+
+  private static int versionScore(String v) {
+    int score = 0;
+    for (String part : v.split("\\.")) score = score * 1000 + Integer.parseInt(part);
+    return score;
   }
 }
