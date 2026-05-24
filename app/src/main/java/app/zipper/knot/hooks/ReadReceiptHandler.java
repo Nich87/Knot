@@ -6,7 +6,6 @@ import app.zipper.knot.LineVersion;
 import app.zipper.knot.LoadParam;
 import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
-import app.zipper.knot.utils.DexScanner;
 import app.zipper.knot.utils.LineDBUtils;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -222,32 +221,12 @@ public class ReadReceiptHandler implements BaseHook {
   }
 
   private Class<?> getManagerClass(LineVersion.Config cfg, ClassLoader cl) {
-    if (!cfg.readReceipt.readReceiptManagerClass.isEmpty()) {
-      try {
-        return Reflect.findClass(cfg.readReceipt.readReceiptManagerClass, cl);
-      } catch (Throwable ignored) {
-      }
+    if (cfg.readReceipt.readReceiptManagerClass.isEmpty()) return null;
+    try {
+      return Reflect.findClass(cfg.readReceipt.readReceiptManagerClass, cl);
+    } catch (Throwable ignored) {
+      return null;
     }
-    return DexScanner.findClass(
-        cl, null, c -> containsServiceReference(c) && containsMarkAsReadLogic(c));
-  }
-
-  private boolean containsServiceReference(Class<?> c) {
-    String target = LineVersion.get().thrift.talkServiceClientInterface;
-    for (java.lang.reflect.Field f : c.getDeclaredFields())
-      if (target.equals(f.getType().getName())) return true;
-    return false;
-  }
-
-  private boolean containsMarkAsReadLogic(Class<?> c) {
-    String target = LineVersion.get().readReceipt.methodSendReadReceipt;
-    for (Method m : c.getDeclaredMethods()) {
-      if (target.equals(m.getName())) {
-        Class<?>[] p = m.getParameterTypes();
-        if (p.length == 3 && p[0] == long.class && p[1] == String.class) return true;
-      }
-    }
-    return false;
   }
 
   private void recordRead(String chatId, String readerMid, String lastMsgId, long createdTime) {

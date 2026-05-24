@@ -15,7 +15,6 @@ public class Version2670 {
     v.main.fieldHeaderHelper = "f";
     v.main.fieldChatActivity = "a";
     v.main.methodSetHeaderButton = "i";
-    v.main.methodSetHeaderIcon = "o";
     v.main.methodSetHeaderLabel = "k";
     v.main.methodSetHeaderButtonVisibility = "s";
     v.main.methodGetHeaderButtonView = "h";
@@ -24,7 +23,6 @@ public class Version2670 {
     v.main.methodHeaderSetTitle = "setTitle";
     v.main.methodHeaderSetButtonVisibility = "setUpButtonVisibility$common_libs";
     v.main.methodHeaderSetButtonListener = "setUpButtonOnClickListener$common_libs";
-    v.main.fieldNavHeader = "i";
 
     v.settings.mainSettingsFragmentClass =
         "com.linecorp.line.settings.main.LineUserMainSettingsFragment";
@@ -39,18 +37,9 @@ public class Version2670 {
     v.settings.methodSetItems = "n";
     v.settings.methodBindViewHolder = "r";
     v.settings.methodGetItem = "q";
-    v.settings.viewHolderSwitch = "ym4.r2";
-    v.settings.methodBindDescription = "N0";
     v.settings.fieldItemModel = "a";
     v.settings.fieldModelTag = "a";
     v.settings.fieldViewHolderView = "a";
-    v.settings.methodGetItemCount = "q";
-    v.settings.methodBindItem = "o";
-    v.settings.methodCreateViewHolder = "v";
-    v.settings.fieldItemType = "u";
-    v.settings.methodGetItemType = "n";
-    v.settings.fieldIsClickable = "y";
-    v.settings.fieldIsEditable = "z";
     v.settings.fieldIsVisible = "k";
     v.settings.fieldLayoutId = "b";
     v.settings.fieldActionHandler = "d";
@@ -71,7 +60,6 @@ public class Version2670 {
     v.plusMenu.plusMenuComponentClass = "jv0.q";
     v.plusMenu.plusMenuComposerClass = "z2.k";
     v.plusMenu.plusMenuComposerImplClass = "z2.l";
-    v.plusMenu.plusMenuScopeClass = "z2.j2";
     v.plusMenu.plusMenuCallbackClass = "lj8.a";
     v.plusMenu.plusMenuModifierClass = "androidx.compose.ui.e";
     v.plusMenu.plusMenuOnClickItemClass = "lj8.l";
@@ -92,7 +80,6 @@ public class Version2670 {
 
     v.unsend.talkServiceHookClass = "si8.zd$a";
     v.unsend.chatMessageViewHolderClass = "de1.j";
-    v.unsend.chatMessageViewDataClass = "t21.h";
     v.unsend.methodReadBuffer = "a";
     v.unsend.methodBind = "C";
     v.unsend.methodOperationTypeValueOf = "a";
@@ -125,10 +112,7 @@ public class Version2670 {
     v.thrift.talkServiceClientImplClass =
         "jp.naver.line.android.thrift.client.impl.LegacyTalkServiceClientImpl";
     v.thrift.talkServiceClientInterface = "jp.naver.line.android.thrift.client.TalkServiceClient";
-    v.thrift.chatSearchActivityClass = "com.linecorp.line.chat.search.ChatSearchActivity";
-    v.thrift.sendMessage = "L";
     v.thrift.v1 = "q1";
-    v.thrift.v2 = "s2";
     v.thrift.protocolClass = "org.apache.thrift.o";
     v.thrift.messageClass = "org.apache.thrift.e";
     v.thrift.methodWriteMessageBegin = "b";
@@ -142,8 +126,6 @@ public class Version2670 {
     v.tabs.resMini = "bnb_mini";
     v.tabs.resContainer = "main_tab_container";
     v.tabs.resBtnText = "bnb_button_text";
-    v.tabs.resBtnImg = "bnb_button_image";
-    v.tabs.resBtnAnimImg = "bnb_animated_button_image";
 
     v.ads.classAdSdkBase = "com.linecorp.line.ladsdk";
     v.ads.classAdMolinBase = "com.linecorp.line.admolin";
@@ -284,13 +266,11 @@ public class Version2670 {
     v.aiIcon.repoClass = "ix0.c";
     v.aiIcon.methodGetShownAfterMillis = "l";
 
-    v.imageQuality.qualityProfileBaseClass = "lg8.a$b";
     v.imageQuality.qualityProfileHighClass = "lg8.a$b$a";
     v.imageQuality.qualityProfileMediumClass = "lg8.a$b$b";
     v.imageQuality.methodGetMaxDimension = "a";
     v.imageQuality.methodGetQuality = "b";
     v.imageQuality.imageUtilClass = "jp.naver.line.android.util.y0";
-    v.imageQuality.methodCompressBitmap = "a";
 
     v.profile.g50fClass = "m50.f";
     v.profile.h13baClass = "j23.b$a";

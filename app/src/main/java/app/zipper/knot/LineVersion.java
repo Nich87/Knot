@@ -88,13 +88,11 @@ public class LineVersion {
     }
 
     public static class ImageQuality {
-      public String qualityProfileBaseClass = "";
       public String qualityProfileHighClass = "";
       public String qualityProfileMediumClass = "";
       public String methodGetMaxDimension = "";
       public String methodGetQuality = "";
       public String imageUtilClass = "";
-      public String methodCompressBitmap = "";
     }
 
     public static class Main {
@@ -107,7 +105,6 @@ public class LineVersion {
       public String fieldHeaderHelper = "";
       public String fieldChatActivity = "";
       public String methodSetHeaderButton = "";
-      public String methodSetHeaderIcon = "";
       public String methodSetHeaderLabel = "";
       public String methodSetHeaderButtonVisibility = "";
       public String methodGetHeaderButtonView = "";
@@ -116,7 +113,6 @@ public class LineVersion {
       public String methodHeaderSetTitle = "";
       public String methodHeaderSetButtonVisibility = "";
       public String methodHeaderSetButtonListener = "";
-      public String fieldNavHeader = "";
     }
 
     public static class Settings {
@@ -129,21 +125,12 @@ public class LineVersion {
       public String methodSetItems = "";
       public String methodBindViewHolder = "";
       public String methodGetItem = "";
-      public String viewHolderSwitch = "";
-      public String methodBindDescription = "";
       public String fieldItemModel = "";
       public String fieldModelTag = "";
       public String fieldViewHolderView = "";
       public String settingsHeaderItemClass = "";
       public String settingsRowItemClass = "";
       public String settingsHandlerBaseClass = "";
-      public String methodGetItemCount = "";
-      public String methodBindItem = "";
-      public String methodCreateViewHolder = "";
-      public String fieldItemType = "";
-      public String methodGetItemType = "";
-      public String fieldIsClickable = "";
-      public String fieldIsEditable = "";
       public String fieldIsVisible = "";
       public String fieldLayoutId = "";
       public String fieldActionHandler = "";
@@ -166,7 +153,6 @@ public class LineVersion {
       public String plusMenuComponentClass = "";
       public String plusMenuComposerClass = "";
       public String plusMenuComposerImplClass = "";
-      public String plusMenuScopeClass = "";
       public String plusMenuCallbackClass = "";
       public String plusMenuModifierClass = "";
       public String plusMenuOnClickItemClass = "";
@@ -195,7 +181,6 @@ public class LineVersion {
     public static class Unsend {
       public String talkServiceHookClass = "";
       public String chatMessageViewHolderClass = "";
-      public String chatMessageViewDataClass = "";
 
       public String methodReadBuffer = "";
       public String methodBind = "";
@@ -232,10 +217,7 @@ public class LineVersion {
     public static class Thrift {
       public String talkServiceClientImplClass = "";
       public String talkServiceClientInterface = "";
-      public String chatSearchActivityClass = "";
-      public String sendMessage = "";
       public String v1 = "";
-      public String v2 = "";
       public String protocolClass = "";
       public String messageClass = "";
       public String methodWriteMessageBegin = "";
@@ -251,8 +233,6 @@ public class LineVersion {
       public String resMini = "";
       public String resContainer = "";
       public String resBtnText = "";
-      public String resBtnImg = "";
-      public String resBtnAnimImg = "";
     }
 
     public static class Ads {
