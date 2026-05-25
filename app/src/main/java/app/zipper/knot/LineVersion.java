@@ -34,6 +34,7 @@ public class LineVersion {
     public ImageQuality imageQuality = new ImageQuality();
     public Media media = new Media();
     public Profile profile = new Profile();
+    public ProfileTimestamps profileTimestamps = new ProfileTimestamps();
     public AnnouncementFix announcementFix = new AnnouncementFix();
     public ChatJump chatJump = new ChatJump();
     public ChatTimestamp chatTimestamp = new ChatTimestamp();
@@ -85,6 +86,14 @@ public class LineVersion {
       public String g50aClass = "";
       public String methodGetProfile = "getProfile";
       public String fieldMid = "";
+    }
+
+    public static class ProfileTimestamps {
+      public String activityClass = "";
+      public String midExtraKey = "";
+      public String resHeaderButtonContainer = "";
+      public String optionalButtonWidthDimen = "userprofile_optional_button_width";
+      public String optionalButtonSpacingDimen = "userprofile_optional_button_spacing";
     }
 
     public static class ImageQuality {

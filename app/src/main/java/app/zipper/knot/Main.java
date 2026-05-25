@@ -109,6 +109,9 @@ public class Main extends XposedModule {
       if (options.showSecondsInChatTime.enabled) {
         applyHook(new ChatTimestampSeconds(), lpparam);
       }
+      if (options.showProfileTimestamps.enabled) {
+        applyHook(new ProfileTimestampsHook(), lpparam);
+      }
 
       if (options.removeAds.enabled) {
         applyHook(new RemoveAds(), lpparam);

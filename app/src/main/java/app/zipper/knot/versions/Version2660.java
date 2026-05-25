@@ -279,6 +279,10 @@ public class Version2660 {
     v.profile.methodGetProfile = "getProfile";
     v.profile.fieldMid = "b";
 
+    v.profileTimestamps.activityClass = "com.linecorp.line.userprofile.impl.UserProfileActivity";
+    v.profileTimestamps.midExtraKey = "USER_PROFILE_MID";
+    v.profileTimestamps.resHeaderButtonContainer = "user_profile_header_button_binding";
+
     v.media.videoDurationCheckClass = "p31.b";
     v.media.videoDurationCheckMethod = "c";
     v.media.mediaPickerParamsClass = "com.linecorp.line.media.picker.b$i";

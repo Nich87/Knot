@@ -294,6 +294,14 @@ public class KnotConfig {
           false,
           Category.CHAT);
 
+  public Item showProfileTimestamps =
+      new Item(
+          "show_profile_timestamps",
+          ModuleStrings.OPT_SHOW_PROFILE_TIMESTAMPS_LABEL,
+          ModuleStrings.OPT_SHOW_PROFILE_TIMESTAMPS_DESC,
+          false,
+          Category.DISPLAY);
+
   public Item[] items = {
     removeAiFriendsButton,
     removeSearchBarAgentIButton,
@@ -326,6 +334,7 @@ public class KnotConfig {
     searchByMember,
     searchMin1Char,
     fixAnnouncementName,
-    showSecondsInChatTime
+    showSecondsInChatTime,
+    showProfileTimestamps
   };
 }

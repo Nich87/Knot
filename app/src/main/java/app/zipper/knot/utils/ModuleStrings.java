@@ -8,6 +8,7 @@ public class ModuleStrings {
   public static final String SETTINGS_RESET_OK = "リセット";
   public static final String SETTINGS_YES = "はい";
   public static final String SETTINGS_CANCEL = "キャンセル";
+  public static final String COMMON_CLOSE = "閉じる";
   public static final String SETTINGS_PATH_PICKER_HINT = "保存先を選択してください";
   public static final String SETTINGS_UNSET = "未設定";
   public static final String SETTINGS_PATH_LABEL = "保存先: ";
@@ -60,7 +61,6 @@ public class ModuleStrings {
 
   public static final String READ_HISTORY_TITLE = "既読履歴";
   public static final String READ_HISTORY_EMPTY = "履歴はありません";
-  public static final String READ_HISTORY_CLOSE = "閉じる";
   public static final String READ_HISTORY_DELETE = "履歴を削除";
   public static final String READ_HISTORY_DELETE_CONFIRM_TITLE = "履歴の削除";
   public static final String READ_HISTORY_DELETE_CONFIRM_MSG = "このチャットの既読履歴をすべて削除しますか？";
@@ -184,6 +184,15 @@ public class ModuleStrings {
   public static final String OPT_FIX_ANNOUNCEMENT_NAME_LABEL = "アナウンス者名の表示を修正";
   public static final String OPT_FIX_ANNOUNCEMENT_NAME_DESC =
       "パッチ済みのLINEで、アナウンス登録時のシステムメッセージが「がアナウンスしました」と名前が空になる不具合を修正し、正しく表示されるようにします。";
+
+  public static final String OPT_SHOW_PROFILE_TIMESTAMPS_LABEL = "プロフィールに日時情報を表示";
+  public static final String OPT_SHOW_PROFILE_TIMESTAMPS_DESC =
+      "友だちのプロフィール画面の右上にアイコンを追加します。タップすると、友だち追加・お気に入り登録・プロフィール更新の日時をダイアログで表示します。記録がない項目は「—」と表示されます。";
+  public static final String PROFILE_TS_FRIEND_CREATED = "友だち追加";
+  public static final String PROFILE_TS_FAVORITE = "お気に入り";
+  public static final String PROFILE_TS_PROFILE_UPDATED = "プロフ更新";
+  public static final String PROFILE_TS_EMPTY = "—";
+  public static final String PROFILE_TS_DIALOG_TITLE = "日時情報";
 
   public static final String OPT_ABOUT_LABEL = "Knotについて";
   public static final String OPT_ABOUT_DESC = "バージョン情報など";

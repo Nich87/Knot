@@ -43,6 +43,56 @@ public class LineDBUtils {
     return null;
   }
 
+  public static class ContactTimes {
+    public Long friendCreated;
+    public Long favorite;
+    public Long profileUpdated;
+
+    public boolean isEmpty() {
+      return friendCreated == null && favorite == null && profileUpdated == null;
+    }
+  }
+
+  public static ContactTimes getContactTimes(String mid) {
+    if (mid == null) return null;
+    try {
+      Context context = Knot.currentApplication();
+      if (context == null) return null;
+      File dbFile = context.getDatabasePath("contact");
+      if (!dbFile.exists()) return null;
+      SQLiteDatabase db =
+          SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+      try {
+        Cursor cursor =
+            db.rawQuery(
+                "SELECT friend_created_time_millis, favorite_time_millis,"
+                    + " profile_updated_time_millis FROM contacts WHERE mid = ?",
+                new String[] {mid});
+        try {
+          if (!cursor.moveToFirst()) return null;
+          ContactTimes t = new ContactTimes();
+          t.friendCreated = getNullableLong(cursor, 0);
+          t.favorite = getNullableLong(cursor, 1);
+          t.profileUpdated = getNullableLong(cursor, 2);
+          return t;
+        } finally {
+          cursor.close();
+        }
+      } finally {
+        db.close();
+      }
+    } catch (Throwable t) {
+      Knot.log("Knot: getContactTimes failed: " + t);
+    }
+    return null;
+  }
+
+  private static Long getNullableLong(Cursor cursor, int index) {
+    if (cursor.isNull(index)) return null;
+    long value = cursor.getLong(index);
+    return value > 0 ? value : null;
+  }
+
   public static String resolveChatName(String chatId) {
     if (chatId == null) return null;
     try {

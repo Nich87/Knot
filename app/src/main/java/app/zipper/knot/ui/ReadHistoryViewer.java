@@ -80,7 +80,7 @@ public class ReadHistoryViewer {
           isDark ? AlertDialog.THEME_DEVICE_DEFAULT_DARK : AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
       AlertDialog.Builder builder = new AlertDialog.Builder(activity, themeId);
       builder.setView(scrollView);
-      builder.setPositiveButton(app.zipper.knot.utils.ModuleStrings.READ_HISTORY_CLOSE, null);
+      builder.setPositiveButton(app.zipper.knot.utils.ModuleStrings.COMMON_CLOSE, null);
       if (targetChatId != null && found) {
         builder.setNeutralButton(
             app.zipper.knot.utils.ModuleStrings.READ_HISTORY_DELETE,
