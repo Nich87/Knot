@@ -80,7 +80,7 @@ public class Version2670 {
 
     v.unsend.talkServiceHookClass = "si8.zd$a";
     v.unsend.chatMessageViewHolderClass = "de1.j";
-    v.unsend.methodReadBuffer = "a";
+    v.unsend.methodReadBuffer = "b";
     v.unsend.methodBind = "C";
     v.unsend.methodOperationTypeValueOf = "a";
     v.unsend.methodBindIndex = 1;
