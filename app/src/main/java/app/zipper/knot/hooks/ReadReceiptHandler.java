@@ -229,11 +229,35 @@ public class ReadReceiptHandler implements BaseHook {
     }
   }
 
+  private long getMaxRecordedMsgId(JSONObject history, String chatId) {
+    long maxId = -1;
+    if (history == null) return -1;
+    JSONObject chats = history.optJSONObject("c");
+    if (chats != null) {
+      JSONObject chat = chats.optJSONObject(chatId);
+      if (chat != null) {
+        JSONObject messages = chat.optJSONObject("m");
+        if (messages != null) {
+          java.util.Iterator<String> keys = messages.keys();
+          while (keys.hasNext()) {
+            try {
+              long id = Long.parseLong(keys.next());
+              if (id > maxId) maxId = id;
+            } catch (Exception ignored) {
+            }
+          }
+        }
+      }
+    }
+    return maxId;
+  }
+
   private void recordRead(String chatId, String readerMid, String lastMsgId, long createdTime) {
     JSONObject history = SettingsStore.loadReadHistory();
     String myMid = LineDBUtils.getMyMid();
+    long minMsgId = getMaxRecordedMsgId(history, chatId);
     List<LineDBUtils.MessageRecord> records =
-        LineDBUtils.fetchMessagesForRecording(chatId, lastMsgId, myMid, false, -1);
+        LineDBUtils.fetchMessagesForRecording(chatId, lastMsgId, myMid, false, minMsgId);
     if (!records.isEmpty()) saveReadEvents(chatId, readerMid, records, createdTime, history);
   }
 
@@ -246,9 +270,10 @@ public class ReadReceiptHandler implements BaseHook {
       String lastMsgId = (String) Reflect.getObjectField(op, cfg.unsend.operationParam3Field);
 
       JSONObject history = SettingsStore.loadReadHistory();
+      long minMsgId = getMaxRecordedMsgId(history, chatId);
       List<LineDBUtils.MessageRecord> records =
           LineDBUtils.fetchMessagesForRecording(
-              chatId, lastMsgId, LineDBUtils.getMyMid(), false, -1);
+              chatId, lastMsgId, LineDBUtils.getMyMid(), false, minMsgId);
       if (!records.isEmpty()) {
         saveReadEvents(chatId, readerMid, records, createdTime, history);
         saver.accept(history);

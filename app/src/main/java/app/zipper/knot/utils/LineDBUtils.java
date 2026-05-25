@@ -425,7 +425,7 @@ public class LineDBUtils {
             sql += " AND (from_mid = ? OR from_mid IS NULL) ";
             queryArgs.add(myMid);
           }
-          sql += " ORDER BY CAST(server_id AS INTEGER) DESC LIMIT 100";
+          sql += " ORDER BY CAST(server_id AS INTEGER) DESC";
         }
 
         Cursor cursor = db.rawQuery(sql, queryArgs.toArray(new String[0]));
