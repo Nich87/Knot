@@ -10,14 +10,11 @@ public class ModuleStrings {
   public static final String SETTINGS_CANCEL = "キャンセル";
   public static final String COMMON_CLOSE = "閉じる";
   public static final String SETTINGS_PATH_PICKER_HINT = "保存先を選択してください";
-  public static final String SETTINGS_UNSET = "未設定";
-  public static final String SETTINGS_PATH_LABEL = "保存先: ";
   public static final String SETTINGS_SEARCH_HINT = "設定を検索...";
 
   public static final String CAT_PRIVACY = "プライバシー";
   public static final String CAT_CHAT = "チャット";
   public static final String CAT_DISPLAY = "画面表示";
-  public static final String CAT_CUSTOMIZE = "カスタマイズ";
   public static final String CAT_NOTIFICATION = "通知";
   public static final String CAT_STORAGE = "保存先";
   public static final String CAT_BACKUP = "バックアップ";
@@ -38,16 +35,7 @@ public class ModuleStrings {
 
   public static final String SEC_FONT = "フォント";
 
-  public static final String MANAGER_TITLE = "Knot Manager";
-  public static final String MANAGER_STORAGE_SETTING = "データ保存先の設定";
-  public static final String MANAGER_HINT_BROWSE = "フォルダ選択";
-  public static final String MANAGER_HINT_MANUAL = "手動入力";
-  public static final String MANAGER_DESC_STORAGE = "機能の設定や履歴データの保存場所を指定します。";
   public static final String MANAGER_RESTART_REQUIRED = "LINEの再起動が必要です";
-  public static final String MANAGER_RESTART_CONFIRM_TITLE = "リセットの確認";
-  public static final String MANAGER_RESET_DESC = "全設定をデフォルトに戻します。保存先の設定も削除されます。";
-  public static final String MANAGER_MANUAL_INPUT_TITLE = "直接指定";
-  public static final String MANAGER_MANUAL_INPUT_CONFIRM = "確定";
 
   public static final String RESTART_TITLE = "再起動の確認";
   public static final String RESTART_MESSAGE = "設定を反映させるにはLINEの再起動が必要です。今すぐ再起動しますか？";
@@ -200,12 +188,10 @@ public class ModuleStrings {
   public static final String OPT_RESTORE_DESC = "バックアップファイルからトーク履歴を復元します。現在の履歴が上書きされます。";
 
   public static final String REACTION_NOTIF_TITLE = "%sが以下のメッセージにリアクションしました";
-  public static final String REACTION_NOTIF_BODY = "%s";
 
   public static final String TOOLTIP_SETTINGS_LONG_PRESS = "長押しでKnotの設定を開けます";
   public static final String TOOLTIP_SEARCH_BY_MEMBER = "タップしてメンバーごとに絞り込み検索";
 
-  public static final String SEARCH_BY_MEMBER_BTN = "メンバーで検索";
   public static final String SEARCH_BY_MEMBER_TITLE = "メンバーで絞り込み";
   public static final String SEARCH_BY_MEMBER_EMPTY = "メンバーが見つかりません";
   public static final String SEARCH_BY_MEMBER_FILTERING = "絞り込み中: ";
@@ -213,7 +199,6 @@ public class ModuleStrings {
 
   public static final String OPT_ABOUT_LABEL = "Knotについて";
   public static final String OPT_ABOUT_DESC = "バージョン情報など";
-  public static final String ABOUT_TITLE = "Knotについて";
   public static final String ABOUT_CONTENT =
       "Knot v%s\n"
           + "A brand-new Xposed module for LINE\n\n"
