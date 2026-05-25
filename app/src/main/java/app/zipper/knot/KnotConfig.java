@@ -1,17 +1,20 @@
 package app.zipper.knot;
 
-import app.zipper.knot.utils.ModuleStrings;
+import static app.zipper.knot.utils.ModuleStrings.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class KnotConfig {
 
   public enum Category {
-    CHAT(ModuleStrings.CAT_CHAT),
-    DISPLAY(ModuleStrings.CAT_DISPLAY),
-    EXPERIMENTAL(ModuleStrings.CAT_EXPERIMENTAL),
-    NOTIFICATION(ModuleStrings.CAT_NOTIFICATION),
-    SYSTEM(ModuleStrings.CAT_SYSTEM),
-    BACKUP(ModuleStrings.CAT_BACKUP),
-    OTHER(ModuleStrings.CAT_OTHER);
+    PRIVACY(CAT_PRIVACY),
+    CHAT(CAT_CHAT),
+    DISPLAY(CAT_DISPLAY),
+    NOTIFICATION(CAT_NOTIFICATION),
+    SYSTEM(CAT_SYSTEM),
+    BACKUP(CAT_BACKUP),
+    OTHER(CAT_OTHER);
 
     public final String label;
 
@@ -20,321 +23,68 @@ public class KnotConfig {
     }
   }
 
-  public static class Item {
+  public static final class Item {
     public final String key;
     public final String label;
     public final String description;
     public boolean enabled;
     public String value = "";
     public final Category category;
+    public final String section;
 
-    public Item(
-        String key, String label, String description, boolean defaultEnabled, Category category) {
+    Item(String key, String label, String desc, boolean def, Category cat, String sec) {
       this.key = key;
       this.label = label;
-      this.description = description;
-      this.enabled = defaultEnabled;
-      this.category = category;
+      this.description = desc;
+      this.enabled = def;
+      this.category = cat;
+      this.section = sec;
     }
   }
 
-  public Item removeAds =
-      new Item(
-          "remove_ads",
-          ModuleStrings.OPT_REMOVE_ADS_LABEL,
-          ModuleStrings.OPT_REMOVE_ADS_DESC,
-          false,
-          Category.DISPLAY);
+  private final List<Item> _reg = new ArrayList<>();
 
-  public Item removeTabVoom =
-      new Item(
-          "remove_tab_voom",
-          ModuleStrings.OPT_REMOVE_TAB_VOOM_LABEL,
-          ModuleStrings.OPT_REMOVE_TAB_VOOM_DESC,
-          false,
-          Category.DISPLAY);
+  private Item item(String key, String label, String desc, boolean def, Category cat, String sec) {
+    Item i = new Item(key, label, desc, def, cat, sec);
+    _reg.add(i);
+    return i;
+  }
 
-  public Item removeTabNews =
-      new Item(
-          "remove_tab_news",
-          ModuleStrings.OPT_REMOVE_TAB_NEWS_LABEL,
-          ModuleStrings.OPT_REMOVE_TAB_NEWS_DESC,
-          false,
-          Category.DISPLAY);
+  // @formatter:off
+  public final Item preventMarkAsRead            = item("prevent_mark_as_read",             OPT_PREVENT_MARK_AS_READ_LABEL,             OPT_PREVENT_MARK_AS_READ_DESC,             false, Category.PRIVACY,      SEC_PRIVACY_READ);
+  public final Item recordReadHistory            = item("record_read_history",              OPT_RECORD_READ_HISTORY_LABEL,              OPT_RECORD_READ_HISTORY_DESC,              false, Category.PRIVACY,      SEC_PRIVACY_READ);
+  public final Item preventUnsendMessage         = item("prevent_unsend_message",           OPT_PREVENT_UNSEND_MESSAGE_LABEL,           OPT_PREVENT_UNSEND_MESSAGE_DESC,           false, Category.PRIVACY,      SEC_PRIVACY_UNSEND);
+  public final Item spoofVersionUnsendOnly       = item("spoof_version_unsend_only",        OPT_SPOOF_VERSION_UNSEND_ONLY_LABEL,        OPT_SPOOF_VERSION_UNSEND_ONLY_DESC,        false, Category.PRIVACY,      SEC_PRIVACY_UNSEND);
+  public final Item showProfileTimestamps        = item("show_profile_timestamps",          OPT_SHOW_PROFILE_TIMESTAMPS_LABEL,          OPT_SHOW_PROFILE_TIMESTAMPS_DESC,          false, Category.PRIVACY,      SEC_PRIVACY_PROFILE);
+  public final Item highQualityPhoto             = item("high_quality_photo",               OPT_HIGH_QUALITY_PHOTO_LABEL,               OPT_HIGH_QUALITY_PHOTO_DESC,               false, Category.CHAT,         SEC_CHAT_MEDIA);
+  public final Item longVideo                    = item("long_video",                       OPT_LONG_VIDEO_LABEL,                       OPT_LONG_VIDEO_DESC,                       false, Category.CHAT,         SEC_CHAT_MEDIA);
+  public final Item searchByMember               = item("search_by_member",                 OPT_SEARCH_BY_MEMBER_LABEL,                 OPT_SEARCH_BY_MEMBER_DESC,                 false, Category.CHAT,         SEC_CHAT_SEARCH);
+  public final Item searchMin1Char               = item("search_min_1_char",                OPT_SEARCH_MIN_1_CHAR_LABEL,                OPT_SEARCH_MIN_1_CHAR_DESC,                false, Category.CHAT,         SEC_CHAT_SEARCH);
+  public final Item showSecondsInChatTime        = item("show_seconds_in_chat_time",        OPT_SHOW_SECONDS_IN_CHAT_TIME_LABEL,        OPT_SHOW_SECONDS_IN_CHAT_TIME_DESC,        false, Category.CHAT,         SEC_CHAT_DISPLAY);
+  public final Item hideAiIconPermanently        = item("hide_ai_icon_permanently",         OPT_HIDE_AI_ICON_PERMANENTLY_LABEL,         OPT_HIDE_AI_ICON_PERMANENTLY_DESC,         false, Category.CHAT,         SEC_CHAT_DISPLAY);
+  public final Item fixAnnouncementName          = item("fix_announcement_name",            OPT_FIX_ANNOUNCEMENT_NAME_LABEL,            OPT_FIX_ANNOUNCEMENT_NAME_DESC,            true,  Category.CHAT,         SEC_CHAT_DISPLAY);
+  public final Item openUrlInDefaultBrowser      = item("open_url_in_default_browser",      OPT_OPEN_URL_IN_DEFAULT_BROWSER_LABEL,      OPT_OPEN_URL_IN_DEFAULT_BROWSER_DESC,      false, Category.CHAT,         SEC_CHAT_DISPLAY);
+  public final Item removeAds                    = item("remove_ads",                       OPT_REMOVE_ADS_LABEL,                       OPT_REMOVE_ADS_DESC,                       false, Category.DISPLAY,      SEC_ADS);
+  public final Item removeHomeRecommendations    = item("remove_home_recommendations",      OPT_REMOVE_HOME_RECOMMENDATIONS_LABEL,      OPT_REMOVE_HOME_RECOMMENDATIONS_DESC,      false, Category.DISPLAY,      SEC_ADS);
+  public final Item removeHomeServices           = item("remove_home_services",             OPT_REMOVE_HOME_SERVICES_LABEL,             OPT_REMOVE_HOME_SERVICES_DESC,             false, Category.DISPLAY,      SEC_ADS);
+  public final Item removeHomeAccordion          = item("remove_home_accordion",            OPT_REMOVE_HOME_ACCORDION_LABEL,            OPT_REMOVE_HOME_ACCORDION_DESC,            false, Category.DISPLAY,      SEC_ADS);
+  public final Item removeTabVoom                = item("remove_tab_voom",                  OPT_REMOVE_TAB_VOOM_LABEL,                  OPT_REMOVE_TAB_VOOM_DESC,                  false, Category.DISPLAY,      SEC_TABS);
+  public final Item removeTabNews                = item("remove_tab_news",                  OPT_REMOVE_TAB_NEWS_LABEL,                  OPT_REMOVE_TAB_NEWS_DESC,                  false, Category.DISPLAY,      SEC_TABS);
+  public final Item removeTabMini                = item("remove_tab_mini",                  OPT_REMOVE_TAB_MINI_LABEL,                  OPT_REMOVE_TAB_MINI_DESC,                  false, Category.DISPLAY,      SEC_TABS);
+  public final Item hideTabText                  = item("hide_tab_text",                    OPT_HIDE_TAB_TEXT_LABEL,                    OPT_HIDE_TAB_TEXT_DESC,                    false, Category.DISPLAY,      SEC_TABS);
+  public final Item extendTabClickArea           = item("extend_tab_click_area",            OPT_EXTEND_TAB_CLICK_AREA_LABEL,            OPT_EXTEND_TAB_CLICK_AREA_DESC,            false, Category.DISPLAY,      SEC_TABS);
+  public final Item removeAiFriendsButton        = item("remove_ai_friends_button",         OPT_REMOVE_AI_FRIENDS_BUTTON_LABEL,         OPT_REMOVE_AI_FRIENDS_BUTTON_DESC,         false, Category.DISPLAY,      SEC_HEADER_BTN);
+  public final Item removeOpenChatButton         = item("remove_open_chat_button",          OPT_REMOVE_OPEN_CHAT_BUTTON_LABEL,          OPT_REMOVE_OPEN_CHAT_BUTTON_DESC,          false, Category.DISPLAY,      SEC_HEADER_BTN);
+  public final Item removeSearchBarAgentIButton  = item("remove_search_bar_agent_i_button", OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_LABEL, OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_DESC, false, Category.DISPLAY,      SEC_HEADER_BTN);
+  public final Item useCustomFont                = item("use_custom_font",                  OPT_USE_CUSTOM_FONT_LABEL,                  OPT_USE_CUSTOM_FONT_DESC,                  false, Category.DISPLAY,      SEC_FONT);
+  public final Item customFontPath               = item("custom_font_path",                 OPT_CUSTOM_FONT_PATH_LABEL,                 OPT_CUSTOM_FONT_PATH_DESC,                 false, Category.DISPLAY,      SEC_FONT);
+  public final Item reactionNotification         = item("reaction_notification",            OPT_REACTION_NOTIFICATION_LABEL,            OPT_REACTION_NOTIFICATION_DESC,            false, Category.NOTIFICATION, "");
+  public final Item removeNotificationMuteButton = item("remove_notification_mute_button",  OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_LABEL,  OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_DESC,  false, Category.NOTIFICATION, "");
+  public final Item experimentalFcmFix           = item("experimental_fcm_fix",             OPT_EXPERIMENTAL_FCM_FIX_LABEL,             OPT_EXPERIMENTAL_FCM_FIX_DESC,             false, Category.NOTIFICATION, "");
+  public final Item lineForegroundKeepAlive      = item("line_foreground_keep_alive",       OPT_LINE_FOREGROUND_KEEP_ALIVE_LABEL,       OPT_LINE_FOREGROUND_KEEP_ALIVE_DESC,       false, Category.NOTIFICATION, "");
+  public final Item safeSettingsResources        = item("safe_settings_resources",          OPT_FIX_SETTINGS_TALK_CRASH_LABEL,          OPT_FIX_SETTINGS_TALK_CRASH_DESC,          true,  Category.SYSTEM,       "");
+  public final Item spoofVersion                 = item("spoof_version",                    OPT_SPOOF_VERSION_LABEL,                    OPT_SPOOF_VERSION_DESC,                    false, Category.SYSTEM,       "");
+  // @formatter:on
 
-  public Item removeTabMini =
-      new Item(
-          "remove_tab_mini",
-          ModuleStrings.OPT_REMOVE_TAB_MINI_LABEL,
-          ModuleStrings.OPT_REMOVE_TAB_MINI_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item extendTabClickArea =
-      new Item(
-          "extend_tab_click_area",
-          ModuleStrings.OPT_EXTEND_TAB_CLICK_AREA_LABEL,
-          ModuleStrings.OPT_EXTEND_TAB_CLICK_AREA_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item hideTabText =
-      new Item(
-          "hide_tab_text",
-          ModuleStrings.OPT_HIDE_TAB_TEXT_LABEL,
-          ModuleStrings.OPT_HIDE_TAB_TEXT_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item removeHomeRecommendations =
-      new Item(
-          "remove_home_recommendations",
-          ModuleStrings.OPT_REMOVE_HOME_RECOMMENDATIONS_LABEL,
-          ModuleStrings.OPT_REMOVE_HOME_RECOMMENDATIONS_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item removeHomeServices =
-      new Item(
-          "remove_home_services",
-          ModuleStrings.OPT_REMOVE_HOME_SERVICES_LABEL,
-          ModuleStrings.OPT_REMOVE_HOME_SERVICES_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item removeHomeAccordion =
-      new Item(
-          "remove_home_accordion",
-          ModuleStrings.OPT_REMOVE_HOME_ACCORDION_LABEL,
-          ModuleStrings.OPT_REMOVE_HOME_ACCORDION_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item preventMarkAsRead =
-      new Item(
-          "prevent_mark_as_read",
-          ModuleStrings.OPT_PREVENT_MARK_AS_READ_LABEL,
-          ModuleStrings.OPT_PREVENT_MARK_AS_READ_DESC,
-          false,
-          Category.CHAT);
-
-  public Item preventUnsendMessage =
-      new Item(
-          "prevent_unsend_message",
-          ModuleStrings.OPT_PREVENT_UNSEND_MESSAGE_LABEL,
-          ModuleStrings.OPT_PREVENT_UNSEND_MESSAGE_DESC,
-          false,
-          Category.CHAT);
-
-  public Item spoofVersion =
-      new Item(
-          "spoof_version",
-          ModuleStrings.OPT_SPOOF_VERSION_LABEL,
-          ModuleStrings.OPT_SPOOF_VERSION_DESC,
-          false,
-          Category.EXPERIMENTAL);
-
-  public Item safeSettingsResources =
-      new Item(
-          "safe_settings_resources",
-          ModuleStrings.OPT_FIX_SETTINGS_TALK_CRASH_LABEL,
-          ModuleStrings.OPT_FIX_SETTINGS_TALK_CRASH_DESC,
-          true,
-          Category.EXPERIMENTAL);
-
-  public Item spoofVersionUnsendOnly =
-      new Item(
-          "spoof_version_unsend_only",
-          ModuleStrings.OPT_SPOOF_VERSION_UNSEND_ONLY_LABEL,
-          ModuleStrings.OPT_SPOOF_VERSION_UNSEND_ONLY_DESC,
-          false,
-          Category.CHAT);
-
-  public Item recordReadHistory =
-      new Item(
-          "record_read_history",
-          ModuleStrings.OPT_RECORD_READ_HISTORY_LABEL,
-          ModuleStrings.OPT_RECORD_READ_HISTORY_DESC,
-          false,
-          Category.CHAT);
-
-  public Item hideAiIconPermanently =
-      new Item(
-          "hide_ai_icon_permanently",
-          ModuleStrings.OPT_HIDE_AI_ICON_PERMANENTLY_LABEL,
-          ModuleStrings.OPT_HIDE_AI_ICON_PERMANENTLY_DESC,
-          false,
-          Category.CHAT);
-
-  public Item removeNotificationMuteButton =
-      new Item(
-          "remove_notification_mute_button",
-          ModuleStrings.OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_LABEL,
-          ModuleStrings.OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_DESC,
-          false,
-          Category.NOTIFICATION);
-
-  public Item experimentalFcmFix =
-      new Item(
-          "experimental_fcm_fix",
-          ModuleStrings.OPT_EXPERIMENTAL_FCM_FIX_LABEL,
-          ModuleStrings.OPT_EXPERIMENTAL_FCM_FIX_DESC,
-          false,
-          Category.EXPERIMENTAL);
-
-  public Item lineForegroundKeepAlive =
-      new Item(
-          "line_foreground_keep_alive",
-          ModuleStrings.OPT_LINE_FOREGROUND_KEEP_ALIVE_LABEL,
-          ModuleStrings.OPT_LINE_FOREGROUND_KEEP_ALIVE_DESC,
-          false,
-          Category.EXPERIMENTAL);
-
-  public Item reactionNotification =
-      new Item(
-          "reaction_notification",
-          ModuleStrings.OPT_REACTION_NOTIFICATION_LABEL,
-          ModuleStrings.OPT_REACTION_NOTIFICATION_DESC,
-          false,
-          Category.NOTIFICATION);
-
-  public Item removeAiFriendsButton =
-      new Item(
-          "remove_ai_friends_button",
-          ModuleStrings.OPT_REMOVE_AI_FRIENDS_BUTTON_LABEL,
-          ModuleStrings.OPT_REMOVE_AI_FRIENDS_BUTTON_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item removeSearchBarAgentIButton =
-      new Item(
-          "remove_search_bar_agent_i_button",
-          ModuleStrings.OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_LABEL,
-          ModuleStrings.OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item removeOpenChatButton =
-      new Item(
-          "remove_open_chat_button",
-          ModuleStrings.OPT_REMOVE_OPEN_CHAT_BUTTON_LABEL,
-          ModuleStrings.OPT_REMOVE_OPEN_CHAT_BUTTON_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item openUrlInDefaultBrowser =
-      new Item(
-          "open_url_in_default_browser",
-          ModuleStrings.OPT_OPEN_URL_IN_DEFAULT_BROWSER_LABEL,
-          ModuleStrings.OPT_OPEN_URL_IN_DEFAULT_BROWSER_DESC,
-          false,
-          Category.CHAT);
-
-  public Item useCustomFont =
-      new Item(
-          "use_custom_font",
-          ModuleStrings.OPT_USE_CUSTOM_FONT_LABEL,
-          ModuleStrings.OPT_USE_CUSTOM_FONT_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item customFontPath =
-      new Item(
-          "custom_font_path",
-          ModuleStrings.OPT_CUSTOM_FONT_PATH_LABEL,
-          ModuleStrings.OPT_CUSTOM_FONT_PATH_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item highQualityPhoto =
-      new Item(
-          "high_quality_photo",
-          ModuleStrings.OPT_HIGH_QUALITY_PHOTO_LABEL,
-          ModuleStrings.OPT_HIGH_QUALITY_PHOTO_DESC,
-          false,
-          Category.CHAT);
-
-  public Item longVideo =
-      new Item(
-          "long_video",
-          ModuleStrings.OPT_LONG_VIDEO_LABEL,
-          ModuleStrings.OPT_LONG_VIDEO_DESC,
-          false,
-          Category.CHAT);
-
-  public Item searchByMember =
-      new Item(
-          "search_by_member",
-          ModuleStrings.OPT_SEARCH_BY_MEMBER_LABEL,
-          ModuleStrings.OPT_SEARCH_BY_MEMBER_DESC,
-          false,
-          Category.CHAT);
-
-  public Item searchMin1Char =
-      new Item(
-          "search_min_1_char",
-          ModuleStrings.OPT_SEARCH_MIN_1_CHAR_LABEL,
-          ModuleStrings.OPT_SEARCH_MIN_1_CHAR_DESC,
-          false,
-          Category.CHAT);
-
-  public Item fixAnnouncementName =
-      new Item(
-          "fix_announcement_name",
-          ModuleStrings.OPT_FIX_ANNOUNCEMENT_NAME_LABEL,
-          ModuleStrings.OPT_FIX_ANNOUNCEMENT_NAME_DESC,
-          true,
-          Category.CHAT);
-
-  public Item showSecondsInChatTime =
-      new Item(
-          "show_seconds_in_chat_time",
-          ModuleStrings.OPT_SHOW_SECONDS_IN_CHAT_TIME_LABEL,
-          ModuleStrings.OPT_SHOW_SECONDS_IN_CHAT_TIME_DESC,
-          false,
-          Category.CHAT);
-
-  public Item showProfileTimestamps =
-      new Item(
-          "show_profile_timestamps",
-          ModuleStrings.OPT_SHOW_PROFILE_TIMESTAMPS_LABEL,
-          ModuleStrings.OPT_SHOW_PROFILE_TIMESTAMPS_DESC,
-          false,
-          Category.DISPLAY);
-
-  public Item[] items = {
-    removeAiFriendsButton,
-    removeSearchBarAgentIButton,
-    removeOpenChatButton,
-    removeAds,
-    removeTabVoom,
-    removeTabNews,
-    removeTabMini,
-    extendTabClickArea,
-    hideTabText,
-    removeHomeRecommendations,
-    removeHomeServices,
-    removeHomeAccordion,
-    useCustomFont,
-    customFontPath,
-    preventMarkAsRead,
-    preventUnsendMessage,
-    hideAiIconPermanently,
-    spoofVersionUnsendOnly,
-    recordReadHistory,
-    openUrlInDefaultBrowser,
-    removeNotificationMuteButton,
-    reactionNotification,
-    experimentalFcmFix,
-    lineForegroundKeepAlive,
-    spoofVersion,
-    safeSettingsResources,
-    highQualityPhoto,
-    longVideo,
-    searchByMember,
-    searchMin1Char,
-    fixAnnouncementName,
-    showSecondsInChatTime,
-    showProfileTimestamps
-  };
+  public final Item[] items = _reg.toArray(new Item[0]);
 }

@@ -14,15 +14,29 @@ public class ModuleStrings {
   public static final String SETTINGS_PATH_LABEL = "保存先: ";
   public static final String SETTINGS_SEARCH_HINT = "設定を検索...";
 
+  public static final String CAT_PRIVACY = "プライバシー";
   public static final String CAT_CHAT = "チャット";
-
   public static final String CAT_DISPLAY = "画面表示";
+  public static final String CAT_CUSTOMIZE = "カスタマイズ";
   public static final String CAT_NOTIFICATION = "通知";
   public static final String CAT_STORAGE = "保存先";
   public static final String CAT_BACKUP = "バックアップ";
   public static final String CAT_SYSTEM = "システム";
-  public static final String CAT_EXPERIMENTAL = "実験的機能";
   public static final String CAT_OTHER = "その他";
+
+  public static final String SEC_PRIVACY_READ = "既読";
+  public static final String SEC_PRIVACY_UNSEND = "送信取り消し";
+  public static final String SEC_PRIVACY_PROFILE = "プロフィール";
+
+  public static final String SEC_CHAT_MEDIA = "メディア";
+  public static final String SEC_CHAT_SEARCH = "検索";
+  public static final String SEC_CHAT_DISPLAY = "表示";
+
+  public static final String SEC_ADS = "広告・おすすめ";
+  public static final String SEC_TABS = "タブ";
+  public static final String SEC_HEADER_BTN = "ヘッダボタン";
+
+  public static final String SEC_FONT = "フォント";
 
   public static final String MANAGER_TITLE = "Knot Manager";
   public static final String MANAGER_STORAGE_SETTING = "データ保存先の設定";
@@ -75,18 +89,50 @@ public class ModuleStrings {
   public static final String OPT_PREVENT_MARK_AS_READ_LABEL = "プラスメニューに「既読回避」を追加";
   public static final String OPT_PREVENT_MARK_AS_READ_DESC =
       "トークタブ右上の「+」メニューから既読回避をON/OFFできるようになります。ONにすると「送信後既読」オプションも表示されます。";
-  public static final String OPT_PREVENT_UNSEND_MESSAGE_LABEL = "送信取り消し無効化";
-  public static final String OPT_PREVENT_UNSEND_MESSAGE_DESC =
-      "相手がメッセージの送信を取り消しても、自分の端末には残るようにします。取り消されたメッセージにはアイコンが表示され、タップすることで取消日時を確認できます。";
   public static final String OPT_RECORD_READ_HISTORY_LABEL = "既読履歴を記録";
   public static final String OPT_RECORD_READ_HISTORY_DESC =
       "誰がいつメッセージを既読にしたかを記録します。チャット画面上部の本アイコンから確認できます。";
 
+  public static final String OPT_PREVENT_UNSEND_MESSAGE_LABEL = "送信取り消し無効化";
+  public static final String OPT_PREVENT_UNSEND_MESSAGE_DESC =
+      "相手がメッセージの送信を取り消しても、自分の端末には残るようにします。取り消されたメッセージにはアイコンが表示され、タップすることで取消日時を確認できます。";
+
+  public static final String OPT_SHOW_PROFILE_TIMESTAMPS_LABEL = "プロフィールに日時情報を表示";
+  public static final String OPT_SHOW_PROFILE_TIMESTAMPS_DESC =
+      "友だちのプロフィール画面の右上にアイコンを追加します。タップすると、友だち追加・お気に入り登録・プロフィール更新の日時をダイアログで表示します。記録がない項目は「—」と表示されます。";
+  public static final String PROFILE_TS_FRIEND_CREATED = "友だち追加";
+  public static final String PROFILE_TS_FAVORITE = "お気に入り";
+  public static final String PROFILE_TS_PROFILE_UPDATED = "プロフ更新";
+  public static final String PROFILE_TS_EMPTY = "—";
+  public static final String PROFILE_TS_DIALOG_TITLE = "日時情報";
+
+  public static final String OPT_HIGH_QUALITY_PHOTO_LABEL = "写真の送信品質を向上";
+  public static final String OPT_HIGH_QUALITY_PHOTO_DESC =
+      "写真送信時の自動圧縮・リサイズを回避し、最高品質で送信できるようにします。設定の「高画質」よりもさらに高品質な送信が可能になります。";
+  public static final String OPT_LONG_VIDEO_LABEL = "5分以上の動画を送信可能にする";
+  public static final String OPT_LONG_VIDEO_DESC = "動画送信時の5分の時間制限を解除し、長い動画を送信できるようにします。";
+
+  public static final String OPT_SEARCH_BY_MEMBER_LABEL = "メンバーでトーク内検索";
+  public static final String OPT_SEARCH_BY_MEMBER_DESC =
+      "検索ボックス内の虫眼鏡アイコンを押すことで、メンバーを選んでそのユーザーのメッセージのみを絞り込み検索できるようにします。";
+  public static final String OPT_SEARCH_MIN_1_CHAR_LABEL = "1文字からトーク内検索";
+  public static final String OPT_SEARCH_MIN_1_CHAR_DESC = "トーク内検索の最低文字数を2文字から1文字に緩和します。";
+
+  public static final String OPT_SHOW_SECONDS_IN_CHAT_TIME_LABEL = "チャットの時刻に秒を表示";
+  public static final String OPT_SHOW_SECONDS_IN_CHAT_TIME_DESC =
+      "各メッセージ横の時刻表示に秒を追加します。 (例: 12:34 → 12:34:56)";
+  public static final String OPT_FIX_ANNOUNCEMENT_NAME_LABEL = "アナウンス者名の表示を修正";
+  public static final String OPT_FIX_ANNOUNCEMENT_NAME_DESC =
+      "パッチ済みのLINEで、アナウンス登録時のシステムメッセージが「がアナウンスしました」と名前が空になる不具合を修正し、正しく表示されるようにします。";
+
   public static final String OPT_HIDE_AI_ICON_PERMANENTLY_LABEL = "AIアイコンを永久に非表示";
   public static final String OPT_HIDE_AI_ICON_PERMANENTLY_DESC =
-      "チャット画面のテキストボックス内にあるAIアイコンを常に非表示に"
-          + "します。通常は30日間のみ非表示にできますが、このオプションを有効にする"
-          + "と設定に関わらず永続的に非表示になります。";
+      "チャット画面のテキストボックス内にあるAIアイコンを常に非表示にします。通常は30日間のみ非表示にできますが、このオプションを有効にすると設定に関わらず永続的に非表示になります。";
+
+  public static final String OPT_OPEN_URL_IN_DEFAULT_BROWSER_LABEL = "URLをデフォルトブラウザで開く";
+  public static final String OPT_OPEN_URL_IN_DEFAULT_BROWSER_DESC =
+      "URLをアプリ内ブラウザではなく、システムのデフォルトブラウザで開くようにします。";
+
   public static final String OPT_REMOVE_ADS_LABEL = "広告を非表示";
   public static final String OPT_REMOVE_ADS_DESC = "トークリスト上部やホーム画面などに表示される広告を非表示にします。";
   public static final String OPT_REMOVE_HOME_RECOMMENDATIONS_LABEL = "ホームのおすすめを非表示";
@@ -107,12 +153,30 @@ public class ModuleStrings {
   public static final String OPT_HIDE_TAB_TEXT_LABEL = "タブラベルを非表示";
   public static final String OPT_HIDE_TAB_TEXT_DESC = "下部タブのアイコン下のテキストを非表示にします。";
 
-  public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_LABEL = "「通知をオフ」ボタンを非表示";
-  public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_DESC =
-      "LINEの通知に表示される「通知をオフ」ボタンを削除します。";
+  public static final String OPT_REMOVE_AI_FRIENDS_BUTTON_LABEL = "AI Friendsボタンを非表示";
+  public static final String OPT_REMOVE_AI_FRIENDS_BUTTON_DESC = "トークタブ右上の「AI Friends」ボタンを非表示にします。";
+  public static final String OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_LABEL = "Agent i関連のボタンを非表示";
+  public static final String OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_DESC =
+      "トークタブ/ホームタブの検索バー右側にある「Agent i」ボタンと、トークルーム内の「+」メニューにある「トークルームのAgent iを表示」トグルをまとめて非表示にします。";
+  public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_LABEL = "オープンチャットボタンを非表示";
+  public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_DESC = "トークタブ右上の「オープンチャット」ボタンを非表示にします。";
+
+  public static final String OPT_USE_CUSTOM_FONT_LABEL = "カスタムフォントを有効にする";
+  public static final String OPT_USE_CUSTOM_FONT_DESC =
+      "選択したフォントファイルをアプリ全体に適用します。反映にはアプリの再起動が必要です。";
+  public static final String OPT_CUSTOM_FONT_PATH_LABEL = "フォントファイルを選択";
+  public static final String OPT_CUSTOM_FONT_PATH_DESC = "使用するフォントファイル (.ttf / .otf) を選択します。";
+
   public static final String OPT_REACTION_NOTIFICATION_LABEL = "リアクション通知";
   public static final String OPT_REACTION_NOTIFICATION_DESC =
       "メッセージについたリアクションを通知します。※アプリを開くと送信されます。";
+
+  public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_LABEL = "「通知をオフ」ボタンを非表示";
+  public static final String OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_DESC =
+      "LINEの通知に表示される「通知をオフ」ボタンを削除します。";
+
+  public static final String OPT_FIX_SETTINGS_TALK_CRASH_LABEL = "トーク設定のクラッシュを修正";
+  public static final String OPT_FIX_SETTINGS_TALK_CRASH_DESC = "公式設定の「トーク」を開くとクラッシュする問題を修正します。";
 
   public static final String OPT_EXPERIMENTAL_FCM_FIX_LABEL = "FCM Fix";
   public static final String OPT_EXPERIMENTAL_FCM_FIX_DESC =
@@ -121,27 +185,12 @@ public class ModuleStrings {
   public static final String OPT_LINE_FOREGROUND_KEEP_ALIVE_DESC =
       "バッテリー使用量が増加する可能性がありますが、FCMFixがタスクキル後も動作します。非root環境で通知が届かなくなる問題の回避に有効です。Knotアップデート時は強制停止か一時停止が必要になる場合があります。";
 
-  public static final String OPT_OPEN_URL_IN_DEFAULT_BROWSER_LABEL = "URLをデフォルトブラウザで開く";
-  public static final String OPT_OPEN_URL_IN_DEFAULT_BROWSER_DESC =
-      "URLをアプリ内ブラウザではなく、システムのデフォルトブラウザで開くようにします。";
-  public static final String OPT_USE_CUSTOM_FONT_LABEL = "カスタムフォントを有効にする";
-  public static final String OPT_USE_CUSTOM_FONT_DESC =
-      "選択したフォントファイルをアプリ全体に適用します。反映にはアプリの再起動が必要です。";
-  public static final String OPT_CUSTOM_FONT_PATH_LABEL = "フォントファイルを選択";
-  public static final String OPT_CUSTOM_FONT_PATH_DESC = "使用するフォントファイル (.ttf / .otf) を選択します。";
   public static final String OPT_SPOOF_VERSION_UNSEND_ONLY_LABEL = "送信取り消しの時間制限を延長";
   public static final String OPT_SPOOF_VERSION_UNSEND_ONLY_DESC =
       "送信取り消し時のみバージョンを15.12.2に偽装し、1時間の時間制限を24時間に戻します。";
   public static final String OPT_SPOOF_VERSION_LABEL = "アプリバージョンの偽装 (常時)";
   public static final String OPT_SPOOF_VERSION_DESC =
       "常にアプリバージョンを15.12.2に偽装します。なにか特別な目的がない限り使用しないでください。";
-  public static final String OPT_FIX_SETTINGS_TALK_CRASH_LABEL = "トーク設定のクラッシュを修正";
-  public static final String OPT_FIX_SETTINGS_TALK_CRASH_DESC = "公式設定の「トーク」を開くとクラッシュする問題を修正します。";
-  public static final String OPT_HIGH_QUALITY_PHOTO_LABEL = "写真の送信品質を向上";
-  public static final String OPT_HIGH_QUALITY_PHOTO_DESC =
-      "写真送信時の自動圧縮・リサイズを回避し、最高品質で送信できるようにします。設定の「高画質」よりもさらに高品質な送信が可能になります。";
-  public static final String OPT_LONG_VIDEO_LABEL = "5分以上の動画を送信可能にする";
-  public static final String OPT_LONG_VIDEO_DESC = "動画送信時の5分の時間制限を解除し、長い動画を送信できるようにします。";
 
   public static final String DESC_PATH_ROW = "モジュールの設定ファイルなどが保存されるディレクトリを選択します。";
   public static final String DESC_RESET_ROW = "すべてのモジュール設定をデフォルト状態に戻します。";
@@ -152,15 +201,6 @@ public class ModuleStrings {
 
   public static final String REACTION_NOTIF_TITLE = "%sが以下のメッセージにリアクションしました";
   public static final String REACTION_NOTIF_BODY = "%s";
-  public static final String OPT_REMOVE_AI_FRIENDS_BUTTON_LABEL = "AI Friendsボタンを非表示";
-  public static final String OPT_REMOVE_AI_FRIENDS_BUTTON_DESC = "トークタブ右上の「AI Friends」ボタンを非表示にします。";
-  public static final String OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_LABEL = "Agent i関連のボタンを非表示";
-  public static final String OPT_REMOVE_SEARCH_BAR_AGENT_I_BUTTON_DESC =
-      "トークタブ/ホームタブの検索バー右側にある「Agent i」ボタンと、"
-          + "トークルーム内の「+」メニューにある"
-          + "「トークルームのAgent iを表示」トグルをまとめて非表示にします。";
-  public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_LABEL = "オープンチャットボタンを非表示";
-  public static final String OPT_REMOVE_OPEN_CHAT_BUTTON_DESC = "トークタブ右上の「オープンチャット」ボタンを非表示にします。";
 
   public static final String TOOLTIP_SETTINGS_LONG_PRESS = "長押しでKnotの設定を開けます";
   public static final String TOOLTIP_SEARCH_BY_MEMBER = "タップしてメンバーごとに絞り込み検索";
@@ -170,29 +210,6 @@ public class ModuleStrings {
   public static final String SEARCH_BY_MEMBER_EMPTY = "メンバーが見つかりません";
   public static final String SEARCH_BY_MEMBER_FILTERING = "絞り込み中: ";
   public static final String SEARCH_BY_MEMBER_FILTER_CLEARED = "絞り込みを解除しました";
-  public static final String OPT_SEARCH_BY_MEMBER_LABEL = "メンバーでトーク内検索";
-  public static final String OPT_SEARCH_BY_MEMBER_DESC =
-      "検索ボックス内の虫眼鏡アイコンを押すことで、メンバーを選んでそのユーザーのメッセージのみを絞り込み検索できるようにします。";
-
-  public static final String OPT_SEARCH_MIN_1_CHAR_LABEL = "1文字からトーク内検索";
-  public static final String OPT_SEARCH_MIN_1_CHAR_DESC = "トーク内検索の最低文字数を2文字から1文字に緩和します。";
-
-  public static final String OPT_SHOW_SECONDS_IN_CHAT_TIME_LABEL = "チャットの時刻に秒を表示";
-  public static final String OPT_SHOW_SECONDS_IN_CHAT_TIME_DESC =
-      "各メッセージ横の時刻表示に秒を追加します。 (例: 12:34 → 12:34:56)";
-
-  public static final String OPT_FIX_ANNOUNCEMENT_NAME_LABEL = "アナウンス者名の表示を修正";
-  public static final String OPT_FIX_ANNOUNCEMENT_NAME_DESC =
-      "パッチ済みのLINEで、アナウンス登録時のシステムメッセージが「がアナウンスしました」と名前が空になる不具合を修正し、正しく表示されるようにします。";
-
-  public static final String OPT_SHOW_PROFILE_TIMESTAMPS_LABEL = "プロフィールに日時情報を表示";
-  public static final String OPT_SHOW_PROFILE_TIMESTAMPS_DESC =
-      "友だちのプロフィール画面の右上にアイコンを追加します。タップすると、友だち追加・お気に入り登録・プロフィール更新の日時をダイアログで表示します。記録がない項目は「—」と表示されます。";
-  public static final String PROFILE_TS_FRIEND_CREATED = "友だち追加";
-  public static final String PROFILE_TS_FAVORITE = "お気に入り";
-  public static final String PROFILE_TS_PROFILE_UPDATED = "プロフ更新";
-  public static final String PROFILE_TS_EMPTY = "—";
-  public static final String PROFILE_TS_DIALOG_TITLE = "日時情報";
 
   public static final String OPT_ABOUT_LABEL = "Knotについて";
   public static final String OPT_ABOUT_DESC = "バージョン情報など";

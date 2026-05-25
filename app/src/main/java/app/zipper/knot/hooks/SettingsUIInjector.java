@@ -80,8 +80,11 @@ public class SettingsUIInjector implements BaseHook {
   private volatile View cachedSearchView = null;
 
   private static final KnotConfig.Category[] DISPLAY_CATEGORIES = {
-    KnotConfig.Category.CHAT, KnotConfig.Category.DISPLAY,
-    KnotConfig.Category.NOTIFICATION, KnotConfig.Category.EXPERIMENTAL
+    KnotConfig.Category.PRIVACY,
+    KnotConfig.Category.CHAT,
+    KnotConfig.Category.DISPLAY,
+    KnotConfig.Category.NOTIFICATION,
+    KnotConfig.Category.SYSTEM
   };
 
   @Override
@@ -711,14 +714,9 @@ public class SettingsUIInjector implements BaseHook {
       if (showAll) {
         injectStorageSection(infl, mainList, ctx);
 
-        KnotConfig activeConfig = Main.options;
         for (KnotConfig.Category cat : DISPLAY_CATEGORIES) {
           injectSectionHeader(infl, mainList, cat.label);
-          for (KnotConfig.Item i : activeConfig.items) {
-            if (i.category == cat) {
-              injectItemRow(infl, mainList, ctx, i, currentCfg, toggleType, statusEnum);
-            }
-          }
+          injectCategoryItems(infl, mainList, ctx, cat, currentCfg, toggleType, statusEnum);
         }
 
         injectBackupSection(infl, mainList, ctx);
@@ -735,12 +733,7 @@ public class SettingsUIInjector implements BaseHook {
         injectOtherSection(infl, mainList, ctx, Main.options);
       }
     } else {
-      KnotConfig activeConfig = Main.options;
-      for (KnotConfig.Item i : activeConfig.items) {
-        if (i.category == targetCategory) {
-          injectItemRow(infl, mainList, ctx, i, currentCfg, toggleType, statusEnum);
-        }
-      }
+      injectCategoryItems(infl, mainList, ctx, targetCategory, currentCfg, toggleType, statusEnum);
     }
 
     scroller.addView(mainList);
@@ -884,6 +877,25 @@ public class SettingsUIInjector implements BaseHook {
       cRow.setOnClickListener(v -> switchPage(ctx, toggleType, statusEnum, category));
       parent.addView(cRow);
     } catch (Throwable ignored) {
+    }
+  }
+
+  private void injectCategoryItems(
+      LayoutInflater infl,
+      LinearLayout parent,
+      Context ctx,
+      KnotConfig.Category category,
+      LineVersion.Config currentCfg,
+      Object toggleType,
+      Object statusEnum) {
+    String lastSection = null;
+    for (KnotConfig.Item i : Main.options.items) {
+      if (i.category != category) continue;
+      if (i.section != null && !i.section.isEmpty() && !i.section.equals(lastSection)) {
+        injectSectionHeader(infl, parent, i.section);
+        lastSection = i.section;
+      }
+      injectItemRow(infl, parent, ctx, i, currentCfg, toggleType, statusEnum);
     }
   }
 
