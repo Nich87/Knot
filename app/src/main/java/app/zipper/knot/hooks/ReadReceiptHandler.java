@@ -45,7 +45,15 @@ public class ReadReceiptHandler implements BaseHook {
                   Object type = Reflect.getObjectField(op, cfg.unsend.operationTypeField);
                   if (type != null
                       && cfg.readReceipt.operationNotifiedReadName.equals(type.toString())) {
-                    processReadOp(op, cfg, history -> SettingsStore.saveReadHistory(history));
+                    long createdTime =
+                        Reflect.getLongField(op, cfg.unsend.operationCreatedTimeField);
+                    String chatId =
+                        (String) Reflect.getObjectField(op, cfg.unsend.operationParam1Field);
+                    String readerMid =
+                        (String) Reflect.getObjectField(op, cfg.unsend.operationParam2Field);
+                    String lastMsgId =
+                        (String) Reflect.getObjectField(op, cfg.unsend.operationParam3Field);
+                    recordReadEvent(chatId, readerMid, lastMsgId, createdTime);
                   }
                 }
               }
@@ -72,9 +80,9 @@ public class ReadReceiptHandler implements BaseHook {
                 if (types.length == 5 && types[0] == long.class && types[1] == String.class) {
                   long createdTime = (long) chain.getArg(0);
                   String chatId = (String) chain.getArg(1);
-                  String senderMid = (String) chain.getArg(2);
+                  String readerMid = (String) chain.getArg(2);
                   String lastMsgId = String.valueOf((long) chain.getArg(3));
-                  recordRead(chatId, senderMid, lastMsgId, createdTime);
+                  recordReadEvent(chatId, readerMid, lastMsgId, createdTime);
                 }
               }
             } catch (Throwable ignored) {
@@ -229,98 +237,125 @@ public class ReadReceiptHandler implements BaseHook {
     }
   }
 
-  private long getMaxRecordedMsgId(JSONObject history, String chatId) {
-    long maxId = -1;
-    if (history == null) return -1;
-    JSONObject chats = history.optJSONObject("c");
-    if (chats != null) {
-      JSONObject chat = chats.optJSONObject(chatId);
-      if (chat != null) {
-        JSONObject messages = chat.optJSONObject("m");
-        if (messages != null) {
-          java.util.Iterator<String> keys = messages.keys();
-          while (keys.hasNext()) {
-            try {
-              long id = Long.parseLong(keys.next());
-              if (id > maxId) maxId = id;
-            } catch (Exception ignored) {
-            }
-          }
-        }
-      }
+  private void recordReadEvent(
+      String chatId, String readerMid, String lastMsgIdStr, long readTime) {
+    if (chatId == null || readerMid == null || lastMsgIdStr == null) return;
+    long lastMsgId;
+    try {
+      lastMsgId = Long.parseLong(lastMsgIdStr);
+    } catch (NumberFormatException e) {
+      return;
     }
-    return maxId;
-  }
-
-  private void recordRead(String chatId, String readerMid, String lastMsgId, long createdTime) {
-    JSONObject history = SettingsStore.loadReadHistory();
     String myMid = LineDBUtils.getMyMid();
-    long minMsgId = getMaxRecordedMsgId(history, chatId);
-    List<LineDBUtils.MessageRecord> records =
-        LineDBUtils.fetchMessagesForRecording(chatId, lastMsgId, myMid, false, minMsgId);
-    if (!records.isEmpty()) saveReadEvents(chatId, readerMid, records, createdTime, history);
-  }
+    if (myMid == null) return;
+    if (readerMid.equals(myMid)) return;
 
-  private void processReadOp(
-      Object op, LineVersion.Config cfg, java.util.function.Consumer<JSONObject> saver) {
     try {
-      long createdTime = Reflect.getLongField(op, cfg.unsend.operationCreatedTimeField);
-      String chatId = (String) Reflect.getObjectField(op, cfg.unsend.operationParam1Field);
-      String readerMid = (String) Reflect.getObjectField(op, cfg.unsend.operationParam2Field);
-      String lastMsgId = (String) Reflect.getObjectField(op, cfg.unsend.operationParam3Field);
-
       JSONObject history = SettingsStore.loadReadHistory();
-      long minMsgId = getMaxRecordedMsgId(history, chatId);
+      JSONObject chat = ensureChat(history, chatId);
+
+      long prevHwm = getReaderHwm(chat, readerMid);
+      if (lastMsgId <= prevHwm) return;
+
+      long lowerBound;
+      if (prevHwm > 0) {
+        lowerBound = prevHwm;
+      } else {
+        long inferred = inferReaderFloor(chat, readerMid);
+        lowerBound = inferred > 0 ? inferred : lastMsgId - 1;
+      }
+
       List<LineDBUtils.MessageRecord> records =
-          LineDBUtils.fetchMessagesForRecording(
-              chatId, lastMsgId, LineDBUtils.getMyMid(), false, minMsgId);
+          LineDBUtils.fetchMyMessagesUpTo(chatId, lowerBound, lastMsgId, myMid);
+
       if (!records.isEmpty()) {
-        saveReadEvents(chatId, readerMid, records, createdTime, history);
-        saver.accept(history);
+        addReaderToMessages(chat, readerMid, records, readTime);
       }
-    } catch (Throwable ignored) {
-    }
-  }
-
-  private void saveReadEvents(
-      String chatId,
-      String readerMid,
-      List<LineDBUtils.MessageRecord> records,
-      long readTime,
-      JSONObject history) {
-    try {
-      JSONObject chats = history.optJSONObject("c");
-      if (chats == null) history.put("c", chats = new JSONObject());
-      JSONObject chat = chats.optJSONObject(chatId);
-      if (chat == null) chats.put(chatId, chat = new JSONObject());
-      JSONObject messages = chat.optJSONObject("m");
-      if (messages == null) chat.put("m", messages = new JSONObject());
-
-      String name = LineDBUtils.resolveMemberName(readerMid);
-      String timeStr =
-          new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-              .format(new Date(readTime));
-
-      for (LineDBUtils.MessageRecord record : records) {
-        if (!chat.has("n")) chat.put("n", record.chatName);
-        JSONObject msg = messages.optJSONObject(record.id);
-        if (msg == null) {
-          messages.put(record.id, msg = new JSONObject());
-          msg.put("c", record.text);
-          msg.put("sn", record.senderName);
-          msg.put("ct", record.timestamp);
-          msg.put("r", new JSONObject());
-        }
-        JSONObject readers = msg.optJSONObject("r");
-        if (!readers.has(readerMid)) {
-          JSONObject info = new JSONObject();
-          info.put("n", name != null ? name : "Unknown");
-          info.put("t", timeStr);
-          readers.put(readerMid, info);
-        }
-      }
+      setReaderHwm(chat, readerMid, lastMsgId);
       SettingsStore.saveReadHistory(history);
     } catch (Throwable ignored) {
+    }
+  }
+
+  private JSONObject ensureChat(JSONObject history, String chatId) throws Exception {
+    JSONObject chats = history.optJSONObject("c");
+    if (chats == null) history.put("c", chats = new JSONObject());
+    JSONObject chat = chats.optJSONObject(chatId);
+    if (chat == null) chats.put(chatId, chat = new JSONObject());
+    return chat;
+  }
+
+  private long getReaderHwm(JSONObject chat, String readerMid) {
+    JSONObject hwm = chat.optJSONObject("rh");
+    if (hwm == null) return 0L;
+    String v = hwm.optString(readerMid, "");
+    if (v.isEmpty()) return 0L;
+    try {
+      return Long.parseLong(v);
+    } catch (NumberFormatException e) {
+      return 0L;
+    }
+  }
+
+  private void setReaderHwm(JSONObject chat, String readerMid, long msgId) throws Exception {
+    JSONObject hwm = chat.optJSONObject("rh");
+    if (hwm == null) chat.put("rh", hwm = new JSONObject());
+    hwm.put(readerMid, String.valueOf(msgId));
+  }
+
+  private long inferReaderFloor(JSONObject chat, String readerMid) {
+    JSONObject messages = chat.optJSONObject("m");
+    if (messages == null) return 0L;
+    long maxSeen = 0L;
+    java.util.Iterator<String> it = messages.keys();
+    while (it.hasNext()) {
+      String mid = it.next();
+      JSONObject msg = messages.optJSONObject(mid);
+      if (msg == null) continue;
+      JSONObject readers = msg.optJSONObject("r");
+      if (readers == null || !readers.has(readerMid)) continue;
+      try {
+        long id = Long.parseLong(mid);
+        if (id > maxSeen) maxSeen = id;
+      } catch (NumberFormatException ignored) {
+      }
+    }
+    return maxSeen;
+  }
+
+  private void addReaderToMessages(
+      JSONObject chat, String readerMid, List<LineDBUtils.MessageRecord> records, long readTime)
+      throws Exception {
+    JSONObject messages = chat.optJSONObject("m");
+    if (messages == null) chat.put("m", messages = new JSONObject());
+
+    String name = LineDBUtils.resolveMemberName(readerMid);
+    String timeStr =
+        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date(readTime));
+
+    for (LineDBUtils.MessageRecord record : records) {
+      if (!chat.has("n") && record.chatName != null) chat.put("n", record.chatName);
+
+      JSONObject msg = messages.optJSONObject(record.id);
+      if (msg == null) {
+        msg = new JSONObject();
+        msg.put("c", record.text);
+        msg.put("sn", record.senderName);
+        msg.put("ct", record.timestamp);
+        msg.put("r", new JSONObject());
+        messages.put(record.id, msg);
+      }
+      JSONObject readers = msg.optJSONObject("r");
+      if (readers == null) {
+        readers = new JSONObject();
+        msg.put("r", readers);
+      }
+      if (!readers.has(readerMid)) {
+        JSONObject info = new JSONObject();
+        info.put("n", name != null ? name : "Unknown");
+        info.put("t", timeStr);
+        readers.put(readerMid, info);
+      }
     }
   }
 }

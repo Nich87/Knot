@@ -383,10 +383,11 @@ public class LineDBUtils {
     }
   }
 
-  public static List<MessageRecord> fetchMessagesForRecording(
-      String targetChatId, String latestMsgId, String myMid, boolean includeOthers, long minMsgId) {
+  public static List<MessageRecord> fetchMyMessagesUpTo(
+      String targetChatId, long minExclusiveId, long maxInclusiveId, String myMid) {
     List<MessageRecord> results = new ArrayList<>();
-    if (targetChatId == null || latestMsgId == null) return results;
+    if (targetChatId == null || myMid == null) return results;
+    if (maxInclusiveId <= minExclusiveId) return results;
 
     try {
       Context context = Knot.currentApplication();
@@ -403,32 +404,20 @@ public class LineDBUtils {
         SimpleDateFormat dateFormat =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
-        List<String> queryArgs = new ArrayList<>();
-        queryArgs.add(targetChatId);
-        queryArgs.add(latestMsgId);
+        String sql =
+            "SELECT server_id, content, parameter, from_mid, created_time "
+                + "FROM chat_history WHERE chat_id = ? "
+                + "AND CAST(server_id AS INTEGER) > ? "
+                + "AND CAST(server_id AS INTEGER) <= ? "
+                + "AND (from_mid = ? OR from_mid IS NULL) "
+                + "ORDER BY CAST(server_id AS INTEGER) DESC";
 
-        String sql;
-        if (minMsgId == -1) {
-          sql =
-              "SELECT server_id, content, parameter, from_mid, created_time "
-                  + "FROM chat_history WHERE chat_id = ? AND server_id = ?";
-        } else {
-          sql =
-              "SELECT server_id, content, parameter, from_mid, created_time "
-                  + "FROM chat_history WHERE chat_id = ? AND (server_id = ? OR "
-                  + "(CAST(server_id AS INTEGER) < CAST(? AS INTEGER) AND "
-                  + "CAST(server_id AS INTEGER) > ?)) ";
-          queryArgs.add(latestMsgId);
-          queryArgs.add(String.valueOf(minMsgId));
+        String[] args =
+            new String[] {
+              targetChatId, String.valueOf(minExclusiveId), String.valueOf(maxInclusiveId), myMid
+            };
 
-          if (!includeOthers && myMid != null) {
-            sql += " AND (from_mid = ? OR from_mid IS NULL) ";
-            queryArgs.add(myMid);
-          }
-          sql += " ORDER BY CAST(server_id AS INTEGER) DESC";
-        }
-
-        Cursor cursor = db.rawQuery(sql, queryArgs.toArray(new String[0]));
+        Cursor cursor = db.rawQuery(sql, args);
         try {
           while (cursor.moveToNext()) {
             String mId = cursor.getString(0);
@@ -438,8 +427,7 @@ public class LineDBUtils {
             long timeLong = cursor.getLong(4);
 
             if (fromMid == null) fromMid = myMid;
-
-            if (!includeOthers && fromMid != null && !fromMid.equals(myMid)) continue;
+            if (!fromMid.equals(myMid)) continue;
 
             String resolvedText = resolveMessageText(rawContent, rawParam);
             String senderName = resolveMemberName(fromMid);
@@ -449,7 +437,7 @@ public class LineDBUtils {
                 new MessageRecord(
                     mId,
                     resolvedText != null ? resolvedText : "",
-                    fromMid != null ? fromMid : "",
+                    fromMid,
                     senderName != null ? senderName : "Unknown",
                     targetChatId,
                     currentChatName != null ? currentChatName : "Unknown",
