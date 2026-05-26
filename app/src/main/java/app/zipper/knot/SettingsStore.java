@@ -6,80 +6,57 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class SettingsStore {
 
-  private static final String SETTINGS_FILE = "knot_settings.json.gz";
-  private static final String UNSEND_HISTORY_FILE = "knot_unsend_history.json.gz";
-  private static final String READ_HISTORY_FILE = "knot_read_history.json.gz";
+  private static final String SETTINGS_FILE = "knot_settings.bin";
+  private static final String UNSEND_HISTORY_FILE = "knot_unsend_history.bin";
+  private static final String READ_HISTORY_FILE = "knot_read_history.bin";
+
+  private static final byte[] UNSEND_HISTORY_MAGIC = {'K', 'U', 'H', '1'};
+  private static final byte[] READ_HISTORY_MAGIC = {'K', 'R', 'H', '1'};
+
+  private static final String READ_HISTORY_TIME_FMT = "yyyy-MM-dd HH:mm:ss";
+  private static final String UNSEND_HISTORY_TIME_FMT = "yyyy/MM/dd HH:mm:ss";
 
   private static volatile String pointerPath = null;
   private static volatile Context appContext = null;
   private static volatile Uri cachedTreeUri = null;
-  private static volatile Uri cachedDocUri = null;
-  private static volatile Uri cachedHistoryUri = null;
-  private static volatile Uri cachedReadHistoryUri = null;
+  private static final Map<String, Uri> cachedDocUris = new ConcurrentHashMap<>();
   private static volatile boolean isModuleLoaded = false;
+  private static volatile JSONObject cachedSettingsJson = null;
 
   public static void init(android.app.Activity activity) {
     appContext = activity.getApplicationContext();
     ensurePointerPath(activity);
     cachedTreeUri = null;
-    cachedDocUri = null;
-    cachedHistoryUri = null;
-    cachedReadHistoryUri = null;
+    cachedDocUris.clear();
     ensureTreeUri();
-  }
-
-  private static void ensurePointerPath(Context ctx) {
-    if (pointerPath != null) return;
-    try {
-      File extDir = ctx.getExternalFilesDir(null);
-      if (extDir != null) {
-        extDir.mkdirs();
-        pointerPath = extDir.getAbsolutePath() + "/knot_ptr";
-      } else {
-        String sdcard = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
-        pointerPath = sdcard + "/Android/data/jp.naver.line.android/files/knot_ptr";
-      }
-    } catch (Throwable ignored) {
-    }
-  }
-
-  private static volatile JSONObject cachedSettingsJson = null;
-
-  public static void load(KnotConfig config) {
-    ensurePointerPath(appContext);
-    try {
-      JSONObject json = getSettingsJson();
-      for (KnotConfig.Item item : config.items) {
-        if (json.has(item.key)) {
-          Object val = json.get(item.key);
-          if (val instanceof Boolean) item.enabled = (Boolean) val;
-          else if (val instanceof String) item.value = (String) val;
-        }
-      }
-    } catch (Throwable ignored) {
-    }
-  }
-
-  private static JSONObject getSettingsJson() throws Throwable {
-    if (cachedSettingsJson != null) return cachedSettingsJson;
-    synchronized (SettingsStore.class) {
-      if (cachedSettingsJson != null) return cachedSettingsJson;
-      cachedSettingsJson = readJson(SETTINGS_FILE);
-      return cachedSettingsJson;
-    }
   }
 
   public static void setContext(Context context) {
@@ -89,6 +66,18 @@ public class SettingsStore {
 
   public static Context getContext() {
     return appContext;
+  }
+
+  public static boolean isLoaded() {
+    return isModuleLoaded;
+  }
+
+  public static void setLoaded(boolean loaded) {
+    isModuleLoaded = loaded;
+  }
+
+  public static boolean isConfigured() {
+    return ensureTreeUri() != null;
   }
 
   public static String getSettingsDir() {
@@ -109,36 +98,32 @@ public class SettingsStore {
         w.write(uriString);
       }
       cachedTreeUri = Uri.parse(uriString);
-      cachedDocUri = null;
-      cachedHistoryUri = null;
-      cachedReadHistoryUri = null;
+      cachedDocUris.clear();
     } catch (Throwable e) {
       android.util.Log.e("Knot", "SettingsStore.setSettingsDir failed", e);
     }
   }
 
-  public static boolean isConfigured() {
-    return ensureTreeUri() != null;
-  }
-
-  public static boolean isLoaded() {
-    return isModuleLoaded;
-  }
-
-  public static void setLoaded(boolean loaded) {
-    isModuleLoaded = loaded;
+  public static void load(KnotConfig config) {
+    ensurePointerPath(appContext);
+    try {
+      JSONObject json = getSettingsJson();
+      for (KnotConfig.Item item : config.items) {
+        if (!json.has(item.key)) continue;
+        Object val = json.get(item.key);
+        if (val instanceof Boolean) item.enabled = (Boolean) val;
+        else if (val instanceof String) item.value = (String) val;
+      }
+    } catch (Throwable ignored) {
+    }
   }
 
   public static void save(String key, boolean value) {
-    try {
-      synchronized (SettingsStore.class) {
-        JSONObject json = getSettingsJson();
-        json.put(key, value);
-        writeJson(SETTINGS_FILE, json);
-      }
-    } catch (Throwable e) {
-      android.util.Log.e("Knot", "SettingsStore.save failed", e);
-    }
+    putSetting(key, value);
+  }
+
+  public static void save(String key, String value) {
+    putSetting(key, value);
   }
 
   public static boolean get(String key, boolean defaultValue) {
@@ -148,18 +133,6 @@ public class SettingsStore {
     } catch (Throwable ignored) {
     }
     return defaultValue;
-  }
-
-  public static void save(String key, String value) {
-    try {
-      synchronized (SettingsStore.class) {
-        JSONObject json = getSettingsJson();
-        json.put(key, value);
-        writeJson(SETTINGS_FILE, json);
-      }
-    } catch (Throwable e) {
-      android.util.Log.e("Knot", "SettingsStore.save string failed", e);
-    }
   }
 
   public static String getString(String key, String defaultValue) {
@@ -193,14 +166,32 @@ public class SettingsStore {
     } catch (Throwable ignored) {
     }
     cachedTreeUri = null;
-    cachedDocUri = null;
-    cachedHistoryUri = null;
-    cachedReadHistoryUri = null;
+    cachedDocUris.clear();
+  }
+
+  private static JSONObject getSettingsJson() throws Throwable {
+    if (cachedSettingsJson != null) return cachedSettingsJson;
+    synchronized (SettingsStore.class) {
+      if (cachedSettingsJson == null) cachedSettingsJson = readJson(SETTINGS_FILE);
+      return cachedSettingsJson;
+    }
+  }
+
+  private static void putSetting(String key, Object value) {
+    try {
+      synchronized (SettingsStore.class) {
+        JSONObject json = getSettingsJson();
+        json.put(key, value);
+        writeJson(SETTINGS_FILE, json);
+      }
+    } catch (Throwable e) {
+      android.util.Log.e("Knot", "SettingsStore.save failed", e);
+    }
   }
 
   public static JSONObject loadUnsendHistory() {
     try {
-      return readJson(UNSEND_HISTORY_FILE);
+      return readUnsendHistory();
     } catch (Throwable e) {
       return new JSONObject();
     }
@@ -208,14 +199,46 @@ public class SettingsStore {
 
   public static void saveUnsendHistory(JSONObject json) {
     try {
-      writeJson(UNSEND_HISTORY_FILE, json);
+      writeUnsendHistory(json);
     } catch (Throwable ignored) {
     }
   }
 
+  private static JSONObject readUnsendHistory() throws Throwable {
+    DataInputStream in = openBinary(UNSEND_HISTORY_FILE, UNSEND_HISTORY_MAGIC);
+    if (in == null) return new JSONObject();
+
+    SimpleDateFormat fmt = new SimpleDateFormat(UNSEND_HISTORY_TIME_FMT, Locale.getDefault());
+    JSONObject json = new JSONObject();
+    int count = readVarInt(in);
+    for (int i = 0; i < count; i++) {
+      long msgId = readVarLong(in);
+      long ts = readVarLong(in);
+      json.put(String.valueOf(msgId), formatTime(fmt, ts));
+    }
+    return json;
+  }
+
+  private static void writeUnsendHistory(JSONObject json) throws Throwable {
+    SimpleDateFormat fmt = new SimpleDateFormat(UNSEND_HISTORY_TIME_FMT, Locale.getDefault());
+
+    ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    DataOutputStream out = new DataOutputStream(buf);
+    out.write(UNSEND_HISTORY_MAGIC);
+
+    List<String> keys = keysOf(json);
+    writeVarInt(out, keys.size());
+    for (String k : keys) {
+      writeVarLong(out, parseLongSafe(k));
+      writeVarLong(out, parseTimeSafe(fmt, json.optString(k, "")));
+    }
+    out.flush();
+    writeDeflated(UNSEND_HISTORY_FILE, buf.toByteArray());
+  }
+
   public static JSONObject loadReadHistory() {
     try {
-      return readJson(READ_HISTORY_FILE);
+      return readReadHistory();
     } catch (Throwable e) {
       return new JSONObject();
     }
@@ -223,7 +246,161 @@ public class SettingsStore {
 
   public static void saveReadHistory(JSONObject json) {
     try {
-      writeJson(READ_HISTORY_FILE, json);
+      writeReadHistory(json);
+    } catch (Throwable ignored) {
+    }
+  }
+
+  private static JSONObject readReadHistory() throws Throwable {
+    DataInputStream in = openBinary(READ_HISTORY_FILE, READ_HISTORY_MAGIC);
+    if (in == null) return new JSONObject();
+
+    String[] strings = readStringTable(in);
+    SimpleDateFormat fmt = new SimpleDateFormat(READ_HISTORY_TIME_FMT, Locale.getDefault());
+
+    JSONObject root = new JSONObject();
+    JSONObject chats = new JSONObject();
+    root.put("c", chats);
+
+    int chatCount = readVarInt(in);
+    for (int i = 0; i < chatCount; i++) {
+      String chatId = strings[readVarInt(in)];
+      chats.put(chatId, readChat(in, strings, fmt));
+    }
+    return root;
+  }
+
+  private static JSONObject readChat(DataInputStream in, String[] strings, SimpleDateFormat fmt)
+      throws IOException, JSONException {
+    JSONObject chat = new JSONObject();
+    String chatName = strings[readVarInt(in)];
+    if (!chatName.isEmpty()) chat.put("n", chatName);
+
+    int hwmCount = readVarInt(in);
+    if (hwmCount > 0) {
+      JSONObject hwm = new JSONObject();
+      for (int j = 0; j < hwmCount; j++) {
+        hwm.put(strings[readVarInt(in)], String.valueOf(readVarLong(in)));
+      }
+      chat.put("rh", hwm);
+    }
+
+    int msgCount = readVarInt(in);
+    if (msgCount > 0) {
+      JSONObject messages = new JSONObject();
+      for (int j = 0; j < msgCount; j++) {
+        long msgId = readVarLong(in);
+        messages.put(String.valueOf(msgId), readMessage(in, strings, fmt));
+      }
+      chat.put("m", messages);
+    }
+    return chat;
+  }
+
+  private static JSONObject readMessage(DataInputStream in, String[] strings, SimpleDateFormat fmt)
+      throws IOException, JSONException {
+    JSONObject msg = new JSONObject();
+    msg.put("sn", strings[readVarInt(in)]);
+    msg.put("ct", formatTime(fmt, readVarLong(in)));
+    msg.put("c", readUtf8(in));
+
+    JSONObject readers = new JSONObject();
+    int readerCount = readVarInt(in);
+    for (int k = 0; k < readerCount; k++) {
+      String mid = strings[readVarInt(in)];
+      JSONObject info = new JSONObject();
+      info.put("n", strings[readVarInt(in)]);
+      info.put("t", formatTime(fmt, readVarLong(in)));
+      readers.put(mid, info);
+    }
+    msg.put("r", readers);
+    return msg;
+  }
+
+  private static void writeReadHistory(JSONObject json) throws Throwable {
+    SimpleDateFormat fmt = new SimpleDateFormat(READ_HISTORY_TIME_FMT, Locale.getDefault());
+
+    LinkedHashMap<String, Integer> table = new LinkedHashMap<>();
+    table.put("", 0);
+
+    ByteArrayOutputStream payloadBuf = new ByteArrayOutputStream();
+    DataOutputStream payload = new DataOutputStream(payloadBuf);
+
+    JSONObject chats = optObject(json, "c");
+    List<String> chatIds = keysOf(chats);
+    writeVarInt(payload, chatIds.size());
+    for (String chatId : chatIds) {
+      writeVarInt(payload, internString(table, chatId));
+      writeChat(payload, table, fmt, optObject(chats, chatId));
+    }
+    payload.flush();
+
+    ByteArrayOutputStream finalBuf = new ByteArrayOutputStream();
+    DataOutputStream out = new DataOutputStream(finalBuf);
+    out.write(READ_HISTORY_MAGIC);
+    writeStringTable(out, table);
+    out.write(payloadBuf.toByteArray());
+    out.flush();
+    writeDeflated(READ_HISTORY_FILE, finalBuf.toByteArray());
+  }
+
+  private static void writeChat(
+      DataOutputStream out,
+      LinkedHashMap<String, Integer> table,
+      SimpleDateFormat fmt,
+      JSONObject chat)
+      throws IOException {
+    writeVarInt(out, internString(table, chat.optString("n", "")));
+
+    JSONObject hwm = optObject(chat, "rh");
+    List<String> hwmKeys = keysOf(hwm);
+    writeVarInt(out, hwmKeys.size());
+    for (String mid : hwmKeys) {
+      writeVarInt(out, internString(table, mid));
+      writeVarLong(out, parseLongSafe(hwm.optString(mid, "0")));
+    }
+
+    JSONObject messages = optObject(chat, "m");
+    List<String> msgIds = keysOf(messages);
+    writeVarInt(out, msgIds.size());
+    for (String msgIdStr : msgIds) {
+      writeVarLong(out, parseLongSafe(msgIdStr));
+      writeMessage(out, table, fmt, optObject(messages, msgIdStr));
+    }
+  }
+
+  private static void writeMessage(
+      DataOutputStream out,
+      LinkedHashMap<String, Integer> table,
+      SimpleDateFormat fmt,
+      JSONObject msg)
+      throws IOException {
+    writeVarInt(out, internString(table, msg.optString("sn", "")));
+    writeVarLong(out, parseTimeSafe(fmt, msg.optString("ct", "")));
+    writeUtf8(out, msg.optString("c", ""));
+
+    JSONObject readers = optObject(msg, "r");
+    List<String> readerMids = keysOf(readers);
+    writeVarInt(out, readerMids.size());
+    for (String mid : readerMids) {
+      JSONObject info = optObject(readers, mid);
+      writeVarInt(out, internString(table, mid));
+      writeVarInt(out, internString(table, info.optString("n", "")));
+      writeVarLong(out, parseTimeSafe(fmt, info.optString("t", "")));
+    }
+  }
+
+  private static void ensurePointerPath(Context ctx) {
+    if (pointerPath != null || ctx == null) return;
+    try {
+      File extDir = ctx.getExternalFilesDir(null);
+      if (extDir != null) {
+        extDir.mkdirs();
+        pointerPath = extDir.getAbsolutePath() + "/knot_ptr";
+      } else {
+        String sdcard = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+        pointerPath = sdcard + "/Android/data/jp.naver.line.android/files/knot_ptr";
+      }
     } catch (Throwable ignored) {
     }
   }
@@ -236,7 +413,7 @@ public class SettingsStore {
       if (!f.exists()) return null;
       try (BufferedReader r = new BufferedReader(new FileReader(f))) {
         String line = r.readLine();
-        return (line != null) ? line.trim() : null;
+        return line != null ? line.trim() : null;
       }
     } catch (Throwable ignored) {
     }
@@ -252,10 +429,8 @@ public class SettingsStore {
   }
 
   private static Uri getDocUri(String fileName, boolean createIfMissing) throws Throwable {
-    if (SETTINGS_FILE.equals(fileName) && cachedDocUri != null) return cachedDocUri;
-    if (UNSEND_HISTORY_FILE.equals(fileName) && cachedHistoryUri != null) return cachedHistoryUri;
-    if (READ_HISTORY_FILE.equals(fileName) && cachedReadHistoryUri != null)
-      return cachedReadHistoryUri;
+    Uri cached = cachedDocUris.get(fileName);
+    if (cached != null) return cached;
 
     Uri treeUri = ensureTreeUri();
     if (treeUri == null || appContext == null) return null;
@@ -278,57 +453,173 @@ public class SettingsStore {
         while (cursor.moveToNext()) {
           if (fileName.equals(cursor.getString(1))) {
             Uri uri = DocumentsContract.buildDocumentUriUsingTree(treeUri, cursor.getString(0));
-            if (SETTINGS_FILE.equals(fileName)) cachedDocUri = uri;
-            else if (UNSEND_HISTORY_FILE.equals(fileName)) cachedHistoryUri = uri;
-            else if (READ_HISTORY_FILE.equals(fileName)) cachedReadHistoryUri = uri;
+            cachedDocUris.put(fileName, uri);
             return uri;
           }
         }
       }
     }
 
-    if (createIfMissing) {
-      Uri parentDocUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocId);
-      Uri newUri =
-          DocumentsContract.createDocument(
-              resolver, parentDocUri, "application/octet-stream", fileName);
-      if (SETTINGS_FILE.equals(fileName)) cachedDocUri = newUri;
-      else if (UNSEND_HISTORY_FILE.equals(fileName)) cachedHistoryUri = newUri;
-      else if (READ_HISTORY_FILE.equals(fileName)) cachedReadHistoryUri = newUri;
-      return newUri;
-    }
-    return null;
+    if (!createIfMissing) return null;
+
+    Uri parentDocUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocId);
+    Uri newUri =
+        DocumentsContract.createDocument(
+            resolver, parentDocUri, "application/octet-stream", fileName);
+    if (newUri != null) cachedDocUris.put(fileName, newUri);
+    return newUri;
   }
 
   private static JSONObject readJson(String fileName) throws Throwable {
-    Uri docUri = getDocUri(fileName, false);
-    if (docUri == null || appContext == null) return new JSONObject();
-
-    try (InputStream is = appContext.getContentResolver().openInputStream(docUri);
-        GZIPInputStream gzis = new GZIPInputStream(is)) {
-      StringBuilder sb = new StringBuilder();
-      try (BufferedReader r =
-          new BufferedReader(new InputStreamReader(gzis, StandardCharsets.UTF_8))) {
-        char[] buf = new char[8192];
-        int n;
-        while ((n = r.read(buf)) != -1) sb.append(buf, 0, n);
-      }
-      String text = sb.toString().trim();
-      return text.isEmpty() ? new JSONObject() : new JSONObject(text);
-    } catch (Throwable t) {
-      return new JSONObject();
-    }
+    byte[] data = readDeflated(fileName);
+    if (data == null) return new JSONObject();
+    String text = new String(data, StandardCharsets.UTF_8).trim();
+    return text.isEmpty() ? new JSONObject() : new JSONObject(text);
   }
 
   private static void writeJson(String fileName, JSONObject json) throws Throwable {
+    writeDeflated(fileName, json.toString().getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static byte[] readDeflated(String fileName) throws Throwable {
+    Uri docUri = getDocUri(fileName, false);
+    if (docUri == null || appContext == null) return null;
+    try (InputStream is = appContext.getContentResolver().openInputStream(docUri);
+        InflaterInputStream iis = new InflaterInputStream(is)) {
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      byte[] buf = new byte[8192];
+      int n;
+      while ((n = iis.read(buf)) != -1) bos.write(buf, 0, n);
+      return bos.toByteArray();
+    } catch (Throwable t) {
+      return null;
+    }
+  }
+
+  private static void writeDeflated(String fileName, byte[] data) throws Throwable {
     Uri docUri = getDocUri(fileName, true);
     if (docUri == null || appContext == null) throw new IllegalStateException("Not configured");
-
-    try (OutputStream os = appContext.getContentResolver().openOutputStream(docUri, "wt");
-        GZIPOutputStream gzos = new GZIPOutputStream(os)) {
-      gzos.write(json.toString().getBytes(StandardCharsets.UTF_8));
-      gzos.finish();
+    try (OutputStream os = appContext.getContentResolver().openOutputStream(docUri, "wt")) {
+      Deflater def = new Deflater(Deflater.BEST_COMPRESSION);
+      try (DeflaterOutputStream dos = new DeflaterOutputStream(os, def)) {
+        dos.write(data);
+      } finally {
+        def.end();
+      }
     }
+  }
+
+  private static DataInputStream openBinary(String fileName, byte[] magic) throws Throwable {
+    byte[] raw = readDeflated(fileName);
+    if (raw == null || raw.length < magic.length) return null;
+    for (int i = 0; i < magic.length; i++) if (raw[i] != magic[i]) return null;
+    return new DataInputStream(
+        new ByteArrayInputStream(raw, magic.length, raw.length - magic.length));
+  }
+
+  private static void writeVarInt(DataOutputStream out, int v) throws IOException {
+    while ((v & ~0x7F) != 0) {
+      out.writeByte((v & 0x7F) | 0x80);
+      v >>>= 7;
+    }
+    out.writeByte(v);
+  }
+
+  private static void writeVarLong(DataOutputStream out, long v) throws IOException {
+    while ((v & ~0x7FL) != 0) {
+      out.writeByte((int) ((v & 0x7F) | 0x80));
+      v >>>= 7;
+    }
+    out.writeByte((int) v);
+  }
+
+  private static int readVarInt(DataInputStream in) throws IOException {
+    int result = 0;
+    for (int shift = 0; ; shift += 7) {
+      int b = in.readUnsignedByte();
+      result |= (b & 0x7F) << shift;
+      if ((b & 0x80) == 0) return result;
+    }
+  }
+
+  private static long readVarLong(DataInputStream in) throws IOException {
+    long result = 0;
+    for (int shift = 0; ; shift += 7) {
+      int b = in.readUnsignedByte();
+      result |= ((long) (b & 0x7F)) << shift;
+      if ((b & 0x80) == 0) return result;
+    }
+  }
+
+  private static void writeUtf8(DataOutputStream out, String s) throws IOException {
+    byte[] b = s.getBytes(StandardCharsets.UTF_8);
+    writeVarInt(out, b.length);
+    out.write(b);
+  }
+
+  private static String readUtf8(DataInputStream in) throws IOException {
+    int len = readVarInt(in);
+    byte[] b = new byte[len];
+    in.readFully(b);
+    return new String(b, StandardCharsets.UTF_8);
+  }
+
+  private static String[] readStringTable(DataInputStream in) throws IOException {
+    int count = readVarInt(in);
+    String[] strings = new String[count];
+    for (int i = 0; i < count; i++) strings[i] = readUtf8(in);
+    return strings;
+  }
+
+  private static void writeStringTable(DataOutputStream out, LinkedHashMap<String, Integer> table)
+      throws IOException {
+    writeVarInt(out, table.size());
+    for (String s : table.keySet()) writeUtf8(out, s);
+  }
+
+  private static int internString(LinkedHashMap<String, Integer> table, String s) {
+    if (s == null) s = "";
+    Integer idx = table.get(s);
+    if (idx != null) return idx;
+    int newIdx = table.size();
+    table.put(s, newIdx);
+    return newIdx;
+  }
+
+  private static List<String> keysOf(JSONObject json) {
+    List<String> keys = new ArrayList<>();
+    if (json == null) return keys;
+    Iterator<String> it = json.keys();
+    while (it.hasNext()) keys.add(it.next());
+    return keys;
+  }
+
+  private static JSONObject optObject(JSONObject parent, String key) {
+    JSONObject child = parent != null ? parent.optJSONObject(key) : null;
+    return child != null ? child : new JSONObject();
+  }
+
+  private static long parseLongSafe(String s) {
+    if (s == null || s.isEmpty()) return 0L;
+    try {
+      return Long.parseLong(s);
+    } catch (NumberFormatException e) {
+      return 0L;
+    }
+  }
+
+  private static long parseTimeSafe(SimpleDateFormat fmt, String s) {
+    if (s == null || s.isEmpty()) return 0L;
+    try {
+      Date d = fmt.parse(s);
+      return d != null ? d.getTime() : 0L;
+    } catch (Throwable t) {
+      return 0L;
+    }
+  }
+
+  private static String formatTime(SimpleDateFormat fmt, long ms) {
+    return ms > 0 ? fmt.format(new Date(ms)) : "";
   }
 
   private static String uriToDisplayPath(Uri uri) {
