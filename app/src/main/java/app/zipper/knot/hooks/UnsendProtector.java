@@ -20,6 +20,7 @@ import app.zipper.knot.Main;
 import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
 import io.github.libxposed.api.XposedInterface;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,10 +32,14 @@ import org.json.JSONObject;
 
 public class UnsendProtector implements BaseHook {
 
+  private static final int TIMESTAMP_MSG_ID_TAG = 0x7f7a0001;
+  private static final int TIMESTAMP_VIEW_CLEANUP_INTERVAL = 64;
   private static final Map<String, String> unsendEvents = new ConcurrentHashMap<>();
-  private static final Map<String, TextView> timestampViews = new ConcurrentHashMap<>();
+  private static final Map<String, WeakReference<TextView>> timestampViews =
+      new ConcurrentHashMap<>();
   private static volatile Bitmap indicatorIcon;
   private static Toast currentToast;
+  private static int timestampBindCount = 0;
 
   @Override
   public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
@@ -120,7 +125,7 @@ public class UnsendProtector implements BaseHook {
 
     Reflect.setObjectField(aeVar, "h", "");
 
-    TextView tsView = timestampViews.get(msgId);
+    TextView tsView = getTimestampView(msgId);
     if (tsView != null) applyUnsendIndicator(tsView, tsView.getContext(), msgId);
   }
 
@@ -180,7 +185,7 @@ public class UnsendProtector implements BaseHook {
             type.getClass(), cfg.unsend.methodOperationTypeValueOf, cfg.unsend.operationTypeDummy);
     Reflect.setObjectField(operation, cfg.unsend.operationTypeField, harmlessType);
 
-    TextView tsView = timestampViews.get(msgId);
+    TextView tsView = getTimestampView(msgId);
     if (tsView != null) applyUnsendIndicator(tsView, tsView.getContext(), msgId);
   }
 
@@ -198,9 +203,14 @@ public class UnsendProtector implements BaseHook {
     TextView tsView = (TextView) root.findViewById(cfg.res.idTimestamp);
     if (tsView == null) return;
 
+    clearTimestampViewMapping(tsView);
     resetViewProperties(tsView);
-    if (msgId != null) {
-      timestampViews.put(msgId, tsView);
+    if (msgId != null && !msgId.isEmpty()) {
+      tsView.setTag(TIMESTAMP_MSG_ID_TAG, msgId);
+      timestampViews.put(msgId, new WeakReference<>(tsView));
+      if ((++timestampBindCount % TIMESTAMP_VIEW_CLEANUP_INTERVAL) == 0) {
+        cleanupStaleTimestampViews();
+      }
       if (unsendEvents.containsKey(msgId)) applyUnsendIndicator(tsView, root.getContext(), msgId);
     }
   }
@@ -209,6 +219,8 @@ public class UnsendProtector implements BaseHook {
       final TextView tsView, final Context context, final String msgId) {
     Bitmap rawIcon = resolveIndicatorIcon(context);
     if (rawIcon == null) return;
+    Context appContext = context.getApplicationContext();
+    final Context toastContext = appContext != null ? appContext : context;
     float dens = tsView.getResources().getDisplayMetrics().density;
     final int targetPx = (int) (14 * dens);
     int padPx = (int) (3 * dens);
@@ -220,6 +232,7 @@ public class UnsendProtector implements BaseHook {
 
     tsView.post(
         () -> {
+          if (!msgId.equals(tsView.getTag(TIMESTAMP_MSG_ID_TAG))) return;
           tsView.setCompoundDrawables(null, null, draw, null);
           tsView.setCompoundDrawablePadding(padPx);
           tsView.setOnClickListener(
@@ -229,13 +242,44 @@ public class UnsendProtector implements BaseHook {
                   if (currentToast != null) currentToast.cancel();
                   currentToast =
                       Toast.makeText(
-                          context,
+                          toastContext,
                           app.zipper.knot.utils.ModuleStrings.UNSET_TIME_PREFIX + time,
                           Toast.LENGTH_SHORT);
                   currentToast.show();
                 }
               });
         });
+  }
+
+  private static TextView getTimestampView(String msgId) {
+    WeakReference<TextView> ref = timestampViews.get(msgId);
+    if (ref == null) return null;
+    TextView view = ref.get();
+    if (view == null || !msgId.equals(view.getTag(TIMESTAMP_MSG_ID_TAG))) {
+      timestampViews.remove(msgId);
+      return null;
+    }
+    return view;
+  }
+
+  private static void clearTimestampViewMapping(TextView view) {
+    Object previousMsgId = view.getTag(TIMESTAMP_MSG_ID_TAG);
+    if (previousMsgId instanceof String) {
+      WeakReference<TextView> ref = timestampViews.get(previousMsgId);
+      if (ref == null || ref.get() == view) {
+        timestampViews.remove(previousMsgId);
+      }
+    }
+    view.setTag(TIMESTAMP_MSG_ID_TAG, null);
+  }
+
+  private static void cleanupStaleTimestampViews() {
+    for (Map.Entry<String, WeakReference<TextView>> entry : timestampViews.entrySet()) {
+      TextView view = entry.getValue().get();
+      if (view == null || !entry.getKey().equals(view.getTag(TIMESTAMP_MSG_ID_TAG))) {
+        timestampViews.remove(entry.getKey());
+      }
+    }
   }
 
   private static void resetViewProperties(final TextView tsView) {
