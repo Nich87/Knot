@@ -1089,7 +1089,7 @@ public class SettingsUIInjector implements BaseHook {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("*/*");
-            intent.putExtra(Intent.EXTRA_TITLE, "Knot_*.db");
+            intent.putExtra(Intent.EXTRA_TITLE, "Knot_*.knotbak");
 
             try {
               String dirUriStr = SettingsStore.getSettingsDirUri();

@@ -10,10 +10,9 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 import androidx.documentfile.provider.DocumentFile;
-import app.zipper.knot.KnotConfig;
-import app.zipper.knot.LoadParam;
 import app.zipper.knot.SettingsStore;
 import app.zipper.knot.utils.ModuleStrings;
+import app.zipper.knot.utils.ThemeUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,19 +20,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
-public class BackupRestoreHook implements BaseHook {
+public final class BackupRestoreHook {
 
   private static final String LOG_TAG = "KnotSync";
   private static final ExecutorService syncExecutor = Executors.newSingleThreadExecutor();
   private static final Handler uiHandler = new Handler(Looper.getMainLooper());
 
-  @Override
-  public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {}
+  private static final List<String> DB_NAMES = Arrays.asList("naver_line", "contact", "square");
+  private static final String[] DB_SUFFIXES = {"", "-wal"};
+  private static final byte[] ZIP_MAGIC = {0x50, 0x4B, 0x03, 0x04};
+  private static final String MARKER_ENTRY = "knot-backup-v1";
+  private static final int COPY_BUFFER_SIZE = 64 * 1024;
 
   public static void runBackup(Context context) {
     final ProgressDialog pd = createSyncProgress(context, ModuleStrings.RESTORE_PREPARING);
@@ -62,14 +72,12 @@ public class BackupRestoreHook implements BaseHook {
               () -> {
                 pd.dismiss();
                 if (result) {
-                  new AlertDialog.Builder(context, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                  new AlertDialog.Builder(context, dialogTheme(context))
                       .setTitle(ModuleStrings.RESTORE_SUCCESS)
                       .setMessage(ModuleStrings.MANAGER_RESTART_REQUIRED)
                       .setPositiveButton(
                           ModuleStrings.RESTART_OK,
-                          (d, w) -> {
-                            android.os.Process.killProcess(android.os.Process.myPid());
-                          })
+                          (d, w) -> android.os.Process.killProcess(android.os.Process.myPid()))
                       .setCancelable(false)
                       .show();
                 } else {
@@ -84,6 +92,7 @@ public class BackupRestoreHook implements BaseHook {
   }
 
   private static boolean executeKnotBackup(Context context) {
+    DocumentFile outFile = null;
     try {
       String dirUriStr = SettingsStore.getSettingsDirUri();
       if (dirUriStr == null) return false;
@@ -94,76 +103,159 @@ public class BackupRestoreHook implements BaseHook {
         return false;
       }
 
-      String stamp =
-          new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-      DocumentFile knotFolder = ensureSubDir(root, "KnotBackup");
-
-      File localDb = context.getDatabasePath("naver_line");
-      if (!localDb.exists()) {
+      File mainDb = context.getDatabasePath("naver_line");
+      if (!mainDb.exists()) {
         Log.e(LOG_TAG, "Source database not found");
         return false;
       }
 
-      String dbFileName = "Knot_" + stamp + ".db";
-      DocumentFile dbOut = knotFolder.createFile("application/octet-stream", dbFileName);
-      if (dbOut == null) return false;
+      String stamp =
+          new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+      DocumentFile knotFolder = ensureSubDir(root, "KnotBackup");
+      if (knotFolder == null) return false;
 
-      fastChannelCopy(context, localDb, dbOut.getUri());
+      outFile = knotFolder.createFile("application/octet-stream", "Knot_" + stamp + ".knotbak");
+      if (outFile == null) return false;
 
-      for (String suffix : new String[] {"-wal", "-shm"}) {
-        File f = new File(localDb.getPath() + suffix);
-        if (f.exists()) {
-          DocumentFile out = knotFolder.createFile("application/octet-stream", dbFileName + suffix);
-          if (out != null) fastChannelCopy(context, f, out.getUri());
-        }
-      }
-
+      writeBackupZip(context, outFile.getUri());
       return true;
     } catch (Exception e) {
       Log.e(LOG_TAG, "Backup failed: " + e.getMessage());
+      if (outFile != null) safeDelete(outFile);
       return false;
     }
+  }
+
+  private static void writeBackupZip(Context context, Uri dst) throws IOException {
+    try (OutputStream raw = context.getContentResolver().openOutputStream(dst);
+        ZipOutputStream zip = new ZipOutputStream(raw)) {
+
+      zip.putNextEntry(new ZipEntry(MARKER_ENTRY));
+      zip.closeEntry();
+
+      for (String dbName : DB_NAMES) {
+        File baseDb = context.getDatabasePath(dbName);
+        for (String suffix : DB_SUFFIXES) {
+          File f = new File(baseDb.getPath() + suffix);
+          if (f.isFile()) {
+            writeFileEntry(zip, dbName + ".db" + suffix, f);
+          }
+        }
+      }
+    }
+  }
+
+  private static void writeFileEntry(ZipOutputStream zip, String name, File file)
+      throws IOException {
+    zip.putNextEntry(new ZipEntry(name));
+    try (FileInputStream in = new FileInputStream(file)) {
+      copyStream(in, zip);
+    }
+    zip.closeEntry();
   }
 
   private static boolean executeFullRestore(Context context, File srcFile) {
-    try {
-      File localDb = context.getDatabasePath("naver_line");
+    return isZipFile(srcFile) ? restoreFromZip(context, srcFile) : restoreLegacy(context, srcFile);
+  }
 
-      try (SQLiteDatabase check =
-          SQLiteDatabase.openDatabase(
-              srcFile.getAbsolutePath(),
-              null,
-              SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS)) {
-
-      } catch (Exception e) {
-        Log.e(LOG_TAG, "Restore failed: Invalid database file");
+  private static boolean restoreFromZip(Context context, File srcFile) {
+    try (ZipFile zip = new ZipFile(srcFile)) {
+      if (zip.getEntry(MARKER_ENTRY) == null) {
+        Log.e(LOG_TAG, "Restore failed: not a Knot backup");
         return false;
       }
 
-      localDb.delete();
-      new File(localDb.getPath() + "-wal").delete();
-      new File(localDb.getPath() + "-shm").delete();
+      Set<String> dbsToReplace = new HashSet<>();
+      Enumeration<? extends ZipEntry> entries = zip.entries();
+      while (entries.hasMoreElements()) {
+        String name = entries.nextElement().getName();
+        String dbName = matchedDbName(name);
+        if (dbName != null && name.equals(dbName + ".db")) {
+          dbsToReplace.add(dbName);
+        }
+      }
 
-      try (InputStream in = new FileInputStream(srcFile);
-          OutputStream out = new FileOutputStream(localDb)) {
-        byte[] buffer = new byte[32768];
-        int length;
-        while ((length = in.read(buffer)) > 0) out.write(buffer, 0, length);
+      for (String dbName : dbsToReplace) wipeDbFamily(context.getDatabasePath(dbName));
+
+      entries = zip.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry e = entries.nextElement();
+        if (e.isDirectory() || MARKER_ENTRY.equals(e.getName())) continue;
+
+        String dbName = matchedDbName(e.getName());
+        if (dbName == null) {
+          Log.w(LOG_TAG, "Skipping unknown entry: " + e.getName());
+          continue;
+        }
+
+        File baseDb = context.getDatabasePath(dbName);
+        File target = new File(baseDb.getPath() + e.getName().substring((dbName + ".db").length()));
+        try (InputStream in = zip.getInputStream(e);
+            OutputStream out = new FileOutputStream(target)) {
+          copyStream(in, out);
+        }
       }
       return true;
     } catch (Exception e) {
-      Log.e(LOG_TAG, "Full restore failed: " + e.getMessage());
+      Log.e(LOG_TAG, "Zip restore failed: " + e.getMessage());
       return false;
     }
   }
 
-  private static void fastChannelCopy(Context context, File src, Uri dst) throws IOException {
-    try (InputStream in = new FileInputStream(src);
-        OutputStream out = context.getContentResolver().openOutputStream(dst)) {
-      byte[] buffer = new byte[32768];
-      int length;
-      while ((length = in.read(buffer)) > 0) out.write(buffer, 0, length);
+  private static boolean restoreLegacy(Context context, File srcFile) {
+    try (SQLiteDatabase check =
+        SQLiteDatabase.openDatabase(
+            srcFile.getAbsolutePath(),
+            null,
+            SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS)) {
+    } catch (Exception e) {
+      Log.e(LOG_TAG, "Restore failed: Invalid database file");
+      return false;
     }
+
+    File localDb = context.getDatabasePath("naver_line");
+    try {
+      wipeDbFamily(localDb);
+      try (InputStream in = new FileInputStream(srcFile);
+          OutputStream out = new FileOutputStream(localDb)) {
+        copyStream(in, out);
+      }
+      return true;
+    } catch (Exception e) {
+      Log.e(LOG_TAG, "Legacy restore failed: " + e.getMessage());
+      return false;
+    }
+  }
+
+  private static String matchedDbName(String entryName) {
+    for (String name : DB_NAMES) {
+      for (String suffix : DB_SUFFIXES) {
+        if (entryName.equals(name + ".db" + suffix)) return name;
+      }
+    }
+    return null;
+  }
+
+  private static void wipeDbFamily(File baseDb) {
+    baseDb.delete();
+    new File(baseDb.getPath() + "-wal").delete();
+    new File(baseDb.getPath() + "-shm").delete();
+  }
+
+  private static boolean isZipFile(File file) {
+    if (file == null || !file.exists() || file.length() < ZIP_MAGIC.length) return false;
+    try (FileInputStream in = new FileInputStream(file)) {
+      byte[] header = new byte[ZIP_MAGIC.length];
+      return in.read(header) == ZIP_MAGIC.length && Arrays.equals(header, ZIP_MAGIC);
+    } catch (Throwable t) {
+      return false;
+    }
+  }
+
+  private static void copyStream(InputStream in, OutputStream out) throws IOException {
+    byte[] buf = new byte[COPY_BUFFER_SIZE];
+    int n;
+    while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
   }
 
   private static DocumentFile ensureSubDir(DocumentFile parent, String name) {
@@ -171,8 +263,21 @@ public class BackupRestoreHook implements BaseHook {
     return (dir != null && dir.isDirectory()) ? dir : parent.createDirectory(name);
   }
 
+  private static void safeDelete(DocumentFile file) {
+    try {
+      file.delete();
+    } catch (Throwable ignored) {
+    }
+  }
+
+  private static int dialogTheme(Context ctx) {
+    return ThemeUtils.isContextDarkTheme(ctx)
+        ? AlertDialog.THEME_DEVICE_DEFAULT_DARK
+        : AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
+  }
+
   private static ProgressDialog createSyncProgress(Context context, String text) {
-    ProgressDialog pd = new ProgressDialog(context, AlertDialog.THEME_DEVICE_DEFAULT_DARK);
+    ProgressDialog pd = new ProgressDialog(context, dialogTheme(context));
     pd.setMessage(text);
     pd.setCancelable(false);
     return pd;
