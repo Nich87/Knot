@@ -49,12 +49,27 @@
 
 ## 使い方
 
-1. [Vector](https://github.com/JingMatrix/Vector)または互換性のあるXposed環境をインストールします。
-2. [Knot](https://github.com/2b-zipper/Knot/releases/latest)をインストールし、マネージャーでモジュールを有効化します。
-3. 対象アプリとして**LINE**を選択します。
-4. LINEを再起動し、Knotのモジュール設定から各機能を有効化してください。モジュール設定は、ホームタブ右上の設定ボタンを長押しするか、LINE設定内の追加項目からアクセスできます。
+### Root環境
 
-> 非rootユーザーは[NPatch](https://github.com/7723mod/NPatch)の利用を推奨します。
+1. [Vector](https://github.com/JingMatrix/Vector/actions)などの、API 101と互換性のあるXposed環境をインストールします。
+   > 現時点でAPI 101対応版は正式リリースされていないため、GitHub ActionsからCanaryビルドをダウンロードしてください。
+2. [Knot](https://github.com/2b-zipper/Knot/releases/latest)をインストールし、マネージャー上でモジュールを有効化します。
+3. 対象アプリとしてLINEを選択します。
+4. LINEを再起動し、Knotのモジュール設定から各機能を有効化してください。
+   * モジュール設定へのアクセス方法: ホームタブ右上の設定ボタンを長押しするか、LINE設定内の追加項目から開けます。
+
+### 非Root環境
+
+1. [NPatch](https://github.com/7723mod/NPatch)をインストールします。
+   > v1.0.5以上を使用してください。
+2. [Knot](https://github.com/2b-zipper/Knot/releases/latest)をダウンロードし、インストールします。
+3. Knotが対応しているバージョンのLINE apkをダウンロードします。
+   > 分割apkの場合は、[Apktool M](https://maximoff.su/apktool/)や[AntiSplit-M](https://github.com/AbdurazaaqMohammed/AntiSplit-M)などを使用して単一のapkに結合してください。
+4. NPatchアプリを開き、ダウンロードしたLINE apkを選択して```ローカル```でパッチし、インストールします。
+5. NPatchの「管理」タブにあるLINEをタップし、```モジュールのスコープ```を選択します。
+6. 表示されるモジュール一覧からKnotを選択します。
+7. LINEを起動し、Knotのモジュール設定から各機能を有効化してください。
+   * モジュール設定へのアクセス方法: ホームタブ右上の設定ボタンを長押しするか、LINE設定内の追加項目から開けます。
 
 ## 開発者
 
