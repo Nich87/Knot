@@ -34,6 +34,7 @@ public class ModuleStrings {
   public static final String SEC_HEADER_BTN = "ヘッダボタン";
 
   public static final String SEC_FONT = "フォント";
+  public static final String SEC_THEME = "テーマ";
 
   public static final String MANAGER_RESTART_REQUIRED = "LINEの再起動が必要です";
 
@@ -154,6 +155,10 @@ public class ModuleStrings {
       "選択したフォントファイルをアプリ全体に適用します。反映にはアプリの再起動が必要です。";
   public static final String OPT_CUSTOM_FONT_PATH_LABEL = "フォントファイルを選択";
   public static final String OPT_CUSTOM_FONT_PATH_DESC = "使用するフォントファイル (.ttf / .otf) を選択します。";
+
+  public static final String OPT_USE_AMOLED_THEME_LABEL = "AMOLEDテーマを適用する";
+  public static final String OPT_USE_AMOLED_THEME_DESC =
+      "AMOLEDテーマを適用します。\"ダークモードでは「ブラック」着せかえを適用\"をオフにする必要があります。";
 
   public static final String OPT_REACTION_NOTIFICATION_LABEL = "リアクション通知";
   public static final String OPT_REACTION_NOTIFICATION_DESC =

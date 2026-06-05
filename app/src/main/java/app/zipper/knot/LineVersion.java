@@ -230,6 +230,7 @@ public class LineVersion {
       public String protocolClass = "";
       public String messageClass = "";
       public String methodWriteMessageBegin = "";
+      public String methodReadMessageBegin = "";
 
       public String methodDestroyMessage = "destroyMessage";
       public String methodDestroyMessages = "destroyMessages";

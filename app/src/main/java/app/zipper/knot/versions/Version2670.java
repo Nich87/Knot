@@ -116,6 +116,7 @@ public class Version2670 {
     v.thrift.protocolClass = "org.apache.thrift.o";
     v.thrift.messageClass = "org.apache.thrift.e";
     v.thrift.methodWriteMessageBegin = "b";
+    v.thrift.methodReadMessageBegin = "a";
     v.thrift.methodDestroyMessage = "destroyMessage";
     v.thrift.methodDestroyMessages = "destroyMessages";
 
