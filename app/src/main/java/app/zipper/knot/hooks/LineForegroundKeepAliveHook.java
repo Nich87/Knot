@@ -25,8 +25,15 @@ public class LineForegroundKeepAliveHook implements BaseHook {
   private static final String KEEP_ALIVE_CHANNEL_ID = "knot_line_keep_alive";
   private static final int KEEP_ALIVE_NOTIFICATION_ID = 0x4b4e5446;
   private static final String NOTIFICATION_TEXT = "この常設通知は通知設定から非表示にできます。";
+
+  private static final int MAX_RESTART_ATTEMPTS = 5;
+  private static final long RESTART_BASE_DELAY_MS = 5000L;
+  private static final long RESTART_MAX_DELAY_MS = 300_000L; // 5min
+
   private static volatile Context appContext;
   private static volatile boolean keepAliveRequested;
+  private static volatile boolean keepAliveActive;
+  private static volatile int restartAttempts;
 
   private static boolean isEnabled(KnotConfig config) {
     return config.lineForegroundKeepAlive.enabled;
@@ -94,13 +101,16 @@ public class LineForegroundKeepAliveHook implements BaseHook {
     return PendingIntent.getActivity(context, 0, intent, flags);
   }
 
+  // FOREGROUND_SERVICE_TYPE_SPECIAL_USE = 1073741824 (API 34+)
+  private static int getForegroundServiceType() {
+    if (Build.VERSION.SDK_INT >= 34) return 1073741824;
+    return android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
+  }
+
   private static void startKeepAlive(Service service) {
     Notification notification = buildNotification(service);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      service.startForeground(
-          KEEP_ALIVE_NOTIFICATION_ID,
-          notification,
-          android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+      service.startForeground(KEEP_ALIVE_NOTIFICATION_ID, notification, getForegroundServiceType());
       return;
     }
     service.startForeground(KEEP_ALIVE_NOTIFICATION_ID, notification);
@@ -112,10 +122,10 @@ public class LineForegroundKeepAliveHook implements BaseHook {
       return;
     }
 
+    if (keepAliveActive) return;
+
     Context targetContext = context.getApplicationContext();
-    if (targetContext == null) {
-      targetContext = context;
-    }
+    if (targetContext == null) targetContext = context;
 
     try {
       Intent intent = new Intent(KEEP_ALIVE_ACTION);
@@ -125,7 +135,7 @@ public class LineForegroundKeepAliveHook implements BaseHook {
       } else {
         targetContext.startService(intent);
       }
-      log("requested LINE foreground keep-alive service");
+      Knot.log("requested LINE foreground keep-alive service");
     } catch (Throwable t) {
       Knot.log("Knot: failed to start LINE foreground keep-alive service: " + t);
     }
@@ -141,9 +151,33 @@ public class LineForegroundKeepAliveHook implements BaseHook {
     }
 
     keepAliveRequested = true;
-    Handler handler = new Handler(Looper.getMainLooper());
-    handler.postDelayed(() -> requestKeepAlive(context, keepAliveCfg), 1500L);
-    handler.postDelayed(() -> requestKeepAlive(context, keepAliveCfg), 20000L);
+    new Handler(Looper.getMainLooper())
+        .postDelayed(() -> requestKeepAlive(context, keepAliveCfg), 3000L);
+  }
+
+  private static void scheduleRestart(
+      Context context, LineVersion.Config.ForegroundKeepAlive keepAliveCfg) {
+    int attempts = restartAttempts;
+    if (attempts >= MAX_RESTART_ATTEMPTS) {
+      Knot.log(
+          "Knot: LINE foreground keep-alive: max restart attempts ("
+              + MAX_RESTART_ATTEMPTS
+              + ") reached; relying on START_STICKY only");
+      return;
+    }
+
+    restartAttempts = attempts + 1;
+    long delay = Math.min(RESTART_BASE_DELAY_MS << attempts, RESTART_MAX_DELAY_MS);
+    Knot.log(
+        "Knot: LINE foreground keep-alive service destroyed; scheduling restart in "
+            + delay
+            + "ms (attempt "
+            + (attempts + 1)
+            + "/"
+            + MAX_RESTART_ATTEMPTS
+            + ")");
+    new Handler(Looper.getMainLooper())
+        .postDelayed(() -> requestKeepAlive(context, keepAliveCfg), delay);
   }
 
   @Override
@@ -199,7 +233,9 @@ public class LineForegroundKeepAliveHook implements BaseHook {
 
               try {
                 startKeepAlive((Service) chain.getThisObject());
-                log("LINE foreground keep-alive service is active");
+                keepAliveActive = true;
+                restartAttempts = 0;
+                Knot.log("Knot: LINE foreground keep-alive service is active");
                 return Service.START_STICKY;
               } catch (Throwable t) {
                 Knot.log("Knot: failed to activate LINE foreground keep-alive service: " + t);
@@ -214,12 +250,11 @@ public class LineForegroundKeepAliveHook implements BaseHook {
               Object result = chain.proceed();
               if (!isEnabled(config)) return result;
               if (appContext == null) return result;
-              log("LINE foreground keep-alive service destroyed; scheduling restart");
-              new Handler(Looper.getMainLooper())
-                  .postDelayed(() -> requestKeepAlive(appContext, keepAliveCfg), 3000L);
+              keepAliveActive = false;
+              scheduleRestart(appContext, keepAliveCfg);
               return result;
             });
 
-    log("LineForegroundKeepAliveHook installed");
+    Knot.log("LineForegroundKeepAliveHook installed");
   }
 }
