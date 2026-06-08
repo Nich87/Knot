@@ -180,12 +180,14 @@ public class Main extends XposedModule {
               chain -> {
                 Object result = chain.proceed();
                 android.app.Activity activity = (android.app.Activity) chain.getThisObject();
-                new android.app.AlertDialog.Builder(
-                        activity, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                    .setTitle(ModuleStrings.UNSUPPORTED_VERSION_TITLE)
-                    .setMessage(msg)
-                    .setPositiveButton("OK", null)
-                    .show();
+                int themeId = app.zipper.knot.utils.LineTheme.dialogTheme(activity);
+                app.zipper.knot.utils.LineTheme.applyDialogColors(
+                    new android.app.AlertDialog.Builder(activity, themeId)
+                        .setTitle(ModuleStrings.UNSUPPORTED_VERSION_TITLE)
+                        .setMessage(msg)
+                        .setPositiveButton("OK", null)
+                        .show(),
+                    activity);
                 return result;
               });
     } catch (Throwable t) {

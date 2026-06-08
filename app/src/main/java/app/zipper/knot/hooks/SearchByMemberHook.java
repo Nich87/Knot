@@ -24,6 +24,7 @@ import app.zipper.knot.LoadParam;
 import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
 import app.zipper.knot.utils.LineDBUtils;
+import app.zipper.knot.utils.LineTheme;
 import app.zipper.knot.utils.ModuleStrings;
 import io.github.libxposed.api.XposedInterface;
 import java.io.File;
@@ -428,29 +429,30 @@ public class SearchByMemberHook implements BaseHook {
 
   private void showMemberPicker(
       Activity activity, String chatId, List<LineDBUtils.MemberInfo> members, ImageView icon) {
+    LineTheme.invalidate();
     String[] names = members.stream().map(m -> m.name).toArray(String[]::new);
-    int themeId =
-        isContextDark(activity)
-            ? AlertDialog.THEME_DEVICE_DEFAULT_DARK
-            : AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
-    new AlertDialog.Builder(activity, themeId)
-        .setTitle(ModuleStrings.SEARCH_BY_MEMBER_TITLE)
-        .setItems(
-            names,
-            (d, i) -> {
-              LineDBUtils.MemberInfo member = members.get(i);
-              chatMemberFilter.put(chatId, member.mid);
-              chatMemberFilterName.put(chatId, member.name);
-              pendingFetchAll.remove(chatId);
-              cachedResults.remove(chatId);
-              cachedKeywords.remove(chatId);
-              icon.setColorFilter(0xFF2196F3, android.graphics.PorterDuff.Mode.SRC_ATOP);
-              EditText et = getSearchEditText(activity);
-              if (et != null) et.setHint(ModuleStrings.SEARCH_BY_MEMBER_FILTERING + member.name);
-              triggerReSearch(activity, chatId);
-            })
-        .setNegativeButton(android.R.string.cancel, null)
-        .show();
+    int themeId = LineTheme.dialogTheme(activity);
+    LineTheme.applyDialogColors(
+        new AlertDialog.Builder(activity, themeId)
+            .setTitle(ModuleStrings.SEARCH_BY_MEMBER_TITLE)
+            .setItems(
+                names,
+                (d, i) -> {
+                  LineDBUtils.MemberInfo member = members.get(i);
+                  chatMemberFilter.put(chatId, member.mid);
+                  chatMemberFilterName.put(chatId, member.name);
+                  pendingFetchAll.remove(chatId);
+                  cachedResults.remove(chatId);
+                  cachedKeywords.remove(chatId);
+                  icon.setColorFilter(0xFF2196F3, android.graphics.PorterDuff.Mode.SRC_ATOP);
+                  EditText et = getSearchEditText(activity);
+                  if (et != null)
+                    et.setHint(ModuleStrings.SEARCH_BY_MEMBER_FILTERING + member.name);
+                  triggerReSearch(activity, chatId);
+                })
+            .setNegativeButton(android.R.string.cancel, null)
+            .show(),
+        activity);
   }
 
   private void clearMemberFilter(Activity activity, String chatId, ImageView icon) {
@@ -737,16 +739,5 @@ public class SearchByMemberHook implements BaseHook {
       }
     }
     return null;
-  }
-
-  private static boolean isContextDark(Context ctx) {
-    try {
-      int nightMode =
-          ctx.getResources().getConfiguration().uiMode
-              & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-      return nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
-    } catch (Throwable ignored) {
-      return false;
-    }
   }
 }

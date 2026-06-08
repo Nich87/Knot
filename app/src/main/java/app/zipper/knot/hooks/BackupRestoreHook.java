@@ -11,8 +11,8 @@ import android.util.Log;
 import android.widget.Toast;
 import androidx.documentfile.provider.DocumentFile;
 import app.zipper.knot.SettingsStore;
+import app.zipper.knot.utils.LineTheme;
 import app.zipper.knot.utils.ModuleStrings;
-import app.zipper.knot.utils.ThemeUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -48,6 +48,7 @@ public final class BackupRestoreHook {
   public static void runBackup(Context context) {
     final ProgressDialog pd = createSyncProgress(context, ModuleStrings.RESTORE_PREPARING);
     pd.show();
+    LineTheme.applyDialogColors(pd, context);
 
     syncExecutor.execute(
         () -> {
@@ -64,6 +65,7 @@ public final class BackupRestoreHook {
   public static void runRestore(Context context, File backupFile) {
     final ProgressDialog pd = createSyncProgress(context, ModuleStrings.RESTORE_PROCESSING);
     pd.show();
+    LineTheme.applyDialogColors(pd, context);
 
     syncExecutor.execute(
         () -> {
@@ -72,14 +74,16 @@ public final class BackupRestoreHook {
               () -> {
                 pd.dismiss();
                 if (result) {
-                  new AlertDialog.Builder(context, dialogTheme(context))
-                      .setTitle(ModuleStrings.RESTORE_SUCCESS)
-                      .setMessage(ModuleStrings.MANAGER_RESTART_REQUIRED)
-                      .setPositiveButton(
-                          ModuleStrings.RESTART_OK,
-                          (d, w) -> android.os.Process.killProcess(android.os.Process.myPid()))
-                      .setCancelable(false)
-                      .show();
+                  LineTheme.applyDialogColors(
+                      new AlertDialog.Builder(context, LineTheme.dialogTheme(context))
+                          .setTitle(ModuleStrings.RESTORE_SUCCESS)
+                          .setMessage(ModuleStrings.MANAGER_RESTART_REQUIRED)
+                          .setPositiveButton(
+                              ModuleStrings.RESTART_OK,
+                              (d, w) -> android.os.Process.killProcess(android.os.Process.myPid()))
+                          .setCancelable(false)
+                          .show(),
+                      context);
                 } else {
                   notifySyncResult(
                       context, false, ModuleStrings.RESTORE_SUCCESS, ModuleStrings.RESTORE_ERROR);
@@ -270,14 +274,8 @@ public final class BackupRestoreHook {
     }
   }
 
-  private static int dialogTheme(Context ctx) {
-    return ThemeUtils.isContextDarkTheme(ctx)
-        ? AlertDialog.THEME_DEVICE_DEFAULT_DARK
-        : AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
-  }
-
   private static ProgressDialog createSyncProgress(Context context, String text) {
-    ProgressDialog pd = new ProgressDialog(context, dialogTheme(context));
+    ProgressDialog pd = new ProgressDialog(context, LineTheme.dialogTheme(context));
     pd.setMessage(text);
     pd.setCancelable(false);
     return pd;

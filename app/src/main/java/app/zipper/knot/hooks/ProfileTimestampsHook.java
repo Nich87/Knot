@@ -19,6 +19,7 @@ import app.zipper.knot.LoadParam;
 import app.zipper.knot.Main;
 import app.zipper.knot.Reflect;
 import app.zipper.knot.utils.LineDBUtils;
+import app.zipper.knot.utils.LineTheme;
 import app.zipper.knot.utils.ModuleStrings;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -116,17 +117,21 @@ public class ProfileTimestampsHook implements BaseHook {
 
   private static void showDialog(Activity activity, String mid) {
     try {
+      LineTheme.invalidate();
       LineDBUtils.ContactTimes t = LineDBUtils.getContactTimes(mid);
       StringBuilder sb = new StringBuilder();
       appendRow(sb, ModuleStrings.PROFILE_TS_FRIEND_CREATED, t == null ? null : t.friendCreated);
       appendRow(sb, ModuleStrings.PROFILE_TS_FAVORITE, t == null ? null : t.favorite);
       appendRow(sb, ModuleStrings.PROFILE_TS_PROFILE_UPDATED, t == null ? null : t.profileUpdated);
 
-      new AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-          .setTitle(ModuleStrings.PROFILE_TS_DIALOG_TITLE)
-          .setMessage(sb.toString().trim())
-          .setPositiveButton(ModuleStrings.COMMON_CLOSE, null)
-          .show();
+      int themeId = LineTheme.dialogTheme(activity);
+      LineTheme.applyDialogColors(
+          new AlertDialog.Builder(activity, themeId)
+              .setTitle(ModuleStrings.PROFILE_TS_DIALOG_TITLE)
+              .setMessage(sb.toString().trim())
+              .setPositiveButton(ModuleStrings.COMMON_CLOSE, null)
+              .show(),
+          activity);
     } catch (Throwable e) {
       Knot.log("Knot: ProfileTimestampsHook showDialog error: " + e);
     }

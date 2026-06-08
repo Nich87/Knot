@@ -2,7 +2,6 @@ package app.zipper.knot.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,16 +10,21 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import app.zipper.knot.Knot;
 import app.zipper.knot.SettingsStore;
+import app.zipper.knot.utils.ChatJumpUtil;
+import app.zipper.knot.utils.LineDBUtils;
+import app.zipper.knot.utils.LineTheme;
+import app.zipper.knot.utils.ModuleStrings;
 import org.json.JSONObject;
 
 public class ReadHistoryViewer {
 
   public static void show(Activity activity, String targetChatId) {
     try {
+      LineTheme.invalidate();
       JSONObject historyJson = SettingsStore.loadReadHistory();
       JSONObject chats = historyJson.optJSONObject("c");
 
-      String chatName = app.zipper.knot.utils.LineDBUtils.resolveChatName(targetChatId);
+      String chatName = LineDBUtils.resolveChatName(targetChatId);
 
       ScrollView scrollView = new ScrollView(activity);
       LinearLayout container = new LinearLayout(activity);
@@ -28,13 +32,10 @@ public class ReadHistoryViewer {
       container.setPadding(40, 20, 40, 40);
       scrollView.addView(container);
 
-      boolean isDark = app.zipper.knot.utils.ThemeUtils.isContextDarkTheme(activity);
-
       TextView header = new TextView(activity);
-      header.setText(
-          chatName != null ? chatName : app.zipper.knot.utils.ModuleStrings.READ_HISTORY_TITLE);
+      header.setText(chatName != null ? chatName : ModuleStrings.READ_HISTORY_TITLE);
       header.setTextSize(18);
-      header.setTextColor(isDark ? Color.WHITE : Color.BLACK);
+      header.setTextColor(LineTheme.primaryTextColor(activity));
       header.setPadding(0, 20, 0, 30);
       container.addView(header);
 
@@ -48,7 +49,7 @@ public class ReadHistoryViewer {
             JSONObject messages = chat.optJSONObject("m");
             if (messages != null) {
               found = true;
-              renderMessages(activity, container, messages, isDark, targetChatId, dialogRef);
+              renderMessages(activity, container, messages, targetChatId, dialogRef);
             }
           }
         } else {
@@ -60,7 +61,7 @@ public class ReadHistoryViewer {
               JSONObject messages = chat.optJSONObject("m");
               if (messages != null) {
                 found = true;
-                renderMessages(activity, container, messages, isDark, chatKey, dialogRef);
+                renderMessages(activity, container, messages, chatKey, dialogRef);
               }
             }
           }
@@ -69,37 +70,35 @@ public class ReadHistoryViewer {
 
       if (!found) {
         TextView empty = new TextView(activity);
-        empty.setText(app.zipper.knot.utils.ModuleStrings.READ_HISTORY_EMPTY);
+        empty.setText(ModuleStrings.READ_HISTORY_EMPTY);
         empty.setPadding(0, 100, 0, 100);
         empty.setGravity(Gravity.CENTER);
-        empty.setTextColor(Color.GRAY);
+        empty.setTextColor(LineTheme.secondaryTextColor(activity));
         container.addView(empty);
       }
 
-      int themeId =
-          isDark ? AlertDialog.THEME_DEVICE_DEFAULT_DARK : AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
+      int themeId = LineTheme.dialogTheme(activity);
       AlertDialog.Builder builder = new AlertDialog.Builder(activity, themeId);
       builder.setView(scrollView);
-      builder.setPositiveButton(app.zipper.knot.utils.ModuleStrings.COMMON_CLOSE, null);
+      builder.setPositiveButton(ModuleStrings.COMMON_CLOSE, null);
       if (targetChatId != null && found) {
         builder.setNeutralButton(
-            app.zipper.knot.utils.ModuleStrings.READ_HISTORY_DELETE,
-            (dialog, which) -> {
-              new AlertDialog.Builder(activity, themeId)
-                  .setTitle(app.zipper.knot.utils.ModuleStrings.READ_HISTORY_DELETE_CONFIRM_TITLE)
-                  .setMessage(app.zipper.knot.utils.ModuleStrings.READ_HISTORY_DELETE_CONFIRM_MSG)
-                  .setPositiveButton(
-                      app.zipper.knot.utils.ModuleStrings.SETTINGS_YES,
-                      (d, w) -> {
-                        clearChatHistory(targetChatId);
-                      })
-                  .setNegativeButton(app.zipper.knot.utils.ModuleStrings.SETTINGS_CANCEL, null)
-                  .show();
-            });
+            ModuleStrings.READ_HISTORY_DELETE,
+            (dialog, which) ->
+                LineTheme.applyDialogColors(
+                    new AlertDialog.Builder(activity, themeId)
+                        .setTitle(ModuleStrings.READ_HISTORY_DELETE_CONFIRM_TITLE)
+                        .setMessage(ModuleStrings.READ_HISTORY_DELETE_CONFIRM_MSG)
+                        .setPositiveButton(
+                            ModuleStrings.SETTINGS_YES, (d, w) -> clearChatHistory(targetChatId))
+                        .setNegativeButton(ModuleStrings.SETTINGS_CANCEL, null)
+                        .show(),
+                    activity));
       }
       AlertDialog dialog = builder.create();
       dialogRef[0] = dialog;
       dialog.show();
+      LineTheme.applyDialogColors(dialog, activity);
 
     } catch (Throwable t) {
       Knot.log("Knot: error: " + t.getMessage());
@@ -110,7 +109,6 @@ public class ReadHistoryViewer {
       Activity activity,
       LinearLayout container,
       JSONObject messages,
-      boolean isDark,
       String chatId,
       AlertDialog[] dialogRef) {
     java.util.List<String> sortedKeys = new java.util.ArrayList<>();
@@ -131,7 +129,7 @@ public class ReadHistoryViewer {
     for (String msgId : sortedKeys) {
       JSONObject msg = messages.optJSONObject(msgId);
       if (msg == null) continue;
-      addMessageCard(activity, container, msg, isDark, chatId, msgId, dialogRef);
+      addMessageCard(activity, container, msg, chatId, msgId, dialogRef);
     }
   }
 
@@ -139,7 +137,6 @@ public class ReadHistoryViewer {
       Activity activity,
       LinearLayout container,
       JSONObject msg,
-      boolean isDark,
       String chatId,
       String msgId,
       AlertDialog[] dialogRef) {
@@ -156,7 +153,7 @@ public class ReadHistoryViewer {
 
     android.graphics.drawable.GradientDrawable gd =
         new android.graphics.drawable.GradientDrawable();
-    gd.setColor(isDark ? Color.parseColor("#08FFFFFF") : Color.parseColor("#08000000"));
+    gd.setColor(LineTheme.cardColor(activity));
     gd.setCornerRadius(12f);
     card.setBackground(gd);
 
@@ -164,8 +161,8 @@ public class ReadHistoryViewer {
     contentText.setText(
         messageText != null && !messageText.isEmpty()
             ? messageText
-            : app.zipper.knot.utils.ModuleStrings.READ_HISTORY_UNKNOWN_MSG);
-    contentText.setTextColor(isDark ? Color.parseColor("#E0E0E0") : Color.parseColor("#333333"));
+            : ModuleStrings.READ_HISTORY_UNKNOWN_MSG);
+    contentText.setTextColor(LineTheme.primaryTextColor(activity));
     contentText.setTextSize(17);
     contentText.setPadding(0, 0, 0, 15);
     card.addView(contentText);
@@ -188,14 +185,14 @@ public class ReadHistoryViewer {
 
         TextView nameText = new TextView(activity);
         nameText.setText(readerName);
-        nameText.setTextColor(isDark ? Color.parseColor("#AAAAAA") : Color.parseColor("#666666"));
+        nameText.setTextColor(LineTheme.secondaryTextColor(activity));
         nameText.setTextSize(15);
         detailRow.addView(nameText);
 
         TextView timeText = new TextView(activity);
         timeText.setText(readTime);
         timeText.setTextSize(12);
-        timeText.setTextColor(isDark ? Color.parseColor("#888888") : Color.parseColor("#999999"));
+        timeText.setTextColor(LineTheme.secondaryTextColor(activity));
         timeText.setPadding(20, 0, 0, 0);
         detailRow.addView(timeText);
 
@@ -205,7 +202,7 @@ public class ReadHistoryViewer {
 
     card.setOnClickListener(
         v -> {
-          boolean ok = app.zipper.knot.utils.ChatJumpUtil.jumpToMessage(activity, chatId, msgId);
+          boolean ok = ChatJumpUtil.jumpToMessage(activity, chatId, msgId);
           if (ok && dialogRef[0] != null) {
             dialogRef[0].dismiss();
           }

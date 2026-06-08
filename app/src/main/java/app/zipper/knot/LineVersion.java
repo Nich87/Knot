@@ -156,6 +156,14 @@ public class LineVersion {
       public String methodSetItemType = "";
       public String methodSetSyncStatus = "";
       public String methodSetDividerVisible = "";
+
+      public String textItemViewClass =
+          "com.linecorp.line.settings.base.itemview.LineUserSettingTextItemView";
+      public String methodRowSetTitleText = "setTitleText";
+      public String methodRowSetDescription = "setDescriptionText";
+      public String methodRowSetArrowVisible = "setArrowVisible";
+      public String methodRowSetDividerVisible = "setDividerVisible";
+      public String methodRowSetTitleColor = "setTitleTextColor";
     }
 
     public static class PlusMenu {

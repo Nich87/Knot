@@ -41,8 +41,8 @@ import app.zipper.knot.LoadParam;
 import app.zipper.knot.Main;
 import app.zipper.knot.Reflect;
 import app.zipper.knot.SettingsStore;
+import app.zipper.knot.utils.LineTheme;
 import app.zipper.knot.utils.ModuleStrings;
-import app.zipper.knot.utils.ThemeUtils;
 import java.io.File;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -387,22 +387,21 @@ public class SettingsUIInjector implements BaseHook {
                             new Handler(Looper.getMainLooper())
                                 .post(
                                     () -> {
-                                      int themeId =
-                                          ThemeUtils.isContextDarkTheme(ctx)
-                                              ? android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK
-                                              : android.app.AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
-                                      new AlertDialog.Builder(ctx, themeId)
-                                          .setTitle(ModuleStrings.RESTORE_CONFIRM_TITLE)
-                                          .setMessage(ModuleStrings.RESTORE_CONFIRM_MSG)
-                                          .setPositiveButton(
-                                              ModuleStrings.SETTINGS_YES,
-                                              (d, w) -> {
-                                                BackupRestoreHook.runRestore(ctx, finalFile);
-                                              })
-                                          .setNegativeButton(
-                                              ModuleStrings.SETTINGS_CANCEL,
-                                              (d, w) -> finalFile.delete())
-                                          .show();
+                                      int themeId = LineTheme.dialogTheme(ctx);
+                                      LineTheme.applyDialogColors(
+                                          new AlertDialog.Builder(ctx, themeId)
+                                              .setTitle(ModuleStrings.RESTORE_CONFIRM_TITLE)
+                                              .setMessage(ModuleStrings.RESTORE_CONFIRM_MSG)
+                                              .setPositiveButton(
+                                                  ModuleStrings.SETTINGS_YES,
+                                                  (d, w) -> {
+                                                    BackupRestoreHook.runRestore(ctx, finalFile);
+                                                  })
+                                              .setNegativeButton(
+                                                  ModuleStrings.SETTINGS_CANCEL,
+                                                  (d, w) -> finalFile.delete())
+                                              .show(),
+                                          ctx);
                                     });
                           } catch (Throwable t) {
                             Knot.log("Knot: Failed to prepare restore DB: " + t.getMessage());
@@ -437,11 +436,12 @@ public class SettingsUIInjector implements BaseHook {
     try {
       Activity host = resolveActivity(ctx);
       if (host == null) return;
+      LineTheme.invalidate();
       cacheUiConstants(host);
       SettingsStore.init(host);
       SettingsStore.load(Main.options);
       pendingRestart = false;
-      boolean isDark = ThemeUtils.isContextDarkTheme(host);
+      boolean isDark = LineTheme.isDark(host);
 
       Dialog dialog =
           new Dialog(host, android.R.style.Theme_DeviceDefault_NoActionBar) {
@@ -500,21 +500,20 @@ public class SettingsUIInjector implements BaseHook {
     if (settingsDialog == null || !settingsDialog.isShowing()) return;
 
     if (pendingRestart) {
-      int themeId =
-          ThemeUtils.isContextDarkTheme(settingsDialog.getContext())
-              ? android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK
-              : android.app.AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
-      new AlertDialog.Builder(settingsDialog.getContext(), themeId)
-          .setTitle(ModuleStrings.RESTART_TITLE)
-          .setMessage(ModuleStrings.RESTART_MESSAGE)
-          .setPositiveButton(ModuleStrings.RESTART_OK, (d, w) -> System.exit(0))
-          .setNegativeButton(
-              ModuleStrings.RESTART_LATER,
-              (d, w) -> {
-                pendingRestart = false;
-                initiateDialogClosure();
-              })
-          .show();
+      int themeId = LineTheme.dialogTheme(settingsDialog.getContext());
+      LineTheme.applyDialogColors(
+          new AlertDialog.Builder(settingsDialog.getContext(), themeId)
+              .setTitle(ModuleStrings.RESTART_TITLE)
+              .setMessage(ModuleStrings.RESTART_MESSAGE)
+              .setPositiveButton(ModuleStrings.RESTART_OK, (d, w) -> System.exit(0))
+              .setNegativeButton(
+                  ModuleStrings.RESTART_LATER,
+                  (d, w) -> {
+                    pendingRestart = false;
+                    initiateDialogClosure();
+                  })
+              .show(),
+          settingsDialog.getContext());
       return;
     }
 
@@ -548,7 +547,7 @@ public class SettingsUIInjector implements BaseHook {
   private View createSettingsView(Activity host, Object toggleType, Object statusEnum, Window win) {
     try {
       LineVersion.Config currentCfg = LineVersion.get();
-      boolean isDark = ThemeUtils.isContextDarkTheme(host);
+      boolean isDark = LineTheme.isDark(host);
       LayoutInflater infl = LayoutInflater.from(host);
       ViewGroup hostContainer = (ViewGroup) infl.inflate(currentCfg.res.layoutSettingsMain, null);
       hostContainer.setClickable(true);
@@ -597,10 +596,8 @@ public class SettingsUIInjector implements BaseHook {
             currentCfg.main.methodHeaderSetButtonListener,
             (View.OnClickListener) v -> initiateDialogClosure());
 
-        if (isDark) {
-          navHeader.setBackgroundColor(Color.parseColor("#111111"));
-          ThemeUtils.applyDarkThemeToView(navHeader);
-        }
+        navHeader.setBackgroundColor(LineTheme.backgroundColor(host));
+        LineTheme.tintTextAndIcons(navHeader, LineTheme.primaryTextColor(host));
       }
 
       View itemListView = hostContainer.findViewById(currentCfg.res.idSettingList);
@@ -624,8 +621,7 @@ public class SettingsUIInjector implements BaseHook {
         settingsRoot.addView(itemHost, new LinearLayout.LayoutParams(-1, -1));
         viewParent.addView(settingsRoot, viewIndex, viewLp);
 
-        int bgColor = isDark ? Color.parseColor("#111111") : Color.WHITE;
-        hostContainer.setBackgroundColor(bgColor);
+        hostContainer.setBackgroundColor(LineTheme.backgroundColor(host));
       }
       return hostContainer;
     } catch (Throwable t) {
@@ -684,6 +680,9 @@ public class SettingsUIInjector implements BaseHook {
                 initiateDialogClosure();
               }
             });
+
+    cachedNavHeader.setBackgroundColor(LineTheme.backgroundColor(ctx));
+    LineTheme.tintTextAndIcons(cachedNavHeader, LineTheme.primaryTextColor(ctx));
   }
 
   private View renderSettingsItems(
@@ -694,8 +693,7 @@ public class SettingsUIInjector implements BaseHook {
       boolean showAll) {
     LineVersion.Config currentCfg = LineVersion.get();
     LayoutInflater infl = LayoutInflater.from(ctx);
-    boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
-    int bgColor = isDark ? Color.parseColor("#111111") : Color.WHITE;
+    int bgColor = LineTheme.backgroundColor(ctx);
 
     ScrollView scroller = new ScrollView(ctx);
     scroller.setBackgroundColor(bgColor);
@@ -738,6 +736,72 @@ public class SettingsUIInjector implements BaseHook {
 
     scroller.addView(mainList);
     return scroller;
+  }
+
+  private View injectInfoRow(
+      LayoutInflater infl,
+      LinearLayout parent,
+      Context ctx,
+      CharSequence title,
+      CharSequence description,
+      boolean showArrow,
+      Integer titleColorOverride,
+      View.OnClickListener onClick) {
+    View row = LineTheme.createTextRow(ctx);
+    if (row != null) {
+      LineTheme.setRowTitle(row, title);
+      if (description != null && description.length() > 0) {
+        LineTheme.setRowDescription(row, description);
+      }
+      LineTheme.setRowArrowVisible(row, showArrow);
+      LineTheme.setRowDividerVisible(row, false);
+      if (titleColorOverride != null) LineTheme.setRowTitleColor(row, titleColorOverride);
+      if (onClick != null) row.setOnClickListener(onClick);
+      parent.addView(row);
+      return row;
+    }
+    return injectInfoRowFallback(
+        infl, parent, ctx, title, description, showArrow, titleColorOverride, onClick);
+  }
+
+  private View injectInfoRowFallback(
+      LayoutInflater infl,
+      LinearLayout parent,
+      Context ctx,
+      CharSequence title,
+      CharSequence description,
+      boolean showArrow,
+      Integer titleColorOverride,
+      View.OnClickListener onClick) {
+    LineVersion.Config currentCfg = LineVersion.get();
+    View row = infl.inflate(currentCfg.res.typeRow, parent, false);
+    applyNativeHighlight(row, ctx);
+    applyVisibility(row, currentCfg.res.idIcon, View.GONE);
+    applyVisibility(row, currentCfg.res.idMark, View.GONE);
+    applyVisibility(row, currentCfg.res.idSeparator, View.GONE);
+    applyVisibility(row, currentCfg.res.idNewMark, View.GONE);
+    applyVisibility(row, currentCfg.res.idNoticeDot, View.GONE);
+    applyVisibility(row, currentCfg.res.idArrow, showArrow ? View.VISIBLE : View.GONE);
+
+    TextView titleLabel = row.findViewById(currentCfg.res.idTitle);
+    if (titleLabel != null) {
+      titleLabel.setText(title);
+      titleLabel.setTextColor(
+          titleColorOverride != null ? titleColorOverride : LineTheme.primaryTextColor(ctx));
+    }
+    TextView descLabel = row.findViewById(currentCfg.res.idDesc);
+    if (descLabel != null) {
+      if (description != null && description.length() > 0) {
+        descLabel.setText(description);
+        descLabel.setTextColor(LineTheme.secondaryTextColor(ctx));
+        descLabel.setVisibility(View.VISIBLE);
+      } else {
+        descLabel.setVisibility(View.GONE);
+      }
+    }
+    if (onClick != null) row.setOnClickListener(onClick);
+    parent.addView(row);
+    return row;
   }
 
   private void injectStorageSection(LayoutInflater infl, LinearLayout parent, Context ctx) {
@@ -786,62 +850,60 @@ public class SettingsUIInjector implements BaseHook {
       Object statusEnum) {
     try {
       final String settingKey = i.key;
-      View row;
       if (settingKey.equals("custom_font_path")) {
-        row = infl.inflate(currentCfg.res.typeRow, parent, false);
-        applyVisibility(row, currentCfg.res.idIcon, View.GONE);
-        applyVisibility(row, currentCfg.res.idArrow, View.VISIBLE);
-
-        TextView title = row.findViewById(currentCfg.res.idTitle);
-        title.setText(i.label);
-        TextView desc = row.findViewById(currentCfg.res.idDesc);
-        desc.setText(i.description);
-        desc.setVisibility(View.VISIBLE);
-
-        row.setOnClickListener(
-            v -> {
-              Activity host = resolveActivity(ctx);
-              if (host == null) return;
-              Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-              intent.addCategory(Intent.CATEGORY_OPENABLE);
-              intent.setType("*/*");
-              String[] mimeTypes = {
-                "font/ttf", "font/otf", "application/x-font-ttf", "application/x-font-otf"
-              };
-              intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
-              host.startActivityForResult(intent, PICK_FONT_CODE);
-            });
-      } else {
-        row = infl.inflate(currentCfg.res.layoutCheckbox, parent, false);
-        boolean isEnabled = SettingsStore.get(i.key, i.enabled);
-
-        Reflect.callMethod(row, currentCfg.settings.methodSetTitleText, i.label);
-        Reflect.callMethod(
-            row, currentCfg.settings.methodSetDescription, i.description, null, null);
-
-        if (toggleType != null)
-          Reflect.callMethod(row, currentCfg.settings.methodSetItemType, toggleType);
-        if (statusEnum != null)
-          Reflect.callMethod(row, currentCfg.settings.methodSetSyncStatus, statusEnum);
-
-        Reflect.callMethod(row, currentCfg.settings.methodSetChecked, isEnabled);
-        Reflect.callMethod(row, currentCfg.settings.methodSetDividerVisible, true);
-
-        row.setOnClickListener(
-            v -> {
-              boolean newState = !SettingsStore.get(settingKey, i.enabled);
-              Reflect.callMethod(v, currentCfg.settings.methodSetChecked, newState);
-              for (KnotConfig.Item itm : Main.options.items) {
-                if (itm.key.equals(settingKey)) {
-                  itm.enabled = newState;
-                  break;
-                }
-              }
-              SettingsStore.save(settingKey, newState);
-              pendingRestart = true;
-              cachedSearchView = null;
-            });
+        View row =
+            injectInfoRow(
+                infl,
+                parent,
+                ctx,
+                i.label,
+                i.description,
+                true,
+                null,
+                v -> {
+                  Activity host = resolveActivity(ctx);
+                  if (host == null) return;
+                  Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                  intent.addCategory(Intent.CATEGORY_OPENABLE);
+                  intent.setType("*/*");
+                  String[] mimeTypes = {
+                    "font/ttf", "font/otf", "application/x-font-ttf", "application/x-font-otf"
+                  };
+                  intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+                  host.startActivityForResult(intent, PICK_FONT_CODE);
+                });
+        if (row != null) row.setTag((i.label + " " + i.description).toLowerCase());
+        return;
       }
+
+      View row = infl.inflate(currentCfg.res.layoutCheckbox, parent, false);
+      boolean isEnabled = SettingsStore.get(i.key, i.enabled);
+
+      Reflect.callMethod(row, currentCfg.settings.methodSetTitleText, i.label);
+      Reflect.callMethod(row, currentCfg.settings.methodSetDescription, i.description, null, null);
+
+      if (toggleType != null)
+        Reflect.callMethod(row, currentCfg.settings.methodSetItemType, toggleType);
+      if (statusEnum != null)
+        Reflect.callMethod(row, currentCfg.settings.methodSetSyncStatus, statusEnum);
+
+      Reflect.callMethod(row, currentCfg.settings.methodSetChecked, isEnabled);
+      Reflect.callMethod(row, currentCfg.settings.methodSetDividerVisible, true);
+
+      row.setOnClickListener(
+          v -> {
+            boolean newState = !SettingsStore.get(settingKey, i.enabled);
+            Reflect.callMethod(v, currentCfg.settings.methodSetChecked, newState);
+            for (KnotConfig.Item itm : Main.options.items) {
+              if (itm.key.equals(settingKey)) {
+                itm.enabled = newState;
+                break;
+              }
+            }
+            SettingsStore.save(settingKey, newState);
+            pendingRestart = true;
+            cachedSearchView = null;
+          });
       row.setTag((i.label + " " + i.description).toLowerCase());
       parent.addView(row);
     } catch (Throwable ignored) {
@@ -856,26 +918,17 @@ public class SettingsUIInjector implements BaseHook {
       Object toggleType,
       Object statusEnum) {
     try {
-      LineVersion.Config currentCfg = LineVersion.get();
-      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
-      View cRow = infl.inflate(currentCfg.res.typeRow, parent, false);
-      applyNativeHighlight(cRow, isDark);
-      applyVisibility(cRow, currentCfg.res.idIcon, View.GONE);
-      applyVisibility(cRow, currentCfg.res.idDesc, View.GONE);
-      applyVisibility(cRow, currentCfg.res.idMark, View.GONE);
-      applyVisibility(cRow, currentCfg.res.idSeparator, View.GONE);
-      applyVisibility(cRow, currentCfg.res.idNewMark, View.GONE);
-      applyVisibility(cRow, currentCfg.res.idNoticeDot, View.GONE);
-      applyVisibility(cRow, currentCfg.res.idArrow, View.VISIBLE);
-
-      TextView titleLabel = cRow.findViewById(currentCfg.res.idTitle);
-      if (titleLabel != null) {
-        titleLabel.setText(category.label);
-        titleLabel.setTextColor(isDark ? Color.WHITE : Color.parseColor("#111111"));
-      }
-      cRow.setTag(category.label.toLowerCase());
-      cRow.setOnClickListener(v -> switchPage(ctx, toggleType, statusEnum, category));
-      parent.addView(cRow);
+      View cRow =
+          injectInfoRow(
+              infl,
+              parent,
+              ctx,
+              category.label,
+              null,
+              true,
+              null,
+              v -> switchPage(ctx, toggleType, statusEnum, category));
+      if (cRow != null) cRow.setTag(category.label.toLowerCase());
     } catch (Throwable ignored) {
     }
   }
@@ -966,26 +1019,19 @@ public class SettingsUIInjector implements BaseHook {
   private void injectPathSelectorRow(
       LayoutInflater infl, LinearLayout parent, Context ctx, String description) {
     try {
-      LineVersion.Config currentCfg = LineVersion.get();
-      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
-      View pRow = infl.inflate(currentCfg.res.typeRow, parent, false);
-      applyNativeHighlight(pRow, isDark);
-      applyVisibility(pRow, currentCfg.res.idIcon, View.GONE);
-      applyVisibility(pRow, currentCfg.res.idMark, View.GONE);
-      applyVisibility(pRow, currentCfg.res.idSeparator, View.GONE);
-      applyVisibility(pRow, currentCfg.res.idNewMark, View.GONE);
-      applyVisibility(pRow, currentCfg.res.idNoticeDot, View.GONE);
-      applyVisibility(pRow, currentCfg.res.idArrow, View.VISIBLE);
-
-      TextView titleLabel = pRow.findViewById(currentCfg.res.idTitle);
-      updateDisplayPathLabel(titleLabel);
-      TextView descLabel = pRow.findViewById(currentCfg.res.idDesc);
-      if (descLabel != null) {
-        descLabel.setText(description);
-        descLabel.setVisibility(View.VISIBLE);
-      }
-      pRow.setOnClickListener(v -> openSystemFolderPicker(ctx));
-      parent.addView(pRow);
+      String activePath = SettingsStore.getSettingsDir();
+      CharSequence pathTitle =
+          activePath == null ? ModuleStrings.SETTINGS_PATH_PICKER_HINT : activePath;
+      int pathColor = activePath == null ? Color.RED : LineTheme.accentGreen(ctx);
+      injectInfoRow(
+          infl,
+          parent,
+          ctx,
+          pathTitle,
+          description,
+          true,
+          pathColor,
+          v -> openSystemFolderPicker(ctx));
     } catch (Throwable ignored) {
     }
   }
@@ -997,92 +1043,62 @@ public class SettingsUIInjector implements BaseHook {
       KnotConfig config,
       String description) {
     try {
-      LineVersion.Config currentCfg = LineVersion.get();
-      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
-      View rRow = infl.inflate(currentCfg.res.typeRow, parent, false);
-      applyNativeHighlight(rRow, isDark);
-      applyVisibility(rRow, currentCfg.res.idIcon, View.GONE);
-      applyVisibility(rRow, currentCfg.res.idMark, View.GONE);
-      applyVisibility(rRow, currentCfg.res.idSeparator, View.GONE);
-      applyVisibility(rRow, currentCfg.res.idNewMark, View.GONE);
-      applyVisibility(rRow, currentCfg.res.idNoticeDot, View.GONE);
-      applyVisibility(rRow, currentCfg.res.idArrow, View.GONE);
-
-      TextView titleLabel = rRow.findViewById(currentCfg.res.idTitle);
-      if (titleLabel != null) {
-        titleLabel.setText(ModuleStrings.SETTINGS_RESET);
-        titleLabel.setTextColor(Color.RED);
-      }
-      TextView descLabel = rRow.findViewById(currentCfg.res.idDesc);
-      if (descLabel != null) {
-        descLabel.setText(description);
-        descLabel.setVisibility(View.VISIBLE);
-      }
-      rRow.setOnClickListener(
+      injectInfoRow(
+          infl,
+          parent,
+          ctx,
+          ModuleStrings.SETTINGS_RESET,
+          description,
+          false,
+          Color.RED,
           v -> {
             Context activeCtx = settingsDialog != null ? settingsDialog.getContext() : ctx;
-            int themeId =
-                ThemeUtils.isContextDarkTheme(activeCtx)
-                    ? android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK
-                    : android.app.AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
-            new AlertDialog.Builder(activeCtx, themeId)
-                .setTitle(ModuleStrings.SETTINGS_RESET)
-                .setMessage(ModuleStrings.SETTINGS_RESET_CONFIRM)
-                .setPositiveButton(
-                    ModuleStrings.SETTINGS_RESET_OK,
-                    (d, w) -> {
-                      SettingsStore.reset();
-                      SettingsStore.load(Main.options);
-                      pendingRestart = true;
-                      if (onSettingsReloadRequest != null) onSettingsReloadRequest.run();
-                    })
-                .setNegativeButton(ModuleStrings.SETTINGS_CANCEL, null)
-                .show();
+            int themeId = LineTheme.dialogTheme(activeCtx);
+            LineTheme.applyDialogColors(
+                new AlertDialog.Builder(activeCtx, themeId)
+                    .setTitle(ModuleStrings.SETTINGS_RESET)
+                    .setMessage(ModuleStrings.SETTINGS_RESET_CONFIRM)
+                    .setPositiveButton(
+                        ModuleStrings.SETTINGS_RESET_OK,
+                        (d, w) -> {
+                          SettingsStore.reset();
+                          SettingsStore.load(Main.options);
+                          pendingRestart = true;
+                          if (onSettingsReloadRequest != null) onSettingsReloadRequest.run();
+                        })
+                    .setNegativeButton(ModuleStrings.SETTINGS_CANCEL, null)
+                    .show(),
+                activeCtx);
           });
-      parent.addView(rRow);
     } catch (Throwable ignored) {
     }
   }
 
   private void injectBackupRow(LayoutInflater infl, LinearLayout parent, Context ctx) {
     try {
-      LineVersion.Config currentCfg = LineVersion.get();
-      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
-      View bRow = infl.inflate(currentCfg.res.typeRow, parent, false);
-      applyNativeHighlight(bRow, isDark);
-      applyVisibility(bRow, currentCfg.res.idIcon, View.GONE);
-      applyVisibility(bRow, currentCfg.res.idArrow, View.VISIBLE);
-
-      TextView titleLabel = bRow.findViewById(currentCfg.res.idTitle);
-      titleLabel.setText(ModuleStrings.OPT_BACKUP_LABEL);
-      titleLabel.setTextColor(isDark ? Color.WHITE : Color.parseColor("#111111"));
-      TextView descLabel = bRow.findViewById(currentCfg.res.idDesc);
-      descLabel.setText(ModuleStrings.OPT_BACKUP_DESC);
-      descLabel.setVisibility(View.VISIBLE);
-
-      bRow.setOnClickListener(v -> BackupRestoreHook.runBackup(ctx));
-      parent.addView(bRow);
+      injectInfoRow(
+          infl,
+          parent,
+          ctx,
+          ModuleStrings.OPT_BACKUP_LABEL,
+          ModuleStrings.OPT_BACKUP_DESC,
+          true,
+          null,
+          v -> BackupRestoreHook.runBackup(ctx));
     } catch (Throwable ignored) {
     }
   }
 
   private void injectRestoreRow(LayoutInflater infl, LinearLayout parent, Context ctx) {
     try {
-      LineVersion.Config currentCfg = LineVersion.get();
-      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
-      View rRow = infl.inflate(currentCfg.res.typeRow, parent, false);
-      applyNativeHighlight(rRow, isDark);
-      applyVisibility(rRow, currentCfg.res.idIcon, View.GONE);
-      applyVisibility(rRow, currentCfg.res.idArrow, View.VISIBLE);
-
-      TextView titleLabel = rRow.findViewById(currentCfg.res.idTitle);
-      titleLabel.setText(ModuleStrings.OPT_RESTORE_LABEL);
-      titleLabel.setTextColor(isDark ? Color.WHITE : Color.parseColor("#111111"));
-      TextView descLabel = rRow.findViewById(currentCfg.res.idDesc);
-      descLabel.setText(ModuleStrings.OPT_RESTORE_DESC);
-      descLabel.setVisibility(View.VISIBLE);
-
-      rRow.setOnClickListener(
+      injectInfoRow(
+          infl,
+          parent,
+          ctx,
+          ModuleStrings.OPT_RESTORE_LABEL,
+          ModuleStrings.OPT_RESTORE_DESC,
+          true,
+          null,
           v -> {
             Activity host = resolveActivity(ctx);
             if (host == null) return;
@@ -1115,35 +1131,23 @@ public class SettingsUIInjector implements BaseHook {
 
             host.startActivityForResult(intent, PICK_RESTORE_DB_CODE);
           });
-      parent.addView(rRow);
     } catch (Throwable ignored) {
     }
   }
 
   private void injectAboutRow(LayoutInflater infl, LinearLayout parent, Context ctx) {
     try {
-      LineVersion.Config currentCfg = LineVersion.get();
-      boolean isDark = ThemeUtils.isContextDarkTheme(ctx);
-      View aRow = infl.inflate(currentCfg.res.typeRow, parent, false);
-      applyNativeHighlight(aRow, isDark);
-      applyVisibility(aRow, currentCfg.res.idIcon, View.GONE);
-      applyVisibility(aRow, currentCfg.res.idArrow, View.VISIBLE);
-
-      TextView titleLabel = aRow.findViewById(currentCfg.res.idTitle);
-      titleLabel.setText(ModuleStrings.OPT_ABOUT_LABEL);
-      titleLabel.setTextColor(isDark ? Color.WHITE : Color.parseColor("#111111"));
-      TextView descLabel = aRow.findViewById(currentCfg.res.idDesc);
-      descLabel.setText(ModuleStrings.OPT_ABOUT_DESC);
-      descLabel.setVisibility(View.VISIBLE);
-
-      aRow.setOnClickListener(
+      injectInfoRow(
+          infl,
+          parent,
+          ctx,
+          ModuleStrings.OPT_ABOUT_LABEL,
+          ModuleStrings.OPT_ABOUT_DESC,
+          true,
+          null,
           v -> {
             Context activeCtx = settingsDialog != null ? settingsDialog.getContext() : ctx;
-            int themeId =
-                ThemeUtils.isContextDarkTheme(activeCtx)
-                    ? android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK
-                    : android.app.AlertDialog.THEME_DEVICE_DEFAULT_LIGHT;
-            boolean isDarkDialog = ThemeUtils.isContextDarkTheme(activeCtx);
+            int themeId = LineTheme.dialogTheme(activeCtx);
 
             LinearLayout layout = new LinearLayout(activeCtx);
             layout.setOrientation(LinearLayout.VERTICAL);
@@ -1182,14 +1186,14 @@ public class SettingsUIInjector implements BaseHook {
             title.setText(titleStr);
             title.setTextSize(20);
             title.setTypeface(null, Typeface.BOLD);
-            title.setTextColor(isDarkDialog ? Color.WHITE : Color.parseColor("#111111"));
+            title.setTextColor(LineTheme.primaryTextColor(activeCtx));
             title.setGravity(Gravity.CENTER_HORIZONTAL);
             layout.addView(title);
 
             TextView ver = new TextView(activeCtx);
             ver.setText(verStr);
             ver.setTextSize(12);
-            ver.setTextColor(isDarkDialog ? Color.GRAY : Color.DKGRAY);
+            ver.setTextColor(LineTheme.secondaryTextColor(activeCtx));
             ver.setGravity(Gravity.CENTER_HORIZONTAL);
             LinearLayout.LayoutParams verLp = new LinearLayout.LayoutParams(-2, -2);
             verLp.bottomMargin = (int) (24 * density);
@@ -1199,21 +1203,21 @@ public class SettingsUIInjector implements BaseHook {
             TextView content = new TextView(activeCtx);
             content.setText(bodyText);
             content.setTextSize(14);
-            content.setTextColor(isDarkDialog ? Color.LTGRAY : Color.parseColor("#111111"));
+            content.setTextColor(LineTheme.primaryTextColor(activeCtx));
             content.setGravity(Gravity.CENTER_HORIZONTAL);
             content.setLineSpacing(0, 1.2f);
             content.setAutoLinkMask(Linkify.WEB_URLS);
             content.setMovementMethod(LinkMovementMethod.getInstance());
-            content.setLinkTextColor(
-                isDarkDialog ? Color.parseColor("#4dabf7") : Color.parseColor("#1971c2"));
+            content.setLinkTextColor(LineTheme.linkColor(activeCtx));
             layout.addView(content);
 
-            new AlertDialog.Builder(activeCtx, themeId)
-                .setView(layout)
-                .setPositiveButton(ModuleStrings.SETTINGS_YES, null)
-                .show();
+            LineTheme.applyDialogColors(
+                new AlertDialog.Builder(activeCtx, themeId)
+                    .setView(layout)
+                    .setPositiveButton(ModuleStrings.SETTINGS_YES, null)
+                    .show(),
+                activeCtx);
           });
-      parent.addView(aRow);
     } catch (Throwable ignored) {
     }
   }
@@ -1221,18 +1225,6 @@ public class SettingsUIInjector implements BaseHook {
   private static void applyVisibility(View root, int viewId, int state) {
     View v = root.findViewById(viewId);
     if (v != null) v.setVisibility(state);
-  }
-
-  private void updateDisplayPathLabel(TextView label) {
-    if (label == null) return;
-    String activePath = SettingsStore.getSettingsDir();
-    if (activePath == null) {
-      label.setText(ModuleStrings.SETTINGS_PATH_PICKER_HINT);
-      label.setTextColor(Color.RED);
-    } else {
-      label.setText(activePath);
-      label.setTextColor(Color.parseColor("#1a7a1a"));
-    }
   }
 
   private void openSystemFolderPicker(Context ctx) {
@@ -1306,12 +1298,12 @@ public class SettingsUIInjector implements BaseHook {
     searchBox.setPadding(pHorizontal, pVertical, pRight, pVertical);
 
     GradientDrawable searchBg = new GradientDrawable();
-    searchBg.setColor(isDark ? Color.parseColor("#222222") : Color.parseColor("#F5F5F5"));
+    searchBg.setColor(LineTheme.fieldColor(ctx));
     searchBg.setCornerRadius(20 * density);
     searchBox.setBackground(searchBg);
 
-    searchBox.setTextColor(isDark ? Color.WHITE : Color.parseColor("#111111"));
-    searchBox.setHintTextColor(isDark ? Color.parseColor("#888888") : Color.GRAY);
+    searchBox.setTextColor(LineTheme.primaryTextColor(ctx));
+    searchBox.setHintTextColor(LineTheme.secondaryTextColor(ctx));
 
     RelativeLayout.LayoutParams boxLp = new RelativeLayout.LayoutParams(-1, -2);
     searchBox.setLayoutParams(boxLp);
@@ -1321,7 +1313,7 @@ public class SettingsUIInjector implements BaseHook {
     clearButton.setText("✕");
     clearButton.setGravity(Gravity.CENTER);
     clearButton.setTextSize(18);
-    clearButton.setTextColor(isDark ? Color.GRAY : Color.LTGRAY);
+    clearButton.setTextColor(LineTheme.secondaryTextColor(ctx));
     clearButton.setVisibility(View.GONE);
 
     int btnSize = (int) (32 * density);
@@ -1395,12 +1387,12 @@ public class SettingsUIInjector implements BaseHook {
         };
   }
 
-  private void applyNativeHighlight(View v, boolean isDark) {
+  private void applyNativeHighlight(View v, Context ctx) {
     if (v == null) return;
     android.graphics.drawable.StateListDrawable states =
         new android.graphics.drawable.StateListDrawable();
-    int pressedColor = isDark ? Color.parseColor("#1F1F1F") : Color.parseColor("#F5F5F5");
-    int normalColor = isDark ? Color.parseColor("#111111") : Color.parseColor("#FFFFFF");
+    int normalColor = LineTheme.backgroundColor(ctx);
+    int pressedColor = LineTheme.fieldColor(ctx);
 
     states.addState(new int[] {android.R.attr.state_pressed}, new ColorDrawable(pressedColor));
     states.addState(new int[] {android.R.attr.state_focused}, new ColorDrawable(pressedColor));
