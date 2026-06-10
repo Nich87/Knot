@@ -30,22 +30,25 @@ public class HeaderButtonInjector implements BaseHook {
       final Object slotFarLeft =
           Reflect.getStaticObjectField(headerButtonTypeEnum, config.main.slotFarLeft);
 
+      java.util.List<Object> ctorParams = new java.util.ArrayList<>();
+      ctorParams.add(config.chatHeader.chatHistoryActivity);
+      ctorParams.add(config.chatHeader.chatHistoryActivity);
+      ctorParams.add(Window.class);
+      ctorParams.add(View.class);
+      ctorParams.add(config.chatHeader.fieldChatConfigChatId);
+      ctorParams.add(config.chatHeader.fieldChatConfigIsMuted);
+      if (config.chatHeader.fieldChatConfigCategory != null
+          && !config.chatHeader.fieldChatConfigCategory.isEmpty()) {
+        ctorParams.add(config.chatHeader.fieldChatConfigCategory);
+      }
+      ctorParams.add(config.chatHeader.fieldChatConfigType);
+      ctorParams.add(headerHelperClass);
+      ctorParams.add(config.chatHeader.fieldAppInfoVersion);
+      ctorParams.add(config.chatHeader.fieldAppInfoPkg);
+      ctorParams.add(config.chatHeader.fieldAppInfoId);
+
       Knot.module
-          .hook(
-              Reflect.findConstructorExact(
-                  headerControllerClass,
-                  config.chatHeader.chatHistoryActivity,
-                  config.chatHeader.chatHistoryActivity,
-                  Window.class,
-                  View.class,
-                  config.chatHeader.fieldChatConfigChatId,
-                  config.chatHeader.fieldChatConfigIsMuted,
-                  config.chatHeader.fieldChatConfigCategory,
-                  config.chatHeader.fieldChatConfigType,
-                  headerHelperClass,
-                  config.chatHeader.fieldAppInfoVersion,
-                  config.chatHeader.fieldAppInfoPkg,
-                  config.chatHeader.fieldAppInfoId))
+          .hook(Reflect.findConstructorExact(headerControllerClass, ctorParams.toArray()))
           .intercept(
               chain -> {
                 Object result = chain.proceed();

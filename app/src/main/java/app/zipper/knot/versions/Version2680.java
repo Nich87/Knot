@@ -1,0 +1,346 @@
+package app.zipper.knot.versions;
+
+import app.zipper.knot.LineVersion;
+
+public class Version2680 {
+  public static LineVersion.Config create() {
+    LineVersion.Config v = new LineVersion.Config();
+
+    v.main.mainActivity = "jp.naver.line.android.activity.main.MainActivity";
+    v.main.headerButton = "jp.naver.line.android.common.view.header.HeaderButton";
+    v.main.headerButtonInnerField = "f185597a";
+    v.main.headerButtonTypeClass = "bu7.d";
+    v.main.slotFarLeft = "FAR_LEFT";
+    v.main.headerInterfaceA = "jp.naver.line.android.common.view.header.a";
+    v.main.fieldHeaderHelper = "e";
+    v.main.fieldChatActivity = "a";
+    v.main.methodSetHeaderButton = "i";
+    v.main.methodSetHeaderLabel = "k";
+    v.main.methodSetHeaderButtonVisibility = "s";
+    v.main.methodGetHeaderButtonView = "h";
+    v.main.methodSetHeaderOnClickListener = "r";
+    v.main.methodRefreshNavHeader = "a";
+    v.main.methodHeaderSetTitle = "setTitle";
+    v.main.methodHeaderSetButtonVisibility = "setUpButtonVisibility$common_libs";
+    v.main.methodHeaderSetButtonListener = "setUpButtonOnClickListener$common_libs";
+
+    v.settings.mainSettingsFragmentClass =
+        "com.linecorp.line.settings.main.LineUserMainSettingsFragment";
+    v.settings.settingsAdapterClass = "fq7.f";
+    v.settings.settingsItemClass = "fq7.f$c";
+    v.settings.settingsBaseAdapterClass = "fq7.f$b";
+    v.settings.settingsSearchHelperClass = "tt4.b";
+    v.settings.settingsAdapterWrapperClass = "dp4.a";
+    v.settings.settingsHeaderItemClass = "ep4.s";
+    v.settings.settingsRowItemClass = "ep4.v";
+    v.settings.settingsHandlerBaseClass = "ep4.b0";
+    v.settings.methodSetItems = "n";
+    v.settings.methodBindViewHolder = "r";
+    v.settings.methodGetItem = "q";
+    v.settings.fieldItemModel = "a";
+    v.settings.fieldModelTag = "a";
+    v.settings.fieldViewHolderView = "a";
+    v.settings.fieldIsVisible = "k";
+    v.settings.fieldLayoutId = "b";
+    v.settings.fieldActionHandler = "d";
+    v.settings.fieldIconProvider = "f";
+    v.settings.fieldDescriptionProvider = "g";
+    v.settings.fieldSubActionHandler = "h";
+    v.settings.fieldVisibilityFilter = "j";
+    v.settings.fieldDefaultHandler = "p";
+    v.settings.fieldCommonHandler = "m";
+    v.settings.methodSetDescription = "b";
+    v.settings.methodProxyGetItemType = "g";
+    v.settings.methodSetTitleText = "setTitleText";
+    v.settings.methodSetChecked = "setChecked";
+    v.settings.methodSetItemType = "setItemType";
+    v.settings.methodSetSyncStatus = "setSyncStatus";
+    v.settings.methodSetDividerVisible = "setDividerVisible";
+
+    v.plusMenu.plusMenuComponentClass = "ow0.q";
+    v.plusMenu.plusMenuComposerClass = "h3.t";
+    v.plusMenu.plusMenuComposerImplClass = "h3.e1";
+    v.plusMenu.plusMenuCallbackClass = "i18.a";
+    v.plusMenu.plusMenuModifierClass = "androidx.compose.ui.e";
+    v.plusMenu.plusMenuOnClickItemClass = "i18.l";
+    v.plusMenu.methodAddMenuItem = "a";
+    v.plusMenu.methodCreateMenu = "c";
+    v.plusMenu.methodExecuteAction = "Y";
+    v.plusMenu.editChatDrawable = "chat_tab_ui_header_plusmenu_edit_chat";
+
+    v.readReceipt.readReceiptManagerClass = "gw2.e";
+    v.readReceipt.readReceiptQueueClass = "bw7.b";
+    v.readReceipt.methodEnqueueReadReceipt = "c";
+    v.readReceipt.methodSendReadReceipt = "d";
+    v.readReceipt.methodExecuteReadReceiptAsync = "e";
+    v.readReceipt.methodReadAll = "c";
+    v.readReceipt.operationNotifiedReadName = "NOTIFIED_READ_MESSAGE";
+    v.readReceipt.badgeClearClass = "pu2.r";
+    v.readReceipt.longPressReadClass = "rr1";
+
+    v.unsend.talkServiceHookClass = "p08.ae$a";
+    v.unsend.chatMessageViewHolderClass = "of1.f";
+    v.unsend.methodReadBuffer = "b";
+    v.unsend.methodBind = "X";
+    v.unsend.methodOperationTypeValueOf = "a";
+    v.unsend.methodBindIndex = 1;
+    v.unsend.methodGetItemView = "b0";
+    v.unsend.methodGetCommonData = "b";
+    v.unsend.operationTypeDummy = 40;
+    v.unsend.chatServiceConfigClass = "zn4.p";
+    v.unsend.methodUnsendLimit = "i";
+    v.unsend.methodUnsendPremiumLimit = "h";
+    v.unsend.appInfoProviderClass = "vx7.d";
+    v.unsend.methodGetFullUserAgent = "h";
+    v.unsend.methodGetSimpleUserAgent = "k";
+    v.unsend.methodGetFullUserAgentWithContext = "i";
+    v.unsend.methodGetSimpleUserAgentWithContext = "l";
+    v.unsend.methodUnsendThrift = "unsendMessage";
+    v.unsend.methodUnsendThriftSilent = "silentlyUnsendMessage";
+    v.unsend.methodUnsendAnnouncement = "unsendChatRoomAnnouncement";
+    v.unsend.operationTypeField = "c";
+    v.unsend.operationParam1Field = "g";
+    v.unsend.operationParam2Field = "h";
+    v.unsend.operationParam3Field = "i";
+    v.unsend.operationCreatedTimeField = "b";
+    v.unsend.chatMessageIdField = "d";
+    v.unsend.operationUnsendName = "DESTROY_MESSAGE";
+    v.unsend.operationNotifiedUnsendName = "NOTIFIED_DESTROY_MESSAGE";
+    v.unsend.unsendDestroyHandlerClass = "sy7.z0";
+    v.unsend.operationClass = "p08.ae";
+
+    v.thrift.talkServiceClientImplClass =
+        "jp.naver.line.android.thrift.client.impl.LegacyTalkServiceClientImpl";
+    v.thrift.talkServiceClientInterface = "jp.naver.line.android.thrift.client.TalkServiceClient";
+    v.thrift.v1 = "g1";
+    v.thrift.protocolClass = "org.apache.thrift.o";
+    v.thrift.messageClass = "org.apache.thrift.e";
+    v.thrift.methodWriteMessageBegin = "b";
+    v.thrift.methodReadMessageBegin = "a";
+    v.thrift.methodDestroyMessage = "destroyMessage";
+    v.thrift.methodDestroyMessages = "destroyMessages";
+
+    v.tabs.bottomNavigationBarTextViewClass =
+        "jp.naver.line.android.activity.main.bottomnavigationbar.BottomNavigationBarTextView";
+    v.tabs.resVoom = "bnb_timeline";
+    v.tabs.resNews = "bnb_news";
+    v.tabs.resMini = "bnb_mini";
+    v.tabs.resContainer = "main_tab_container";
+    v.tabs.resBtnText = "bnb_button_text";
+
+    v.ads.classAdSdkBase = "com.linecorp.line.ladsdk";
+    v.ads.classAdMolinBase = "com.linecorp.line.admolin";
+    v.ads.ladAdView = v.ads.classAdSdkBase + ".ui.common.view.lifecycle.LadAdView";
+    v.ads.smartChannel = v.ads.classAdMolinBase + ".smartch.v2.view.SmartChannelViewLayout";
+
+    v.home.resRecommendation = "home_tab_contents_recommendation_placement";
+    v.home.resServiceCarouselId = "home_tab_service_carousel";
+    v.home.resServiceTitleId = "home_tab_service_title";
+    v.home.resNoServicesId = "home_tab_no_services_title";
+    v.home.lypRecommendationModuleArgClass = "x02.w";
+    v.home.lypRecommendationContextClass = "g32.m";
+    v.home.lypRecommendationComposerClass = "h3.t";
+    v.home.lypRecommendationModuleClass = "x02.w$h0";
+    v.home.lypRecommendationControllerClass = "a62.k";
+    v.home.lypRecommendationSectionClass = "w22.d";
+
+    v.chat.headerController = "ea1.q1";
+    v.chat.headerHelper = "jp.naver.line.android.common.view.header.b";
+    v.chat.chatIdField = "j";
+    v.chat.methodGetChatId = "t";
+
+    v.chatHeader.chatHistoryActivity =
+        "jp.naver.line.android.activity.chathistory.ChatHistoryActivity";
+    v.chatHeader.fieldChatConfigChatId = "w51.a";
+    v.chatHeader.fieldChatConfigIsMuted = "u51.a";
+    v.chatHeader.fieldChatConfigCategory = "";
+    v.chatHeader.fieldChatConfigType = "ea1.a1";
+    v.chatHeader.fieldAppInfoVersion = "ok1.n";
+    v.chatHeader.fieldAppInfoPkg = "c21.a";
+    v.chatHeader.fieldAppInfoId = "dn0.d";
+
+    v.font.fontConfigClass = "e7.n";
+    v.font.fontManagerClass = "e7.m";
+    v.font.fontSettingsClass = "lb4.e";
+    v.font.fontCallbackClass = "e7.n$c";
+    v.font.fontInjectedClass = "nb4.k";
+    v.font.methodGetFontConfig = "a";
+    v.font.methodInitializeFont = "b";
+    v.font.methodGetFontSettings = "c";
+    v.font.methodOnFontChanged = "b";
+    v.font.fieldTypeface = "f116276a";
+    v.font.fontRequestExecutorClass = "e7.p";
+    v.font.fontCallbackWithHandlerClass = "e7.c";
+
+    v.res.idSettingList = 0x7f0b229d;
+    v.res.idPersonalInfo = 0x7f153722;
+    v.res.typeSection = 0x7f0e0558;
+    v.res.typeRow = 0x7f0e055b;
+    v.res.idIcon = 0x7f0b228e;
+    v.res.idDesc = 0x7f0b2280;
+    v.res.idMark = 0x7f0b22a1;
+    v.res.idSeparator = 0x7f0b22c7;
+    v.res.idArrow = 0x7f0b2268;
+    v.res.idNewMark = 0x7f0b1923;
+    v.res.idNoticeDot = 0x7f0b198d;
+    v.res.idTitle = 0x7f0b22cf;
+    v.res.layoutCheckbox = 0x7f0e054c;
+    v.res.layoutSectionHeader = 0x7f0e0558;
+    v.res.layoutSettingsMain = 0x7f0e0552;
+    v.res.idHeader = 0x7f0b10f2;
+    v.res.idStatusBarGuide = 0x7f0b2532;
+    v.res.idTimestamp = 0x7f0b08a1;
+    v.res.idChatMessageText = 0x7f0b0797;
+    v.res.resSettingsHeaderBtn = "settings_header_button";
+    v.res.resSettingsBtn = "settings_button";
+    v.res.resTooltipBackground = "home_tooltip_background";
+    v.res.resTooltipArrowUp = "home_tooltip_arrow_up";
+
+    v.notification.chatHistoryRequestClass = "com.linecorp.line.chat.request.ChatHistoryRequest";
+    v.notification.chatHistoryActivityLaunchActivityClass =
+        "jp.naver.line.android.activity.chathistory.ChatHistoryActivityLaunchActivity";
+    v.notification.lineAppVersionClass = "jp.naver.line.android.common.LineAppVersion";
+
+    v.notificationFix.lineFcmServiceClass =
+        "jp.naver.line.android.service.fcm.LineFirebaseMessagingService";
+    v.notificationFix.lineFcmDispatchMethod = "d";
+    v.notificationFix.lineFcmOwnershipMethod = "f";
+    v.notificationFix.lineFcmTokenMethod = "e";
+    v.notificationFix.lineFcmServiceBaseClass = "at.i";
+    v.notificationFix.firebaseRemoteMessageClass = "at.k0";
+    v.notificationFix.firebaseReceiverClass = "com.google.firebase.iid.FirebaseInstanceIdReceiver";
+    v.notificationFix.firebaseReceiverMethod = "a";
+    v.notificationFix.firebaseReceiverEnvelopeClass = "al.a";
+    v.notificationFix.firebaseReceiverIntentField = "f6301a";
+    v.notificationFix.firebaseDispatcherClass = "at.n";
+    v.notificationFix.firebaseDispatcherAccessorMethod = "a";
+    v.notificationFix.firebaseDispatcherMethod = "b";
+    v.notificationFix.firebaseDispatcherContextField = "f13025a";
+    v.notificationFix.firebaseDispatcherQueueField = "f13024d";
+    v.notificationFix.firebaseBindDeliveryClass = "at.c1";
+    v.notificationFix.firebaseBindDeliveryMethod = "b";
+    v.notificationFix.firebaseMessagingServiceClass =
+        "com.google.firebase.messaging.FirebaseMessagingService";
+    v.notificationFix.firebaseMessagingHandleMethod = "c";
+    v.notificationFix.firebaseWakefulStartClass = "at.z0";
+    v.notificationFix.firebaseWakefulStartMethod = "c";
+    v.notificationFix.firebaseCompletedTaskClass = "ln.n";
+    v.notificationFix.firebaseCompletedTaskMethod = "e";
+    v.foregroundKeepAlive.serviceClass = "androidx.work.impl.foreground.SystemForegroundService";
+    v.notificationFix.lineLifecycleObserverClass =
+        "jp.naver.line.android.common.lifecycle.LineLifecycleObserver";
+    v.notificationFix.lineLifecycleObserverMethod = "onStateChanged";
+    v.notificationFix.legyStreamingStateClass = "com.linecorp.legy.streaming.h$a";
+    v.notificationFix.legyStreamingLifecycleClass = "com.linecorp.legy.streaming.h$d";
+    v.notificationFix.legyStreamingLifecycleMethod = "d1";
+    v.notificationFix.legyLifecycleOwnerClass = "androidx.lifecycle.u0";
+    v.notificationFix.legyLifecycleEventClass = "androidx.lifecycle.e0$a";
+    v.notificationFix.legyBackgroundStateField = "BACKGROUND";
+    v.notificationFix.legyDisconnectRunnableClass = "n40.h";
+    v.notificationFix.legyStateFieldCandidates = new String[] {"q", "f61396q"};
+    v.notificationFix.legyTimeoutFieldCandidates = new String[] {"s", "f61398s"};
+    v.notificationFix.legyBackgroundWorkerFlagFieldCandidates = new String[] {"u", "f61400u"};
+    v.notificationFix.legyHandlerFieldCandidates = new String[] {"c", "f61382c"};
+    v.notificationFix.legyRunnableFieldCandidates = new String[] {"t", "f61399t"};
+
+    v.talkTabHeader.chatTabHeaderStateClass = "yr1.f";
+    v.talkTabHeader.iconListStateField = "x";
+    v.talkTabHeader.buttonListStateField = "C";
+    v.talkTabHeader.iconTypeClass = "mw0.q";
+    v.talkTabHeader.iconTypeFieldInButton = "a";
+
+    v.searchBarAgentI.talkVisibleMethod = "w";
+    v.searchBarAgentI.talkClickMethod = "s";
+    v.searchBarAgentI.homeSearchBarClass = "fm4.j";
+    v.searchBarAgentI.homeRefreshMethod = "e";
+    v.searchBarAgentI.homeRootViewField = "c";
+    v.searchBarAgentI.homeTabTypeField = "b";
+    v.searchBarAgentI.homeTabName = "HOME";
+    v.searchBarAgentI.homeTabV2Name = "HOME_V2";
+    v.searchBarAgentI.homeAiContainerId = 0x7f0b1659;
+    v.searchBarAgentI.homeGuidelineId = 0x7f0b165b;
+    v.searchBarAgentI.homeGuidelineEndDp = 55;
+    v.searchBarAgentI.homeGuidelineClass = "androidx.constraintlayout.widget.Guideline";
+
+    v.agentIInChat.toggleComposableClass = "bd1.k";
+
+    v.aiIcon.repoClass = "py0.c";
+    v.aiIcon.methodGetShownAfterMillis = "l";
+
+    v.imageQuality.qualityProfileHighClass = "iy7.a$b$a";
+    v.imageQuality.qualityProfileMediumClass = "iy7.a$b$b";
+    v.imageQuality.methodGetMaxDimension = "a";
+    v.imageQuality.methodGetQuality = "b";
+    v.imageQuality.imageUtilClass = "jp.naver.line.android.util.y0";
+
+    v.profile.g50fClass = "f60.f";
+    v.profile.h13baClass = "o43.b$a";
+    v.profile.fieldH3 = "c";
+    v.profile.g50aClass = "f60.a";
+    v.profile.methodGetProfile = "getProfile";
+    v.profile.fieldMid = "b";
+
+    v.profileTimestamps.activityClass = "com.linecorp.line.userprofile.impl.UserProfileActivity";
+    v.profileTimestamps.midExtraKey = "USER_PROFILE_MID";
+    v.profileTimestamps.resHeaderButtonContainer = "user_profile_header_button_binding";
+
+    v.media.videoDurationCheckClass = "k51.b";
+    v.media.videoDurationCheckMethod = "c";
+    v.media.mediaPickerParamsClass = "com.linecorp.line.media.picker.b$i";
+    v.media.fieldMediaPickerMaxVideoDuration = "y";
+    v.media.droppedMediaPreprocessorClass = "tt0.b";
+    v.media.videoDurationSuccessClass = "l51.a$c";
+    v.media.fieldVideoDurationSuccess = "a";
+    v.media.galleryViewClass = "le1.c0";
+    v.media.fieldGalleryDurationLimit = "U";
+    v.media.selectionValidatorClass = "ly2.r";
+    v.media.selectionValidatorMethod = "o";
+    v.media.selectionValidatorParamClass = "pt1.c";
+    v.media.videoProfileTrimmerActivityClass =
+        "jp.naver.line.android.activity.setting.videoprofile.trim.VideoProfileTrimmerActivity";
+    v.media.fieldVideoProfileTrimmerLimit = "M";
+
+    v.chat.searchHeaderHelperClass = "ml1.g";
+    v.chat.searchHeaderControllerField = "i";
+    v.chat.searchHeaderEventBusField = "b";
+    v.chat.searchControllerSearchBoxMethod = "g";
+    v.chat.searchPresenterClass = "ql1.o";
+    v.chat.searchKeywordTypeClass = "d01.a";
+    v.chat.searchKeywordTypeMethod = "d";
+    v.chat.searchResultClass = "d01.f";
+    v.chat.searchResultWrapperClass = "d01.g";
+    v.chat.searchBoxViewClass = "jp.naver.line.android.customview.SearchBoxView";
+    v.chat.searchBoxEditTextField = "b";
+    v.chat.searchKeywordEventClass = "ll1.b";
+    v.chat.searchKeywordEventKeywordField = "a";
+    v.chat.searchPresenterKeywordChangedMethod = "onSearchInChatKeywordChangedEventReceived";
+    v.chat.searchPresenterKeywordSubjectField = "t";
+    v.chat.searchResultWrapperResultOptionalField = "c";
+    v.chat.searchResultCountField = "d";
+    v.chat.searchResultTitleViewHolderClass = "tl1.i";
+    v.chat.searchResultTitleBindMethod = "F0";
+    v.chat.searchResultTitleBindingField = "x";
+    v.chat.searchResultTitleTextViewField = "b";
+    v.chat.searchFtsInChatQueryClass = "l02.o";
+    v.chat.searchFtsQueryField = "a";
+    v.chat.searchFtsChatIdField = "b";
+    v.chat.searchFtsLimitField = "c";
+
+    v.announcementFix.formatterClass = "qh1.b";
+    v.announcementFix.formatMethod = "a";
+    v.announcementFix.nameResolverMethod = "b";
+    v.announcementFix.announcementEventClass = "vy0.g$d0";
+
+    v.chatJump.requestClass = "com.linecorp.line.chat.request.ChatHistoryRequest";
+    v.chatJump.launchActivityClass =
+        "jp.naver.line.android.activity.chathistory.ChatHistoryActivityLaunchActivity";
+    v.chatJump.requestExtraKey = "chatHistoryRequest";
+
+    v.chatTimestamp.displayTimeInterface = "b41.f";
+    v.chatTimestamp.methodCreatedMillis = "a";
+
+    v.iab.inAppBrowserActivityClass = "com.linecorp.line.iab.browser.InAppBrowserActivity";
+
+    return v;
+  }
+}
