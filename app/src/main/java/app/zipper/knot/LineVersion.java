@@ -14,6 +14,7 @@ public class LineVersion {
     public Main main = new Main();
     public Settings settings = new Settings();
     public PlusMenu plusMenu = new PlusMenu();
+    public ChatListMoreMenu chatListMoreMenu = new ChatListMoreMenu();
     public Unsend unsend = new Unsend();
     public Thrift thrift = new Thrift();
     public Tabs tabs = new Tabs();
@@ -181,6 +182,15 @@ public class LineVersion {
       public String editChatDrawable = "";
       public String moduleId = "app.zipper.knot";
       public String targetPkg = "jp.naver.line.android";
+    }
+
+    public static class ChatListMoreMenu {
+      public String popupListViewClass = "";
+      public String fieldListView = "";
+      public String popupListAdapterClass = "";
+      public String fieldPopupItems = "";
+      public String clickListenerClass = "";
+      public String methodAddItem = "";
     }
 
     public static class ReadReceipt {

@@ -76,6 +76,7 @@ public class Main extends XposedModule {
       if (options.recordReadHistory.enabled || options.preventMarkAsRead.enabled) {
         applyHook(new ReadReceiptHandler(), lpparam);
         applyHook(new PlusMenuHook(), lpparam);
+        applyHook(new ChatListMoreMenuHook(), lpparam);
       }
       if (options.recordReadHistory.enabled) {
         applyHook(new HeaderButtonInjector(), lpparam);
