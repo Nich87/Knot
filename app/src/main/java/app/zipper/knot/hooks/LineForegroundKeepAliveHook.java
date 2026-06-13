@@ -101,9 +101,7 @@ public class LineForegroundKeepAliveHook implements BaseHook {
     return PendingIntent.getActivity(context, 0, intent, flags);
   }
 
-  // FOREGROUND_SERVICE_TYPE_SPECIAL_USE = 1073741824 (API 34+)
   private static int getForegroundServiceType() {
-    if (Build.VERSION.SDK_INT >= 34) return 1073741824;
     return android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
   }
 
