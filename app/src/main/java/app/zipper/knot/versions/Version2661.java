@@ -68,6 +68,15 @@ public class Version2661 {
     v.plusMenu.methodExecuteAction = "X";
     v.plusMenu.editChatDrawable = "chat_tab_ui_header_plusmenu_edit_chat";
 
+    v.chatListMoreMenu.popupListViewClass =
+        "jp.naver.line.android.common.view.listview.PopupListView";
+    v.chatListMoreMenu.fieldListView = "a";
+    v.chatListMoreMenu.popupListAdapterClass =
+        "jp.naver.line.android.common.view.listview.PopupListView$b";
+    v.chatListMoreMenu.fieldPopupItems = "a";
+    v.chatListMoreMenu.clickListenerClass = "vn1.a";
+    v.chatListMoreMenu.methodAddItem = "a";
+
     v.readReceipt.readReceiptManagerClass = "at2.e";
     v.readReceipt.readReceiptQueueClass = "ge8.b";
     v.readReceipt.methodEnqueueReadReceipt = "c";
