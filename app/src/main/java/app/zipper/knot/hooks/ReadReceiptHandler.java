@@ -229,7 +229,8 @@ public class ReadReceiptHandler implements BaseHook {
   }
 
   private boolean isPreventActive(KnotConfig config) {
-    return config.preventMarkAsRead.enabled && SettingsStore.get("prevent_read_state", true);
+    return SettingsStore.get("prevent_mark_as_read", false)
+        && SettingsStore.get("prevent_read_state", true);
   }
 
   private boolean isFromClass(String prefix) {

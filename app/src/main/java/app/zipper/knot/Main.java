@@ -73,8 +73,9 @@ public class Main extends XposedModule {
       applyHook(new HomeSettingsTooltip(), lpparam);
       applyHook(new SafeResourceFix(), lpparam);
 
+      // Always installed; self-gates at runtime to avoid the cold-start settings-load race
+      applyHook(new ReadReceiptHandler(), lpparam);
       if (options.recordReadHistory.enabled || options.preventMarkAsRead.enabled) {
-        applyHook(new ReadReceiptHandler(), lpparam);
         applyHook(new PlusMenuHook(), lpparam);
         applyHook(new ChatListMoreMenuHook(), lpparam);
       }

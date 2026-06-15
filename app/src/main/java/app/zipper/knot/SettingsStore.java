@@ -172,7 +172,13 @@ public class SettingsStore {
   private static JSONObject getSettingsJson() throws Throwable {
     if (cachedSettingsJson != null) return cachedSettingsJson;
     synchronized (SettingsStore.class) {
-      if (cachedSettingsJson == null) cachedSettingsJson = readJson(SETTINGS_FILE);
+      if (cachedSettingsJson != null) return cachedSettingsJson;
+      byte[] data = readDeflated(SETTINGS_FILE);
+      if (data == null) {
+        return new JSONObject();
+      }
+      String text = new String(data, StandardCharsets.UTF_8).trim();
+      cachedSettingsJson = text.isEmpty() ? new JSONObject() : new JSONObject(text);
       return cachedSettingsJson;
     }
   }
@@ -183,6 +189,7 @@ public class SettingsStore {
         JSONObject json = getSettingsJson();
         json.put(key, value);
         writeJson(SETTINGS_FILE, json);
+        cachedSettingsJson = json;
       }
     } catch (Throwable e) {
       android.util.Log.e("Knot", "SettingsStore.save failed", e);
@@ -397,9 +404,6 @@ public class SettingsStore {
       if (extDir != null) {
         extDir.mkdirs();
         pointerPath = extDir.getAbsolutePath() + "/knot_ptr";
-      } else {
-        String sdcard = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
-        pointerPath = sdcard + "/Android/data/jp.naver.line.android/files/knot_ptr";
       }
     } catch (Throwable ignored) {
     }
