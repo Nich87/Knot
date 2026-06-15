@@ -115,6 +115,8 @@ public class SettingsUIInjector implements BaseHook {
 
     final Class<?> proxyInterface =
         Reflect.findClass(cfg.settings.settingsItemClass, lpparam.classLoader);
+    final Class<?> settingsSearchHelperClass =
+        Reflect.findClass(cfg.settings.settingsSearchHelperClass, lpparam.classLoader);
     Knot.module
         .hook(
             Reflect.findMethodExact(
@@ -124,14 +126,20 @@ public class SettingsUIInjector implements BaseHook {
                 Collection.class))
         .intercept(
             chain -> {
-              if (chain.getThisObject() != targetAdapter) return chain.proceed();
               LineVersion.Config c = LineVersion.get();
-              List<Object> items = new ArrayList<>((Collection<?>) chain.getArg(0));
+              Collection<?> sourceItems = (Collection<?>) chain.getArg(0);
+              if (chain.getThisObject() != targetAdapter
+                  && !settingsSearchHelperClass.isInstance(chain.getThisObject())) {
+                return chain.proceed();
+              }
+              if (containsKnotItem(sourceItems, c)) return chain.proceed();
+
+              List<Object> items = new ArrayList<>(sourceItems);
               int insertPos = items.size();
               findPosition:
               for (int i = 0; i < items.size(); i++) {
                 try {
-                  Object model = Reflect.getObjectField(items.get(i), cfg.settings.fieldItemModel);
+                  Object model = Reflect.getObjectField(items.get(i), c.settings.fieldItemModel);
                   if (model == null) continue;
                   for (java.lang.reflect.Field f : model.getClass().getDeclaredFields()) {
                     if (f.getType() == int.class) {
@@ -228,7 +236,10 @@ public class SettingsUIInjector implements BaseHook {
                 int.class))
         .intercept(
             chain -> {
-              if (chain.getThisObject() != targetAdapter) return chain.proceed();
+              if (chain.getThisObject() != targetAdapter
+                  && !settingsSearchHelperClass.isInstance(chain.getThisObject())) {
+                return chain.proceed();
+              }
               LineVersion.Config c = LineVersion.get();
               int currentPos = (int) chain.getArg(1);
               boolean ours = false;
@@ -1220,6 +1231,20 @@ public class SettingsUIInjector implements BaseHook {
           });
     } catch (Throwable ignored) {
     }
+  }
+
+  private static boolean containsKnotItem(Collection<?> items, LineVersion.Config c) {
+    if (items == null) return false;
+    for (Object item : items) {
+      try {
+        Object model = Reflect.getObjectField(item, c.settings.fieldItemModel);
+        if (model == null) continue;
+        Object tag = Reflect.getObjectField(model, c.settings.fieldModelTag);
+        if (BRAND_TAG.equals(tag)) return true;
+      } catch (Throwable ignored) {
+      }
+    }
+    return false;
   }
 
   private static void applyVisibility(View root, int viewId, int state) {
