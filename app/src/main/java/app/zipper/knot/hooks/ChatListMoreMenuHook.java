@@ -52,7 +52,11 @@ public class ChatListMoreMenuHook implements BaseHook {
     Knot.module
         .hook(
             Reflect.findMethodExact(
-                popupCls, cfg.chatListMoreMenu.methodAddItem, String.class, int.class, boolean.class))
+                popupCls,
+                cfg.chatListMoreMenu.methodAddItem,
+                String.class,
+                int.class,
+                boolean.class))
         .intercept(
             chain -> {
               Object result = chain.proceed();
@@ -92,8 +96,7 @@ public class ChatListMoreMenuHook implements BaseHook {
       items.add(new Pair<>(-1, ModuleStrings.LABEL_PREVENT_READ + ": " + (readOn ? "ON" : "OFF")));
       if (readOn) {
         items.add(
-            new Pair<>(
-                -1, ModuleStrings.LABEL_SEND_MARK_READ + ": " + (markOn ? "ON" : "OFF")));
+            new Pair<>(-1, ModuleStrings.LABEL_SEND_MARK_READ + ": " + (markOn ? "ON" : "OFF")));
       }
 
       if (notify && adapter instanceof BaseAdapter) {
