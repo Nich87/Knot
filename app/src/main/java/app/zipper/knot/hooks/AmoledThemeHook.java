@@ -84,6 +84,32 @@ public class AmoledThemeHook implements BaseHook {
 
     installFileRedirects();
     installThriftValidationHijack(lpparam);
+    installNavigationBarBlackening();
+  }
+
+  private void installNavigationBarBlackening() {
+    try {
+      Knot.module
+          .hook(Reflect.findMethodExact(android.app.Activity.class, "onResume"))
+          .intercept(
+              chain -> {
+                Object result = chain.proceed();
+                try {
+                  android.view.Window w =
+                      ((android.app.Activity) chain.getThisObject()).getWindow();
+                  if (w != null && !w.isFloating()) {
+                    w.getDecorView().setBackgroundColor(0xFF000000);
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                      w.setNavigationBarContrastEnforced(false);
+                    }
+                  }
+                } catch (Throwable ignored) {
+                }
+                return result;
+              });
+    } catch (Throwable t) {
+      Knot.log("Knot: AmoledTheme: nav bar blackening failed: " + t);
+    }
   }
 
   private static void loadBundle(String apkPath) throws IOException, org.json.JSONException {
