@@ -370,7 +370,6 @@ public class LineVersion {
     public static class Notification {
       public String chatHistoryRequestClass = "";
       public String chatHistoryActivityLaunchActivityClass = "";
-      public String lineAppVersionClass = "";
     }
 
     public static class NotificationFix {
@@ -472,43 +471,36 @@ public class LineVersion {
     return detect(cl);
   }
 
+  public static String getVersionName(android.content.Context context) {
+    if (context == null) return null;
+    try {
+      return context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+    } catch (Throwable t) {
+      Knot.log("Knot: getVersionName failed: " + t.getMessage());
+      return null;
+    }
+  }
+
   public static Config detect(ClassLoader cl) {
     if (cachedConfig != null) return cachedConfig;
-    if (cl == null) return null;
-    try {
-      Class<?> verCls = cl.loadClass("jp.naver.line.android.common.LineAppVersion");
-      String verName = (String) Reflect.callStaticMethod(verCls, "getVerName");
-      Knot.log("Knot: Detected LINE version: " + verName);
-
-      for (Map.Entry<String, Config> entry : VERSION_TABLE.entrySet()) {
-        if (verName.startsWith(entry.getKey())) {
-          cachedConfig = entry.getValue();
-          return cachedConfig;
-        }
-      }
-    } catch (Throwable t) {
-      Knot.log("Knot: Version detection via class failed: " + t.getMessage());
-    }
-
-    return null;
+    return matchVersion(getVersionName(Knot.currentApplication()));
   }
 
   public static Config detectWithContext(android.content.Context context) {
     if (cachedConfig != null) return cachedConfig;
-    if (context == null) return null;
-    try {
-      String verName =
-          context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
-      Knot.log("Knot: Detected LINE version via PackageInfo: " + verName);
-      for (Map.Entry<String, Config> entry : VERSION_TABLE.entrySet()) {
-        if (verName.startsWith(entry.getKey())) {
-          cachedConfig = entry.getValue();
-          return cachedConfig;
-        }
+    return matchVersion(getVersionName(context));
+  }
+
+  private static Config matchVersion(String verName) {
+    if (verName == null) return null;
+    Knot.log("Knot: Detected LINE version: " + verName);
+    for (Map.Entry<String, Config> entry : VERSION_TABLE.entrySet()) {
+      if (verName.startsWith(entry.getKey())) {
+        cachedConfig = entry.getValue();
+        return cachedConfig;
       }
-    } catch (Throwable t) {
-      Knot.log("Knot: Version detection via PackageInfo failed: " + t.getMessage());
     }
+    Knot.log("Knot: Unsupported LINE version: " + verName);
     return null;
   }
 

@@ -208,7 +208,6 @@ public class Version2671 {
     v.notification.chatHistoryRequestClass = "com.linecorp.line.chat.request.ChatHistoryRequest";
     v.notification.chatHistoryActivityLaunchActivityClass =
         "jp.naver.line.android.activity.chathistory.ChatHistoryActivityLaunchActivity";
-    v.notification.lineAppVersionClass = "jp.naver.line.android.common.LineAppVersion";
 
     v.notificationFix.lineFcmServiceClass =
         "jp.naver.line.android.service.fcm.LineFirebaseMessagingService";

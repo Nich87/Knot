@@ -247,9 +247,7 @@ public class ReactionNotification implements BaseHook {
   private Bitmap downloadBitmap(Context context, String[] urls) {
     String ua = "Line/26.6.0";
     try {
-      Class<?> verCls =
-          context.getClassLoader().loadClass(LineVersion.get().notification.lineAppVersionClass);
-      String verName = (String) Reflect.callStaticMethod(verCls, "getVerName");
+      String verName = LineVersion.getVersionName(context);
       if (verName != null && !verName.isEmpty()) ua = "Line/" + verName;
     } catch (Throwable ignored) {
     }
