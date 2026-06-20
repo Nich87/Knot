@@ -14,10 +14,6 @@ android {
         versionCode 10
         versionName "2.1.0"
         multiDexEnabled true
-
-        // LINE 26.5.0 info
-        buildConfigField 'String', 'TARGET_LINE_VERSION', '"265000000"'
-        buildConfigField 'String', 'TARGET_PACKAGE', '"jp.naver.line.android"'
     }
 
     buildTypes {
