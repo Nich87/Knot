@@ -5,10 +5,25 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class Reflect {
 
   private Reflect() {}
+
+  private static final Object NEGATIVE = new Object();
+  private static final ClassLoader NULL_CL = new ClassLoader() {};
+  private static final Map<ClassLoader, Map<String, Object>> CLASS_CACHE =
+      new ConcurrentHashMap<>();
+  private static final Map<Class<?>, Map<String, Object>> METHOD_CACHE = new ConcurrentHashMap<>();
+  private static final Map<Class<?>, Map<String, Object>> CONSTRUCTOR_CACHE =
+      new ConcurrentHashMap<>();
+  private static final Map<Class<?>, Map<String, Object>> FIELD_CACHE = new ConcurrentHashMap<>();
+
+  private static Map<String, Object> bucket(
+      Map<Class<?>, Map<String, Object>> cache, Class<?> clazz) {
+    return cache.computeIfAbsent(clazz, k -> new ConcurrentHashMap<>());
+  }
 
   private static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER = new HashMap<>();
 
@@ -24,9 +39,19 @@ public final class Reflect {
   }
 
   public static Class<?> findClass(String className, ClassLoader cl) {
+    Map<String, Object> bucket =
+        CLASS_CACHE.computeIfAbsent(cl == null ? NULL_CL : cl, k -> new ConcurrentHashMap<>());
+    Object cached = bucket.get(className);
+    if (cached != null) {
+      if (cached == NEGATIVE) throw new RuntimeException("Class not found: " + className);
+      return (Class<?>) cached;
+    }
     try {
-      return Class.forName(className, false, cl);
+      Class<?> c = Class.forName(className, false, cl);
+      bucket.put(className, c);
+      return c;
     } catch (ClassNotFoundException e) {
+      bucket.put(className, NEGATIVE);
       throw new RuntimeException("Class not found: " + className, e);
     }
   }
@@ -47,17 +72,26 @@ public final class Reflect {
 
   public static Method findMethodExact(Class<?> clazz, String name, Object... paramTypeSpecs) {
     Class<?>[] types = resolveTypes(paramTypeSpecs, clazz.getClassLoader());
+    Map<String, Object> bucket = bucket(METHOD_CACHE, clazz);
+    String key = name + describe(types);
+    Object cached = bucket.get(key);
+    if (cached != null) {
+      if (cached == NEGATIVE) throw new NoSuchMethodError(clazz.getName() + "#" + key);
+      return (Method) cached;
+    }
     Class<?> c = clazz;
     while (c != null) {
       try {
         Method m = c.getDeclaredMethod(name, types);
         m.setAccessible(true);
+        bucket.put(key, m);
         return m;
       } catch (NoSuchMethodException ignored) {
         c = c.getSuperclass();
       }
     }
-    throw new NoSuchMethodError(clazz.getName() + "#" + name + describe(types));
+    bucket.put(key, NEGATIVE);
+    throw new NoSuchMethodError(clazz.getName() + "#" + key);
   }
 
   public static Method findMethodExact(
@@ -67,12 +101,21 @@ public final class Reflect {
 
   public static Constructor<?> findConstructorExact(Class<?> clazz, Object... paramTypeSpecs) {
     Class<?>[] types = resolveTypes(paramTypeSpecs, clazz.getClassLoader());
+    Map<String, Object> bucket = bucket(CONSTRUCTOR_CACHE, clazz);
+    String key = ".<init>" + describe(types);
+    Object cached = bucket.get(key);
+    if (cached != null) {
+      if (cached == NEGATIVE) throw new NoSuchMethodError(clazz.getName() + key);
+      return (Constructor<?>) cached;
+    }
     try {
       Constructor<?> ctor = clazz.getDeclaredConstructor(types);
       ctor.setAccessible(true);
+      bucket.put(key, ctor);
       return ctor;
     } catch (NoSuchMethodException e) {
-      throw new NoSuchMethodError(clazz.getName() + ".<init>" + describe(types));
+      bucket.put(key, NEGATIVE);
+      throw new NoSuchMethodError(clazz.getName() + key);
     }
   }
 
@@ -100,17 +143,31 @@ public final class Reflect {
   }
 
   public static Object newInstance(Class<?> clazz, Object... args) {
-    Constructor<?> best = null;
-    for (Constructor<?> ctor : clazz.getDeclaredConstructors()) {
-      if (parametersMatch(ctor.getParameterTypes(), args)
-          && (best == null || isMoreSpecific(ctor.getParameterTypes(), best.getParameterTypes()))) {
-        best = ctor;
+    Map<String, Object> bucket = bucket(CONSTRUCTOR_CACHE, clazz);
+    String key = ".<init>" + describeArgs(args) + "#best";
+    Object cached = bucket.get(key);
+    Constructor<?> best;
+    if (cached != null) {
+      if (cached == NEGATIVE) {
+        throw new NoSuchMethodError(clazz.getName() + ".<init> (no matching constructor)");
       }
+      best = (Constructor<?>) cached;
+    } else {
+      best = null;
+      for (Constructor<?> ctor : clazz.getDeclaredConstructors()) {
+        if (parametersMatch(ctor.getParameterTypes(), args)
+            && (best == null
+                || isMoreSpecific(ctor.getParameterTypes(), best.getParameterTypes()))) {
+          best = ctor;
+        }
+      }
+      if (best == null) {
+        bucket.put(key, NEGATIVE);
+        throw new NoSuchMethodError(clazz.getName() + ".<init> (no matching constructor)");
+      }
+      best.setAccessible(true);
+      bucket.put(key, best);
     }
-    if (best == null) {
-      throw new NoSuchMethodError(clazz.getName() + ".<init> (no matching constructor)");
-    }
-    best.setAccessible(true);
     try {
       return best.newInstance(args);
     } catch (Throwable t) {
@@ -119,6 +176,15 @@ public final class Reflect {
   }
 
   private static Method resolveBestMethod(Class<?> clazz, String name, Object[] args) {
+    Map<String, Object> bucket = bucket(METHOD_CACHE, clazz);
+    String key = name + describeArgs(args) + "#best";
+    Object cached = bucket.get(key);
+    if (cached != null) {
+      if (cached == NEGATIVE) {
+        throw new NoSuchMethodError(clazz.getName() + "#" + name + " (no matching overload)");
+      }
+      return (Method) cached;
+    }
     Method best = null;
     Class<?> c = clazz;
     while (c != null) {
@@ -143,23 +209,33 @@ public final class Reflect {
       }
     }
     if (best == null) {
+      bucket.put(key, NEGATIVE);
       throw new NoSuchMethodError(clazz.getName() + "#" + name + " (no matching overload)");
     }
     best.setAccessible(true);
+    bucket.put(key, best);
     return best;
   }
 
   private static Field findField(Class<?> clazz, String name) {
+    Map<String, Object> bucket = bucket(FIELD_CACHE, clazz);
+    Object cached = bucket.get(name);
+    if (cached != null) {
+      if (cached == NEGATIVE) throw new NoSuchFieldError(clazz.getName() + "#" + name);
+      return (Field) cached;
+    }
     Class<?> c = clazz;
     while (c != null) {
       try {
         Field f = c.getDeclaredField(name);
         f.setAccessible(true);
+        bucket.put(name, f);
         return f;
       } catch (NoSuchFieldException ignored) {
         c = c.getSuperclass();
       }
     }
+    bucket.put(name, NEGATIVE);
     throw new NoSuchFieldError(clazz.getName() + "#" + name);
   }
 
@@ -327,6 +403,15 @@ public final class Reflect {
     for (int i = 0; i < types.length; i++) {
       if (i > 0) sb.append(", ");
       sb.append(types[i].getName());
+    }
+    return sb.append(")").toString();
+  }
+
+  private static String describeArgs(Object[] args) {
+    StringBuilder sb = new StringBuilder("(");
+    for (int i = 0; i < args.length; i++) {
+      if (i > 0) sb.append(", ");
+      sb.append(args[i] == null ? "null" : args[i].getClass().getName());
     }
     return sb.append(")").toString();
   }
