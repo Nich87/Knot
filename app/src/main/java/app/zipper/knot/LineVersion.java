@@ -395,8 +395,6 @@ public class LineVersion {
       public String firebaseWakefulStartMethod = "";
       public String firebaseCompletedTaskClass = "";
       public String firebaseCompletedTaskMethod = "";
-      public String lineLifecycleObserverClass = "";
-      public String lineLifecycleObserverMethod = "";
       public String legyStreamingStateClass = "";
       public String legyStreamingLifecycleClass = "";
       public String legyStreamingLifecycleMethod = "";

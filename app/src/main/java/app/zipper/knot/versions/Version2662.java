@@ -234,9 +234,6 @@ public class Version2662 {
     v.notificationFix.firebaseCompletedTaskClass = "lm.n";
     v.notificationFix.firebaseCompletedTaskMethod = "e";
     v.foregroundKeepAlive.serviceClass = "androidx.work.impl.foreground.SystemForegroundService";
-    v.notificationFix.lineLifecycleObserverClass =
-        "jp.naver.line.android.common.lifecycle.LineLifecycleObserver";
-    v.notificationFix.lineLifecycleObserverMethod = "onStateChanged";
     v.notificationFix.legyStreamingStateClass = "com.linecorp.legy.streaming.h$a";
     v.notificationFix.legyStreamingLifecycleClass = "com.linecorp.legy.streaming.h$d";
     v.notificationFix.legyStreamingLifecycleMethod = "Z0";

@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
 import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
@@ -280,30 +278,6 @@ public class FcmFixHook implements BaseHook {
       return;
     }
     final LineVersion.Config.NotificationFix fixCfg = versionConfig.notificationFix;
-
-    try {
-      Knot.module
-          .hook(
-              Reflect.findMethodExact(
-                  fixCfg.lineLifecycleObserverClass,
-                  cl,
-                  fixCfg.lineLifecycleObserverMethod,
-                  LifecycleOwner.class,
-                  Lifecycle.Event.class))
-          .intercept(
-              chain -> {
-                if (!isEnabled(config)) return chain.proceed();
-
-                Lifecycle.Event event = (Lifecycle.Event) chain.getArg(1);
-                if (event != Lifecycle.Event.ON_STOP) {
-                  return chain.proceed();
-                }
-
-                logVerbose("suppressing LINE background lifecycle stop");
-                return null;
-              });
-    } catch (Throwable ignored) {
-    }
 
     try {
       final Class<?> streamingStateClass = Reflect.findClass(fixCfg.legyStreamingStateClass, cl);
