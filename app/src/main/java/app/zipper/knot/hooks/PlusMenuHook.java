@@ -161,7 +161,7 @@ public class PlusMenuHook implements BaseHook {
                   }
                 }
               } catch (Throwable t) {
-                Knot.log("Knot: PlusMenu error: " + t);
+                Knot.debug("Knot: PlusMenu error: " + t);
               } finally {
                 injectionActive = false;
               }

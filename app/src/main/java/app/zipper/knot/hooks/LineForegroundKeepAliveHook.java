@@ -135,7 +135,7 @@ public class LineForegroundKeepAliveHook implements BaseHook {
       }
       Knot.log("requested LINE foreground keep-alive service");
     } catch (Throwable t) {
-      Knot.log("Knot: failed to start LINE foreground keep-alive service: " + t);
+      Knot.debug("Knot: failed to start LINE foreground keep-alive service: " + t);
     }
   }
 
@@ -236,7 +236,7 @@ public class LineForegroundKeepAliveHook implements BaseHook {
                 Knot.log("Knot: LINE foreground keep-alive service is active");
                 return Service.START_STICKY;
               } catch (Throwable t) {
-                Knot.log("Knot: failed to activate LINE foreground keep-alive service: " + t);
+                Knot.debug("Knot: failed to activate LINE foreground keep-alive service: " + t);
                 return Service.START_NOT_STICKY;
               }
             });

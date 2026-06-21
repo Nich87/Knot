@@ -51,7 +51,7 @@ public class RemoveHeaderButtons implements BaseHook {
             try {
               patchState(chain.getThisObject(), cfg, aiFriend, album, openChat);
             } catch (Exception e) {
-              Knot.log("Knot: RemoveHeaderButtons constructor error: " + e);
+              Knot.debug("Knot: RemoveHeaderButtons constructor error: " + e);
             }
           }
           return result;
@@ -69,7 +69,7 @@ public class RemoveHeaderButtons implements BaseHook {
           try {
             return filterButtons(list, cfg, aiFriend, album, openChat);
           } catch (Exception e) {
-            Knot.log("Knot: RemoveHeaderButtons createEndButtons error: " + e);
+            Knot.debug("Knot: RemoveHeaderButtons createEndButtons error: " + e);
             return result;
           }
         });
@@ -149,7 +149,7 @@ public class RemoveHeaderButtons implements BaseHook {
                 return chain.proceed();
               });
     } else {
-      Knot.log("Knot: RemoveHeaderButtons could not find search bar AI visibility method.");
+      Knot.debug("Knot: RemoveHeaderButtons could not find search bar AI visibility method.");
     }
 
     if (searchBarAiClick != null) {
@@ -188,7 +188,7 @@ public class RemoveHeaderButtons implements BaseHook {
     try {
       cls = Reflect.findClass(cfg.searchBarAgentI.homeSearchBarClass, classLoader);
     } catch (Throwable t) {
-      Knot.log("Knot: RemoveHeaderButtons could not find Home search bar class.");
+      Knot.debug("Knot: RemoveHeaderButtons could not find Home search bar class.");
       return;
     }
 
@@ -199,7 +199,7 @@ public class RemoveHeaderButtons implements BaseHook {
             try {
               patchHomeSearchBarAiButton(cfg, chain.getThisObject());
             } catch (Exception e) {
-              Knot.log("Knot: RemoveHeaderButtons Home search bar error: " + e);
+              Knot.debug("Knot: RemoveHeaderButtons Home search bar error: " + e);
             }
           }
           return result;
@@ -237,7 +237,7 @@ public class RemoveHeaderButtons implements BaseHook {
               "setGuidelineEnd",
               dpToPx(context, cfg.searchBarAgentI.homeGuidelineEndDp));
         } catch (Throwable t) {
-          Knot.log("Knot: RemoveHeaderButtons guideline error: " + t);
+          Knot.debug("Knot: RemoveHeaderButtons guideline error: " + t);
         }
       }
     }

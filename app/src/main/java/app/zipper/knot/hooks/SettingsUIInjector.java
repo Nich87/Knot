@@ -215,7 +215,7 @@ public class SettingsUIInjector implements BaseHook {
                       cfg.settings.fieldVisibilityFilter,
                       Reflect.getStaticObjectField(bc, cfg.settings.fieldCommonHandler));
                 } catch (Throwable e) {
-                  Knot.log("Knot: Adapter wrapper failed: " + e);
+                  Knot.debug("Knot: Adapter wrapper failed: " + e);
                 }
               }
 
@@ -369,7 +369,7 @@ public class SettingsUIInjector implements BaseHook {
                   pendingRestart = true;
                   if (onSettingsReloadRequest != null) onSettingsReloadRequest.run();
                 } catch (Throwable t) {
-                  Knot.log("Knot: Failed to copy font file: " + t.getMessage());
+                  Knot.debug("Knot: Failed to copy font file: " + t.getMessage());
                 }
                 return null;
               } else if (requestCode == PICK_RESTORE_DB_CODE) {
@@ -415,7 +415,7 @@ public class SettingsUIInjector implements BaseHook {
                                           ctx);
                                     });
                           } catch (Throwable t) {
-                            Knot.log("Knot: Failed to prepare restore DB: " + t.getMessage());
+                            Knot.debug("Knot: Failed to prepare restore DB: " + t.getMessage());
                             if (tempFile != null) tempFile.delete();
                           }
                         })
@@ -503,7 +503,7 @@ public class SettingsUIInjector implements BaseHook {
           .setInterpolator(new DecelerateInterpolator())
           .start();
     } catch (Throwable e) {
-      Knot.log("Knot: Dialog display failed: " + e.getMessage());
+      Knot.debug("Knot: Dialog display failed: " + e.getMessage());
     }
   }
 

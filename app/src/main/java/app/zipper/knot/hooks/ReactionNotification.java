@@ -87,7 +87,7 @@ public class ReactionNotification implements BaseHook {
           .hook(Reflect.findMethodExact(android.app.Activity.class, "onPause"))
           .intercept(activityTracker);
     } catch (Throwable t) {
-      Knot.log("Knot: Chat tracking hook failed: " + t.getMessage());
+      Knot.debug("Knot: Chat tracking hook failed: " + t.getMessage());
     }
 
     try {
@@ -105,7 +105,7 @@ public class ReactionNotification implements BaseHook {
             return result;
           });
     } catch (Throwable t) {
-      Knot.log("Knot: Reaction hook failed: " + t.getMessage());
+      Knot.debug("Knot: Reaction hook failed: " + t.getMessage());
     }
   }
 

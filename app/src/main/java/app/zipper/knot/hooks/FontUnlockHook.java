@@ -302,7 +302,7 @@ public class FontUnlockHook implements BaseHook {
             return;
           }
         } catch (Throwable t) {
-          Knot.log("Knot: Failed to load font: " + t.getMessage());
+          Knot.debug("Knot: Failed to load font: " + t.getMessage());
         }
       }
     }

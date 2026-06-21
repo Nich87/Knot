@@ -238,7 +238,7 @@ public class HomeSettingsTooltip implements BaseHook {
               });
 
     } catch (Throwable t) {
-      Knot.log("Knot: HomeSettingsTooltip error: " + t);
+      Knot.debug("Knot: HomeSettingsTooltip error: " + t);
     }
   }
 }

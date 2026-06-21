@@ -64,7 +64,7 @@ public class SearchResultCountHook implements BaseHook {
             return result;
           });
     } catch (Throwable t) {
-      Knot.log("Knot: SearchResultCountHook FTS count hook error: " + t);
+      Knot.debug("Knot: SearchResultCountHook FTS count hook error: " + t);
     }
   }
 
@@ -89,7 +89,7 @@ public class SearchResultCountHook implements BaseHook {
                 return result;
               });
     } catch (Throwable t) {
-      Knot.log("Knot: SearchResultCountHook result count hook error: " + t);
+      Knot.debug("Knot: SearchResultCountHook result count hook error: " + t);
     }
   }
 
@@ -111,7 +111,7 @@ public class SearchResultCountHook implements BaseHook {
             return result;
           });
     } catch (Throwable t) {
-      Knot.log("Knot: SearchResultCountHook title count hook error: " + t);
+      Knot.debug("Knot: SearchResultCountHook title count hook error: " + t);
     }
   }
 
@@ -137,7 +137,7 @@ public class SearchResultCountHook implements BaseHook {
 
       rememberRecentFtsCount(chatId, count);
     } catch (Throwable t) {
-      Knot.log("Knot: SearchResultCountHook cache FTS count error: " + t);
+      Knot.debug("Knot: SearchResultCountHook cache FTS count error: " + t);
     }
   }
 
@@ -165,7 +165,7 @@ public class SearchResultCountHook implements BaseHook {
       if (value > Integer.MAX_VALUE) return Integer.MAX_VALUE;
       return (int) value;
     } catch (Throwable t) {
-      Knot.log("Knot: SearchResultCountHook fetch FTS count error: " + t);
+      Knot.debug("Knot: SearchResultCountHook fetch FTS count error: " + t);
       return null;
     } finally {
       if (statement != null) {
@@ -200,7 +200,7 @@ public class SearchResultCountHook implements BaseHook {
 
       if (currentCount > LINE_SEARCH_DISPLAY_CAP) rememberExactCount(currentCount);
     } catch (Throwable t) {
-      Knot.log("Knot: SearchResultCountHook replace result count error: " + t);
+      Knot.debug("Knot: SearchResultCountHook replace result count error: " + t);
     }
   }
 
@@ -240,7 +240,7 @@ public class SearchResultCountHook implements BaseHook {
       boolean rtl = Boolean.TRUE.equals(args.get(2));
       ((TextView) titleView).setText(formatSearchResultTitle((String) title, count, rtl));
     } catch (Throwable t) {
-      Knot.log("Knot: SearchResultCountHook replace title count error: " + t);
+      Knot.debug("Knot: SearchResultCountHook replace title count error: " + t);
     }
   }
 
@@ -342,7 +342,7 @@ public class SearchResultCountHook implements BaseHook {
         return (int) count;
       }
     } catch (Throwable t) {
-      Knot.log("Knot: SearchResultCountHook fetch local LIKE count error: " + t);
+      Knot.debug("Knot: SearchResultCountHook fetch local LIKE count error: " + t);
       return null;
     }
   }

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.util.Log;
 import androidx.annotation.NonNull;
+import app.zipper.knot.diagnostics.HookLog;
+import app.zipper.knot.diagnostics.MappingDiagnostics;
 import app.zipper.knot.hooks.*;
 import app.zipper.knot.utils.ModuleStrings;
 import io.github.libxposed.api.XposedModule;
@@ -66,6 +68,7 @@ public class Main extends XposedModule {
       SettingsStore.setLoaded(true);
 
       Knot.log("Knot: Initializing Knot hooks...");
+      Reflect.missListener = HookLog::recordResolveFailure;
 
       applyHook(new SettingsUIInjector(), lpparam);
       applyHook(new SettingsButtonLongPress(), lpparam);
@@ -155,14 +158,22 @@ public class Main extends XposedModule {
       if (options.spoofVersion.enabled || options.spoofVersionUnsendOnly.enabled) {
         applyHook(new VersionSpoof(), lpparam);
       }
+
+      MappingDiagnostics.runAndLog(lpparam.classLoader);
     }
   }
 
   private void applyHook(BaseHook hook, LoadParam lpparam) {
+    String name = hook.getClass().getSimpleName();
+    HookLog.enterHook(name);
     try {
       hook.hook(options, lpparam);
+      HookLog.recordInstall(name, null);
     } catch (Throwable t) {
-      Knot.log("Knot: Hook failed for " + hook.getClass().getSimpleName() + ": " + t);
+      HookLog.recordInstall(name, t);
+      Knot.debug("Knot: Hook failed for " + name + ": " + t);
+    } finally {
+      HookLog.exitHook();
     }
   }
 

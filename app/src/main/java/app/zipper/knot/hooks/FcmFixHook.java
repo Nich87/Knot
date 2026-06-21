@@ -251,7 +251,8 @@ public class FcmFixHook implements BaseHook {
                 appContext,
                 serviceIntent);
       } catch (Throwable wakefulFailure) {
-        Knot.log("Knot: wakeful Firebase direct-delivery failed, falling back: " + wakefulFailure);
+        Knot.debug(
+            "Knot: wakeful Firebase direct-delivery failed, falling back: " + wakefulFailure);
         component = appContext.startService(serviceIntent);
       }
 
@@ -265,7 +266,7 @@ public class FcmFixHook implements BaseHook {
       logIntent("forced-direct-intent", originalIntent);
       return true;
     } catch (Throwable t) {
-      Knot.log("Knot: Firebase direct-delivery failed: " + t);
+      Knot.debug("Knot: Firebase direct-delivery failed: " + t);
       return false;
     }
   }
@@ -305,7 +306,7 @@ public class FcmFixHook implements BaseHook {
                   Object observer = chain.getThisObject();
                   Object streamingManager = resolveLegyStreamingManager(observer, fixCfg);
                   if (streamingManager == null) {
-                    Knot.log("Knot: failed to resolve legy streaming outer instance");
+                    Knot.debug("Knot: failed to resolve legy streaming outer instance");
                     return chain.proceed();
                   }
 
@@ -313,7 +314,7 @@ public class FcmFixHook implements BaseHook {
                   logVerbose("suppressed legy streaming background disconnect timer");
                   return null;
                 } catch (Throwable t) {
-                  Knot.log("Knot: failed to suppress legy background disconnect: " + t);
+                  Knot.debug("Knot: failed to suppress legy background disconnect: " + t);
                   return chain.proceed();
                 }
               });

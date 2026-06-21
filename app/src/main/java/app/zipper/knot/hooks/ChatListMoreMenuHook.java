@@ -104,7 +104,7 @@ public class ChatListMoreMenuHook implements BaseHook {
       }
       return true;
     } catch (Throwable t) {
-      Knot.log("Knot: ChatListMoreMenu model inject error: " + t);
+      Knot.debug("Knot: ChatListMoreMenu model inject error: " + t);
       return false;
     }
   }
@@ -192,7 +192,7 @@ public class ChatListMoreMenuHook implements BaseHook {
           return;
         }
       } catch (Throwable t) {
-        Knot.log("Knot: ChatListMoreMenu click error: " + t);
+        Knot.debug("Knot: ChatListMoreMenu click error: " + t);
       }
       if (original != null) original.onItemClick(parent, view, position, id);
     }

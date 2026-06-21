@@ -24,7 +24,7 @@ public class SafeResourceFix implements BaseHook {
                 return result;
               });
     } catch (Throwable t) {
-      Knot.log("Knot: Failed to hook SafeResourceFix: " + t.getMessage());
+      Knot.debug("Knot: Failed to hook SafeResourceFix: " + t.getMessage());
     }
   }
 }

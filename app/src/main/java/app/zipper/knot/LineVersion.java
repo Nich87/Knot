@@ -488,8 +488,15 @@ public class LineVersion {
     return matchVersion(getVersionName(context));
   }
 
+  private static volatile String detectedVersion;
+
+  public static String detectedVersion() {
+    return detectedVersion;
+  }
+
   private static Config matchVersion(String verName) {
     if (verName == null) return null;
+    detectedVersion = verName;
     Knot.log("Knot: Detected LINE version: " + verName);
     for (Map.Entry<String, Config> entry : VERSION_TABLE.entrySet()) {
       if (verName.startsWith(entry.getKey())) {

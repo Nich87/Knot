@@ -108,7 +108,7 @@ public class AmoledThemeHook implements BaseHook {
                 return result;
               });
     } catch (Throwable t) {
-      Knot.log("Knot: AmoledTheme: nav bar blackening failed: " + t);
+      Knot.debug("Knot: AmoledTheme: nav bar blackening failed: " + t);
     }
   }
 
@@ -252,7 +252,7 @@ public class AmoledThemeHook implements BaseHook {
               + " files)");
       return true;
     } catch (Throwable t) {
-      Knot.log("Knot: AmoledTheme: cache extract failed: " + t);
+      Knot.debug("Knot: AmoledTheme: cache extract failed: " + t);
       return false;
     }
   }

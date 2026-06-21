@@ -47,7 +47,7 @@ public class ImageQuality implements BaseHook {
 
       Knot.log("Knot: Image quality profiles hooked");
     } catch (Throwable t) {
-      Knot.log("Knot: Failed to hook image quality profiles: " + t.getMessage());
+      Knot.debug("Knot: Failed to hook image quality profiles: " + t.getMessage());
     }
   }
 
@@ -79,7 +79,7 @@ public class ImageQuality implements BaseHook {
 
       Knot.log("Knot: Bitmap.compress hooked");
     } catch (Throwable t) {
-      Knot.log("Knot: Failed to hook Bitmap.compress: " + t.getMessage());
+      Knot.debug("Knot: Failed to hook Bitmap.compress: " + t.getMessage());
     }
   }
 }
