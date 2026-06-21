@@ -172,7 +172,6 @@ public class LineVersion {
       public String plusMenuComposerClass = "";
       public String plusMenuComposerImplClass = "";
       public String plusMenuCallbackClass = "";
-      public String plusMenuModifierClass = "";
       public String plusMenuOnClickItemClass = "";
 
       public String methodAddMenuItem = "";

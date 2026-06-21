@@ -61,7 +61,6 @@ public class Version2680 {
     v.plusMenu.plusMenuComposerClass = "h3.t";
     v.plusMenu.plusMenuComposerImplClass = "h3.e1";
     v.plusMenu.plusMenuCallbackClass = "i18.a";
-    v.plusMenu.plusMenuModifierClass = "androidx.compose.ui.e";
     v.plusMenu.plusMenuOnClickItemClass = "i18.l";
     v.plusMenu.methodAddMenuItem = "a";
     v.plusMenu.methodCreateMenu = "c";

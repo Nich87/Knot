@@ -61,7 +61,6 @@ public class Version2670 {
     v.plusMenu.plusMenuComposerClass = "z2.k";
     v.plusMenu.plusMenuComposerImplClass = "z2.l";
     v.plusMenu.plusMenuCallbackClass = "lj8.a";
-    v.plusMenu.plusMenuModifierClass = "androidx.compose.ui.e";
     v.plusMenu.plusMenuOnClickItemClass = "lj8.l";
     v.plusMenu.methodAddMenuItem = "a";
     v.plusMenu.methodCreateMenu = "c";
