@@ -88,12 +88,12 @@ public class AnnouncementNameFix implements BaseHook {
                   sb.insert(0, name.toString());
                   return sb;
                 } catch (Throwable t) {
-                  Knot.debug("Knot: AnnouncementNameFix post-process error: " + t);
+                  Knot.log("Knot: AnnouncementNameFix post-process error: " + t);
                   return original;
                 }
               });
     } catch (Throwable t) {
-      Knot.debug("Knot: AnnouncementNameFix hook error: " + t);
+      Knot.log("Knot: AnnouncementNameFix hook error: " + t);
     }
   }
 }

@@ -52,7 +52,7 @@ public class OpenInExternalBrowserHook implements BaseHook {
                 return result;
               });
     } catch (Throwable t) {
-      Knot.debug("Knot: Failed to hook InAppBrowserActivity: " + t.getMessage());
+      Knot.log("Knot: Failed to hook InAppBrowserActivity: " + t.getMessage());
     }
   }
 }

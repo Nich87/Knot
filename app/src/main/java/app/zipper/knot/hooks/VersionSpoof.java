@@ -53,7 +53,7 @@ public class VersionSpoof implements BaseHook {
           .hook(Reflect.findMethodExact(configCls, cfg.unsend.methodUnsendPremiumLimit))
           .intercept(limitPatch);
     } catch (Throwable t) {
-      Knot.debug("Knot: UI limit patch failed: " + t.getMessage());
+      Knot.log("Knot: UI limit patch failed: " + t.getMessage());
     }
   }
 
@@ -111,7 +111,7 @@ public class VersionSpoof implements BaseHook {
           .intercept(stringPatchHook);
 
     } catch (Throwable t) {
-      Knot.debug("Knot: Version patch failed: " + t.getMessage());
+      Knot.log("Knot: Version patch failed: " + t.getMessage());
     }
   }
 
@@ -139,7 +139,7 @@ public class VersionSpoof implements BaseHook {
                 }
               });
     } catch (Throwable t) {
-      Knot.debug("Knot: Thrift interception failed: " + t.getMessage());
+      Knot.log("Knot: Thrift interception failed: " + t.getMessage());
     }
   }
 

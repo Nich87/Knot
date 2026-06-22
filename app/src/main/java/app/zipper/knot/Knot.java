@@ -16,8 +16,6 @@ public final class Knot {
 
   private Knot() {}
 
-  public static volatile boolean debugLogging = false;
-
   public static void log(String msg) {
     XposedInterface m = module;
     if (m != null) {
@@ -25,10 +23,6 @@ public final class Knot {
     } else {
       Log.i(TAG, msg);
     }
-  }
-
-  public static void debug(String msg) {
-    if (debugLogging) log(msg);
   }
 
   public static void log(String msg, Throwable t) {

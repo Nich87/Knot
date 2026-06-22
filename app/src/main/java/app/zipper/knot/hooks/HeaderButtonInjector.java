@@ -75,7 +75,7 @@ public class HeaderButtonInjector implements BaseHook {
               });
 
     } catch (Throwable t) {
-      Knot.debug("Knot: init error: " + t.getMessage());
+      Knot.log("Knot: init error: " + t.getMessage());
     }
   }
 
@@ -109,7 +109,7 @@ public class HeaderButtonInjector implements BaseHook {
           }
         }
       } catch (Throwable t) {
-        Knot.debug("Knot: icon load error: " + t.getMessage());
+        Knot.log("Knot: icon load error: " + t.getMessage());
       }
 
       if (icon == null) return;
@@ -139,7 +139,7 @@ public class HeaderButtonInjector implements BaseHook {
           }
         }
       } catch (Throwable t) {
-        Knot.debug("Knot: layout error: " + t.getMessage());
+        Knot.log("Knot: layout error: " + t.getMessage());
       }
 
       Reflect.callMethod(
@@ -175,13 +175,13 @@ public class HeaderButtonInjector implements BaseHook {
                       .show();
                 }
               } catch (Throwable t) {
-                Knot.debug("Knot: click error: " + t.toString());
+                Knot.log("Knot: click error: " + t.toString());
               }
             }
           });
 
     } catch (Throwable t) {
-      Knot.debug("Knot: injection error: " + t.getMessage());
+      Knot.log("Knot: injection error: " + t.getMessage());
     }
   }
 }

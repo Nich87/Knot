@@ -38,21 +38,6 @@ public final class Reflect {
     PRIMITIVE_TO_WRAPPER.put(double.class, Double.class);
   }
 
-  public interface MissListener {
-    void onMiss(String target);
-  }
-
-  public static volatile MissListener missListener;
-
-  private static void notifyMiss(String target) {
-    MissListener l = missListener;
-    if (l == null) return;
-    try {
-      l.onMiss(target);
-    } catch (Throwable ignored) {
-    }
-  }
-
   public static Class<?> findClass(String className, ClassLoader cl) {
     Map<String, Object> bucket =
         CLASS_CACHE.computeIfAbsent(cl == null ? NULL_CL : cl, k -> new ConcurrentHashMap<>());
@@ -67,7 +52,6 @@ public final class Reflect {
       return c;
     } catch (ClassNotFoundException e) {
       bucket.put(className, NEGATIVE);
-      notifyMiss(className);
       throw new RuntimeException("Class not found: " + className, e);
     }
   }
@@ -107,7 +91,6 @@ public final class Reflect {
       }
     }
     bucket.put(key, NEGATIVE);
-    notifyMiss("method " + clazz.getName() + "#" + key);
     throw new NoSuchMethodError(clazz.getName() + "#" + key);
   }
 
@@ -227,7 +210,6 @@ public final class Reflect {
     }
     if (best == null) {
       bucket.put(key, NEGATIVE);
-      notifyMiss("method " + clazz.getName() + "#" + name);
       throw new NoSuchMethodError(clazz.getName() + "#" + name + " (no matching overload)");
     }
     best.setAccessible(true);
@@ -254,7 +236,6 @@ public final class Reflect {
       }
     }
     bucket.put(name, NEGATIVE);
-    notifyMiss("field " + clazz.getName() + "#" + name);
     throw new NoSuchFieldError(clazz.getName() + "#" + name);
   }
 

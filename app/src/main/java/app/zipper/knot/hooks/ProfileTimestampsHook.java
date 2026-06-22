@@ -50,7 +50,7 @@ public class ProfileTimestampsHook implements BaseHook {
               try {
                 inject((Activity) chain.getThisObject(), cfg);
               } catch (Throwable t) {
-                Knot.debug("Knot: ProfileTimestampsHook inject error: " + t);
+                Knot.log("Knot: ProfileTimestampsHook inject error: " + t);
               }
               return result;
             });
@@ -70,7 +70,7 @@ public class ProfileTimestampsHook implements BaseHook {
               try {
                 addIcon(activity, cfg, mid);
               } catch (Throwable t) {
-                Knot.debug("Knot: ProfileTimestampsHook addIcon error: " + t);
+                Knot.log("Knot: ProfileTimestampsHook addIcon error: " + t);
               }
             });
   }
@@ -133,7 +133,7 @@ public class ProfileTimestampsHook implements BaseHook {
               .show(),
           activity);
     } catch (Throwable e) {
-      Knot.debug("Knot: ProfileTimestampsHook showDialog error: " + e);
+      Knot.log("Knot: ProfileTimestampsHook showDialog error: " + e);
     }
   }
 
@@ -168,7 +168,7 @@ public class ProfileTimestampsHook implements BaseHook {
       int id = modCtx.getResources().getIdentifier(name, "drawable", modCtx.getPackageName());
       if (id != 0) return modCtx.getDrawable(id);
     } catch (Throwable t) {
-      Knot.debug("Knot: ProfileTimestampsHook loadModuleDrawable failed: " + t);
+      Knot.log("Knot: ProfileTimestampsHook loadModuleDrawable failed: " + t);
     }
     return null;
   }

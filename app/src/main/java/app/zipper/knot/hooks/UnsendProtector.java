@@ -58,13 +58,13 @@ public class UnsendProtector implements BaseHook {
               try {
                 handleIncomingOperation(chain);
               } catch (Exception e) {
-                Knot.debug("Knot: Unsend error: " + e);
+                Knot.log("Knot: Unsend error: " + e);
               }
             }
             return result;
           });
     } catch (Throwable t) {
-      Knot.debug("Knot: Unsend op hook failed: " + t);
+      Knot.log("Knot: Unsend op hook failed: " + t);
     }
 
     if (cfg.unsend.unsendDestroyHandlerClass != null
@@ -83,7 +83,7 @@ public class UnsendProtector implements BaseHook {
               return chain.proceed();
             });
       } catch (Throwable t) {
-        Knot.debug("Knot: Destroy handler hook failed: " + t);
+        Knot.log("Knot: Destroy handler hook failed: " + t);
       }
     }
 
@@ -97,13 +97,13 @@ public class UnsendProtector implements BaseHook {
               try {
                 handleViewHolderBinding(chain);
               } catch (Exception e) {
-                Knot.debug("Knot: Bind error: " + e);
+                Knot.log("Knot: Bind error: " + e);
               }
             }
             return result;
           });
     } catch (Throwable t) {
-      Knot.debug("Knot: Bind hook failed: " + t);
+      Knot.log("Knot: Bind hook failed: " + t);
     }
   }
 
@@ -138,7 +138,7 @@ public class UnsendProtector implements BaseHook {
         unsendEvents.put(id, json.getString(id));
       }
     } catch (Exception e) {
-      Knot.debug("Knot: Unsend history load error: " + e);
+      Knot.log("Knot: Unsend history load error: " + e);
     }
   }
 
@@ -150,7 +150,7 @@ public class UnsendProtector implements BaseHook {
         json.put(entry.getKey(), entry.getValue());
       SettingsStore.saveUnsendHistory(json);
     } catch (Exception e) {
-      Knot.debug("Knot: Unsend history save error: " + e);
+      Knot.log("Knot: Unsend history save error: " + e);
     }
   }
 

@@ -71,7 +71,7 @@ public class SearchMin1CharHook implements BaseHook {
                   String.class))
           .intercept(chain -> hasMeaningfulKeyword((String) chain.getArg(0)));
     } catch (Throwable t) {
-      Knot.debug("Knot: SearchMin1CharHook error: " + t);
+      Knot.log("Knot: SearchMin1CharHook error: " + t);
     }
 
     if (!config.chat.searchResultClass.isEmpty())
@@ -96,7 +96,7 @@ public class SearchMin1CharHook implements BaseHook {
                 return chain.proceed(args);
               });
     } catch (Throwable t) {
-      Knot.debug("Knot: SearchMin1CharHook result hook error: " + t);
+      Knot.log("Knot: SearchMin1CharHook result hook error: " + t);
     }
   }
 
@@ -112,7 +112,7 @@ public class SearchMin1CharHook implements BaseHook {
       args[1] = localIds.size();
       args[3] = localIds;
     } catch (Throwable t) {
-      Knot.debug("Knot: SearchMin1CharHook replace results error: " + t);
+      Knot.log("Knot: SearchMin1CharHook replace results error: " + t);
     }
   }
 
@@ -156,7 +156,7 @@ public class SearchMin1CharHook implements BaseHook {
         return result;
       }
     } catch (Throwable t) {
-      Knot.debug("Knot: SearchMin1CharHook fetch local ids error: " + t);
+      Knot.log("Knot: SearchMin1CharHook fetch local ids error: " + t);
       return null;
     }
   }

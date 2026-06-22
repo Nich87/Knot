@@ -85,7 +85,7 @@ public class SettingsButtonLongPress implements BaseHook {
             return true;
           }
         } catch (Throwable t) {
-          Knot.debug("Knot: Interaction error: " + t);
+          Knot.log("Knot: Interaction error: " + t);
         }
         return false;
       };

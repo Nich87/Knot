@@ -43,7 +43,7 @@ public class ChatTimestampSeconds implements BaseHook {
             try {
               stashCreatedMillis(chain, cfg, displayTimeIface, timestampId);
             } catch (Throwable t) {
-              Knot.debug("Knot: ChatTimestampSeconds stash error: " + t);
+              Knot.log("Knot: ChatTimestampSeconds stash error: " + t);
             }
           }
           return chain.proceed();
@@ -67,7 +67,7 @@ public class ChatTimestampSeconds implements BaseHook {
                 }
                 return chain.proceed();
               } catch (Throwable t) {
-                Knot.debug("Knot: ChatTimestampSeconds setText error: " + t);
+                Knot.log("Knot: ChatTimestampSeconds setText error: " + t);
                 return chain.proceed();
               }
             });

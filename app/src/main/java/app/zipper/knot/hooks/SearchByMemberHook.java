@@ -116,7 +116,7 @@ public class SearchByMemberHook implements BaseHook {
                 return result;
               });
     } catch (Throwable t) {
-      Knot.debug("Knot: SearchByMember setupHeaderHook error: " + t);
+      Knot.log("Knot: SearchByMember setupHeaderHook error: " + t);
     }
   }
 
@@ -132,7 +132,7 @@ public class SearchByMemberHook implements BaseHook {
       setupTextWatcherIfNeeded(activity, config);
       injectMemberSearchIcon(activity, headerView, config);
     } catch (Throwable t) {
-      Knot.debug("Knot: handleHeaderCreated error: " + t);
+      Knot.log("Knot: handleHeaderCreated error: " + t);
     }
   }
 
@@ -191,7 +191,7 @@ public class SearchByMemberHook implements BaseHook {
         showMemberPicker(activity, chatId, members, icon);
       }
     } catch (Throwable t) {
-      Knot.debug("Knot: onMemberIconClicked error: " + t);
+      Knot.log("Knot: onMemberIconClicked error: " + t);
     }
   }
 
@@ -220,7 +220,7 @@ public class SearchByMemberHook implements BaseHook {
                 return result;
               });
     } catch (Throwable t) {
-      Knot.debug("Knot: setupSearchBoxHook error: " + t);
+      Knot.log("Knot: setupSearchBoxHook error: " + t);
     }
   }
 
@@ -238,7 +238,7 @@ public class SearchByMemberHook implements BaseHook {
                 return chain.proceed();
               });
     } catch (Throwable t) {
-      Knot.debug("Knot: setupSearchPresenterHook error: " + t);
+      Knot.log("Knot: setupSearchPresenterHook error: " + t);
     }
   }
 
@@ -260,7 +260,7 @@ public class SearchByMemberHook implements BaseHook {
                 return chain.proceed(args);
               });
     } catch (Throwable t) {
-      Knot.debug("Knot: setupSearchResultHook error: " + t);
+      Knot.log("Knot: setupSearchResultHook error: " + t);
     }
   }
 
@@ -287,7 +287,7 @@ public class SearchByMemberHook implements BaseHook {
         args[1] = filtered.size();
       }
     } catch (Throwable t) {
-      Knot.debug("Knot: handleSearchResultCreation error: " + t);
+      Knot.log("Knot: handleSearchResultCreation error: " + t);
     }
   }
 
@@ -319,7 +319,7 @@ public class SearchByMemberHook implements BaseHook {
                 return result;
               });
     } catch (Throwable t) {
-      Knot.debug("Knot: setupSearchResultWrapperHook error: " + t);
+      Knot.log("Knot: setupSearchResultWrapperHook error: " + t);
     }
   }
 
@@ -356,7 +356,7 @@ public class SearchByMemberHook implements BaseHook {
         creatingResult.remove();
       }
     } catch (Throwable t) {
-      Knot.debug("Knot: handleSearchResultWrapperCreated error: " + t);
+      Knot.log("Knot: handleSearchResultWrapperCreated error: " + t);
     }
   }
 
@@ -394,7 +394,7 @@ public class SearchByMemberHook implements BaseHook {
         return result;
       }
     } catch (Throwable t) {
-      Knot.debug("Knot: filterLocalIdsByMid error: " + t);
+      Knot.log("Knot: filterLocalIdsByMid error: " + t);
       return ids;
     }
   }
@@ -422,7 +422,7 @@ public class SearchByMemberHook implements BaseHook {
         return result;
       }
     } catch (Throwable t) {
-      Knot.debug("Knot: fetchAllMemberLocalIds error: " + t);
+      Knot.log("Knot: fetchAllMemberLocalIds error: " + t);
       return new ArrayList<>();
     }
   }
@@ -480,7 +480,7 @@ public class SearchByMemberHook implements BaseHook {
       return (EditText)
           Reflect.getObjectField(sbView, lineVersionConfig.chat.searchBoxEditTextField);
     } catch (Throwable t) {
-      Knot.debug("Knot: getSearchEditText error: " + t);
+      Knot.log("Knot: getSearchEditText error: " + t);
       return null;
     }
   }
@@ -524,10 +524,10 @@ public class SearchByMemberHook implements BaseHook {
       }
 
       if (!postSearchKeywordEvent(helper, currentText)) {
-        Knot.debug("Knot: triggerReSearch failed to dispatch keyword");
+        Knot.log("Knot: triggerReSearch failed to dispatch keyword");
       }
     } catch (Throwable t) {
-      Knot.debug("Knot: triggerReSearch error: " + t);
+      Knot.log("Knot: triggerReSearch error: " + t);
     }
   }
 
@@ -544,7 +544,7 @@ public class SearchByMemberHook implements BaseHook {
       return true;
     } catch (Throwable t) {
       forcedKeywordRefreshes.remove(keyword != null ? keyword : "");
-      Knot.debug("Knot: postSearchKeywordEvent error: " + t);
+      Knot.log("Knot: postSearchKeywordEvent error: " + t);
       return false;
     }
   }
@@ -568,7 +568,7 @@ public class SearchByMemberHook implements BaseHook {
 
       currentValueRef.lazySet("__knot_force_refresh__" + System.nanoTime());
     } catch (Throwable t) {
-      Knot.debug("Knot: handleForcedKeywordRefresh error: " + t);
+      Knot.log("Knot: handleForcedKeywordRefresh error: " + t);
     }
   }
 
@@ -598,7 +598,7 @@ public class SearchByMemberHook implements BaseHook {
         if (Objects.equals(atomicRef.get(), currentValue)) return (AtomicReference<Object>) ref;
       }
     } catch (Throwable t) {
-      Knot.debug("Knot: getBehaviorSubjectCurrentValueRef error: " + t);
+      Knot.log("Knot: getBehaviorSubjectCurrentValueRef error: " + t);
     }
     return null;
   }
@@ -691,7 +691,7 @@ public class SearchByMemberHook implements BaseHook {
             popup.showAsDropDown(anchor, 0, 0);
             activeTooltip = popup;
           } catch (Throwable t) {
-            Knot.debug("Knot: SearchByMember tooltip error: " + t);
+            Knot.log("Knot: SearchByMember tooltip error: " + t);
           }
         });
   }
