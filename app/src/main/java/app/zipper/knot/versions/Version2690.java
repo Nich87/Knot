@@ -278,7 +278,7 @@ public class Version2690 {
     v.imageQuality.imageUtilClass = "jp.naver.line.android.util.y0";
 
     v.profile.g50fClass = "m60.g";
-    v.profile.h13baClass = "o43.b$a";
+    v.profile.h13baClass = "o43.b";
     v.profile.fieldH3 = "c";
     v.profile.g50aClass = "m60.a";
     v.profile.methodGetProfile = "getProfile";
