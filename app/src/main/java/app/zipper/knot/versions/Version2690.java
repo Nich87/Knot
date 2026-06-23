@@ -307,7 +307,7 @@ public class Version2690 {
     v.chat.searchHeaderHelperClass = "gm1.i";
     v.chat.searchHeaderControllerField = "i";
     v.chat.searchHeaderEventBusField = "b";
-    v.chat.searchControllerSearchBoxMethod = "g";
+    v.chat.searchControllerSearchBoxMethod = "C0";
     v.chat.searchPresenterClass = "km1.p";
     v.chat.searchKeywordTypeClass = "q01.a";
     v.chat.searchKeywordTypeMethod = "d";
