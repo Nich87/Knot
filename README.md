@@ -4,6 +4,11 @@
     Knot
   </h1>
   <p>A brand-new Xposed module for LINE</p>
+  <p>
+    <a href="https://github.com/2b-zipper/Knot/releases"><img src="https://img.shields.io/github/downloads/2b-zipper/Knot/total.svg" alt="Downloads"></a>
+    <a href="https://github.com/2b-zipper/Knot/stargazers"><img src="https://badgen.net/github/stars/2b-zipper/Knot" alt="Stars"></a>
+    <a href="https://github.com/2b-zipper/Knot/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License"></a>
+  </p>
 </div>
 
 ---
