@@ -55,18 +55,16 @@ public class LongVideoHook implements BaseHook {
   private void hookMediaPickerParams(ClassLoader cl, LineVersion.Config v) {
     if (v.media.mediaPickerParamsClass.isEmpty()) return;
     try {
-      Class<?> paramsClass = Reflect.findClass(v.media.mediaPickerParamsClass, cl);
-      Knot.module
-          .hook(Reflect.findConstructorExact(paramsClass))
-          .intercept(
-              chain -> {
-                Object result = chain.proceed();
-                Reflect.setLongField(
-                    chain.getThisObject(),
-                    v.media.fieldMediaPickerMaxVideoDuration,
-                    (long) Integer.MAX_VALUE);
-                return result;
-              });
+      Knot.hookAllCtors(
+          Reflect.findClass(v.media.mediaPickerParamsClass, cl),
+          chain -> {
+            Object result = chain.proceed();
+            Reflect.setLongField(
+                chain.getThisObject(),
+                v.media.fieldMediaPickerMaxVideoDuration,
+                (long) Integer.MAX_VALUE);
+            return result;
+          });
     } catch (Throwable ignored) {
     }
   }
