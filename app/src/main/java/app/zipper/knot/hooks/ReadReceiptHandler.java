@@ -41,7 +41,7 @@ public class ReadReceiptHandler implements BaseHook {
   private void hookOperationForHistory(LineVersion.Config cfg, ClassLoader cl) {
     try {
       Knot.hookAll(
-          Reflect.findClass(cfg.unsend.talkServiceHookClass, cl),
+          Reflect.findClass(cfg.unsend.notifiedReadMessageHandlerClass, cl),
           cfg.unsend.methodReadBuffer,
           chain -> {
             Object result = chain.proceed();

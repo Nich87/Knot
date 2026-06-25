@@ -50,7 +50,7 @@ public class UnsendProtector implements BaseHook {
 
     try {
       Knot.hookAll(
-          Reflect.findClass(cfg.unsend.talkServiceHookClass, lpparam.classLoader),
+          Reflect.findClass(cfg.unsend.notifiedDestroyMessageHandlerClass, lpparam.classLoader),
           cfg.unsend.methodReadBuffer,
           chain -> {
             Object result = chain.proceed();

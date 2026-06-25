@@ -205,7 +205,9 @@ public class LineVersion {
     }
 
     public static class Unsend {
-      public String talkServiceHookClass = "";
+      public String notifiedReadMessageHandlerClass = "";
+      public String notifiedSendReactionHandlerClass = "";
+      public String notifiedDestroyMessageHandlerClass = "";
       public String chatMessageViewHolderClass = "";
 
       public String methodReadBuffer = "";

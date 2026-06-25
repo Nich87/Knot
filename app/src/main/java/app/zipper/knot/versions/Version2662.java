@@ -86,7 +86,9 @@ public class Version2662 {
     v.readReceipt.badgeClearClass = "dc8.b";
     v.readReceipt.longPressReadClass = "ip1";
 
-    v.unsend.talkServiceHookClass = "fh8.ae$a";
+    v.unsend.notifiedReadMessageHandlerClass = "fh8.ae$a";
+    v.unsend.notifiedSendReactionHandlerClass = "fh8.ae$a";
+    v.unsend.notifiedDestroyMessageHandlerClass = "fh8.ae$a";
     v.unsend.chatMessageViewHolderClass = "nd1.g";
     v.unsend.methodReadBuffer = "a";
     v.unsend.methodBind = "N";

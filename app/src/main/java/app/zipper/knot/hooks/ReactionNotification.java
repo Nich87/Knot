@@ -92,7 +92,7 @@ public class ReactionNotification implements BaseHook {
 
     try {
       Knot.hookAll(
-          Reflect.findClass(cfg.unsend.talkServiceHookClass, lpparam.classLoader),
+          Reflect.findClass(cfg.unsend.notifiedSendReactionHandlerClass, lpparam.classLoader),
           cfg.unsend.methodReadBuffer,
           chain -> {
             Object result = chain.proceed();
