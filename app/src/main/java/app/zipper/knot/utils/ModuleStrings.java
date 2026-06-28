@@ -169,7 +169,7 @@ public class ModuleStrings {
       "LINEの通知に表示される「通知をオフ」ボタンを削除します。";
 
   public static final String OPT_FIX_SETTINGS_TALK_CRASH_LABEL = "トーク設定のクラッシュを修正";
-  public static final String OPT_FIX_SETTINGS_TALK_CRASH_DESC = "公式設定の「トーク」を開くとクラッシュする問題を修正します。";
+  public static final String OPT_FIX_SETTINGS_TALK_CRASH_DESC = "パッチ済みのLINEで、公式設定の「トーク」を開くとクラッシュする問題を修正します。";
 
   public static final String OPT_EXPERIMENTAL_FCM_FIX_LABEL = "FCM Fix";
   public static final String OPT_EXPERIMENTAL_FCM_FIX_DESC =
@@ -184,6 +184,10 @@ public class ModuleStrings {
   public static final String OPT_SPOOF_VERSION_LABEL = "アプリバージョンの偽装 (常時)";
   public static final String OPT_SPOOF_VERSION_DESC =
       "常にアプリバージョンを15.12.2に偽装します。なにか特別な目的がない限り使用しないでください。";
+
+  public static final String OPT_FIX_BIOMETRIC_AUTH_LABEL = "生体認証を修正";
+  public static final String OPT_FIX_BIOMETRIC_AUTH_DESC =
+      "パッチ済みのLINEで生体情報の連携ができない問題を修正します。";
 
   public static final String DESC_PATH_ROW = "モジュールの設定ファイルなどが保存されるディレクトリを選択します。";
   public static final String DESC_RESET_ROW = "すべてのモジュール設定をデフォルト状態に戻します。";
