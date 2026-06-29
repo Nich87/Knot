@@ -139,6 +139,9 @@ public class Main extends XposedModule {
       if (options.useAmoledTheme.enabled) {
         applyHook(new AmoledThemeHook(), lpparam);
       }
+      if (options.showThemeOnSubDevice.enabled) {
+        applyHook(new ShowThemeOnSubDeviceHook(), lpparam);
+      }
 
       if (options.reactionNotification.enabled) {
         applyHook(new ReactionNotification(), lpparam);

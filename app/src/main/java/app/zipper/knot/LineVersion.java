@@ -165,6 +165,8 @@ public class LineVersion {
       public String methodRowSetArrowVisible = "setArrowVisible";
       public String methodRowSetDividerVisible = "setDividerVisible";
       public String methodRowSetTitleColor = "setTitleTextColor";
+
+      public String themeSettingItemId = "line-main-settings.themes";
     }
 
     public static class PlusMenu {

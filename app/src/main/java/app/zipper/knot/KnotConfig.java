@@ -79,6 +79,7 @@ public class KnotConfig {
   public final Item useCustomFont                = item("use_custom_font",                  OPT_USE_CUSTOM_FONT_LABEL,                  OPT_USE_CUSTOM_FONT_DESC,                  false, Category.DISPLAY,      SEC_FONT);
   public final Item customFontPath               = item("custom_font_path",                 OPT_CUSTOM_FONT_PATH_LABEL,                 OPT_CUSTOM_FONT_PATH_DESC,                 false, Category.DISPLAY,      SEC_FONT);
   public final Item useAmoledTheme               = item("use_amoled_theme",                 OPT_USE_AMOLED_THEME_LABEL,                 OPT_USE_AMOLED_THEME_DESC,                 false, Category.DISPLAY,      SEC_THEME);
+  public final Item showThemeOnSubDevice         = item("show_theme_on_sub_device",         OPT_SHOW_THEME_ON_SUB_DEVICE_LABEL,         OPT_SHOW_THEME_ON_SUB_DEVICE_DESC,         false, Category.DISPLAY,      SEC_THEME);
   public final Item reactionNotification         = item("reaction_notification",            OPT_REACTION_NOTIFICATION_LABEL,            OPT_REACTION_NOTIFICATION_DESC,            false, Category.NOTIFICATION, "");
   public final Item removeNotificationMuteButton = item("remove_notification_mute_button",  OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_LABEL,  OPT_REMOVE_NOTIFICATION_MUTE_BUTTON_DESC,  false, Category.NOTIFICATION, "");
   public final Item experimentalFcmFix           = item("experimental_fcm_fix",             OPT_EXPERIMENTAL_FCM_FIX_LABEL,             OPT_EXPERIMENTAL_FCM_FIX_DESC,             false, Category.NOTIFICATION, "");

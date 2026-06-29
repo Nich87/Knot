@@ -160,6 +160,10 @@ public class ModuleStrings {
   public static final String OPT_USE_AMOLED_THEME_DESC =
       "AMOLEDテーマを適用します。\"ダークモードでは「ブラック」着せかえを適用\"をオフにする必要があります。";
 
+  public static final String OPT_SHOW_THEME_ON_SUB_DEVICE_LABEL = "サブ端末で着せかえ項目を表示";
+  public static final String OPT_SHOW_THEME_ON_SUB_DEVICE_DESC =
+      "サブ端末でログインした際、公式設定で非表示になる「着せかえ」項目を表示します。※着せかえショップは開けません。購入はメイン端末で行ってください。";
+
   public static final String OPT_REACTION_NOTIFICATION_LABEL = "リアクション通知";
   public static final String OPT_REACTION_NOTIFICATION_DESC =
       "メッセージについたリアクションを通知します。※アプリを開くと送信されます。フォアグラウンドサービス化している場合、LINEを起動していなくても通知が届きます。";
