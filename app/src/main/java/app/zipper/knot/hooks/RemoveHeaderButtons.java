@@ -22,7 +22,8 @@ public class RemoveHeaderButtons implements BaseHook {
 
     if (!config.removeAiFriendsButton.enabled
         && !config.removeSearchBarAgentIButton.enabled
-        && !config.removeOpenChatButton.enabled) return;
+        && !config.removeOpenChatButton.enabled
+        && !config.removeAlbumButton.enabled) return;
 
     if (config.removeSearchBarAgentIButton.enabled) {
       hookHomeSearchBarAiButton(cfg, lpparam.classLoader);
@@ -40,6 +41,16 @@ public class RemoveHeaderButtons implements BaseHook {
 
     if (config.removeSearchBarAgentIButton.enabled) {
       hookSearchBarAiButton(cfg, cls);
+    }
+
+    if (!cfg.talkTabHeader.subDeviceOpenChatButtonClass.isEmpty()) {
+      hookSubDeviceHeaderButton(
+          cfg.talkTabHeader.subDeviceOpenChatButtonClass, lpparam.classLoader, "OPEN_CHAT");
+    }
+
+    if (!cfg.talkTabHeader.subDeviceAlbumButtonClass.isEmpty()) {
+      hookSubDeviceHeaderButton(
+          cfg.talkTabHeader.subDeviceAlbumButtonClass, lpparam.classLoader, "ALBUM");
     }
 
     Knot.hookAllCtors(
@@ -164,6 +175,28 @@ public class RemoveHeaderButtons implements BaseHook {
 
     if (searchBarAiVisible != null || searchBarAiClick != null) {
       Knot.log("Knot: RemoveHeaderButtons hooked Talk search bar Agent i button.");
+    }
+  }
+
+  private static void hookSubDeviceHeaderButton(
+      String className, ClassLoader classLoader, String type) {
+    try {
+      Class<?> subCls = Reflect.findClass(className, classLoader);
+      Knot.hookAll(
+          subCls,
+          "getVisibility",
+          chain -> {
+            boolean shouldRemove =
+                type.equals("OPEN_CHAT")
+                    ? Main.options.removeOpenChatButton.enabled
+                    : Main.options.removeAlbumButton.enabled;
+            if (shouldRemove) return View.GONE;
+            return chain.proceed();
+          });
+      Knot.log("Knot: RemoveHeaderButtons hooked sub-device button " + className);
+    } catch (Throwable t) {
+      Knot.log(
+          "Knot: RemoveHeaderButtons could not hook sub-device button " + className + ": " + t);
     }
   }
 

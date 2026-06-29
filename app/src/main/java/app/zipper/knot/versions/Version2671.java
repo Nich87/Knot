@@ -254,6 +254,8 @@ public class Version2671 {
     v.talkTabHeader.buttonListStateField = "C";
     v.talkTabHeader.iconTypeClass = "iv0.n";
     v.talkTabHeader.iconTypeFieldInButton = "a";
+    v.talkTabHeader.subDeviceOpenChatButtonClass = "no1.c$e";
+    v.talkTabHeader.subDeviceAlbumButtonClass = "no1.c$b";
 
     v.searchBarAgentI.talkVisibleMethod = "w";
     v.searchBarAgentI.talkClickMethod = "s";

@@ -423,6 +423,8 @@ public class LineVersion {
       public String buttonListStateField = "";
       public String iconTypeClass = "";
       public String iconTypeFieldInButton = "";
+      public String subDeviceOpenChatButtonClass = "";
+      public String subDeviceAlbumButtonClass = "";
     }
 
     public static class SearchBarAgentI {
