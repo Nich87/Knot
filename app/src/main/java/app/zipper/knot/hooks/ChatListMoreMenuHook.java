@@ -68,7 +68,7 @@ public class ChatListMoreMenuHook implements BaseHook {
   private static void installClickWrapperIfNeeded(
       Object popupListView, AdapterView.OnItemClickListener original) {
     ListView listView = getListView(popupListView);
-    if (listView == null || Boolean.TRUE.equals(listView.getTag(TAG_CLICK_WRAPPED))) return;
+    if (listView == null) return;
     listView.setOnItemClickListener(new KnotMoreMenuClickListener(original));
     listView.setTag(TAG_CLICK_WRAPPED, Boolean.TRUE);
     injectPairItems(popupListView, true);
