@@ -193,7 +193,8 @@ public class ModuleStrings {
       "常にアプリバージョンを15.12.2に偽装します。なにか特別な目的がない限り使用しないでください。";
 
   public static final String OPT_FIX_BIOMETRIC_AUTH_LABEL = "生体認証を修正";
-  public static final String OPT_FIX_BIOMETRIC_AUTH_DESC = "パッチ済みのLINEで生体情報の連携ができない問題を修正します。※連携後は必ずオフにしてください。";
+  public static final String OPT_FIX_BIOMETRIC_AUTH_DESC =
+      "パッチ済みのLINEで生体情報の連携ができない問題を修正します。※連携後は必ずオフにしてください。";
 
   public static final String DESC_PATH_ROW = "モジュールの設定ファイルなどが保存されるディレクトリを選択します。";
   public static final String DESC_RESET_ROW = "すべてのモジュール設定をデフォルト状態に戻します。";

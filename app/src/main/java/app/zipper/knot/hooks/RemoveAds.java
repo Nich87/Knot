@@ -19,14 +19,15 @@ public class RemoveAds implements BaseHook {
   public void hook(KnotConfig config, LoadParam lpparam) throws Throwable {
     LineVersion.Config cfg = LineVersion.get();
 
-    applyLadAdHook(config, lpparam, cfg);
-    applySmartChannelHook(config, lpparam, cfg);
-    applyGenericAddViewHook(config);
+    hookLadAdView(lpparam, cfg.ads.ladAdView);
+    hookLadAdView(lpparam, cfg.ads.ladAdViewV2);
+    hookSmartChannel(lpparam, cfg);
+    hookGenericAddView();
   }
 
-  private void applyLadAdHook(KnotConfig config, LoadParam lpparam, LineVersion.Config cfg) {
+  private void hookLadAdView(LoadParam lpparam, String className) {
     try {
-      Class<?> ladCls = lpparam.classLoader.loadClass(cfg.ads.ladAdView);
+      Class<?> ladCls = lpparam.classLoader.loadClass(className);
       Knot.module
           .hook(Reflect.findMethodExact(ladCls, "onAttachedToWindow"))
           .intercept(
@@ -50,7 +51,7 @@ public class RemoveAds implements BaseHook {
     }
   }
 
-  private void applySmartChannelHook(KnotConfig config, LoadParam lpparam, LineVersion.Config cfg) {
+  private void hookSmartChannel(LoadParam lpparam, LineVersion.Config cfg) {
     try {
       Class<?> smartCls = lpparam.classLoader.loadClass(cfg.ads.smartChannel);
       Knot.module
@@ -64,7 +65,7 @@ public class RemoveAds implements BaseHook {
     }
   }
 
-  private void applyGenericAddViewHook(KnotConfig config) {
+  private void hookGenericAddView() {
     Knot.module
         .hook(
             Reflect.findMethodExact(
@@ -73,9 +74,7 @@ public class RemoveAds implements BaseHook {
             chain -> {
               Object result = chain.proceed();
               View view = (View) chain.getArg(0);
-              if (isAdComponent(view.getClass().getName())) {
-                hideAdWrapper(view);
-              }
+              if (isAdComponent(view.getClass().getName())) hideAdWrapper(view);
               return result;
             });
   }
@@ -83,48 +82,44 @@ public class RemoveAds implements BaseHook {
   private static void hideAdWrapper(View view) {
     if (view == null) return;
     try {
+      collapse(view);
+
       View current = view;
-      int depth = 0;
-      while (current != null && depth < 5) {
-        current.setVisibility(View.GONE);
-        ViewGroup.LayoutParams lp = current.getLayoutParams();
-        if (lp != null) {
-          lp.height = 0;
-          if (lp instanceof ViewGroup.MarginLayoutParams) {
-            ((ViewGroup.MarginLayoutParams) lp).setMargins(0, 0, 0, 0);
-          }
-          current.setLayoutParams(lp);
-        }
-        current.setPadding(0, 0, 0, 0);
-
+      for (int depth = 0; depth < 5; depth++) {
         View parent = (View) current.getParent();
-        if (!(parent instanceof ViewGroup)) break;
-
-        ViewGroup vg = (ViewGroup) parent;
-        String pName = vg.getClass().getSimpleName();
-        if (pName.contains("RecyclerView")
-            || pName.contains("ListView")
-            || pName.contains("ViewPager")) {
-          break;
-        }
-
-        boolean safeToHideParent = true;
-        for (int i = 0; i < vg.getChildCount(); i++) {
-          View child = vg.getChildAt(i);
-          if (child != current && child.getVisibility() != View.GONE) {
-            safeToHideParent = false;
-            break;
-          }
-        }
-        if (!safeToHideParent) {
-          break;
-        }
-
+        if (!(parent instanceof ViewGroup) || !isEmptyAdWrapper((ViewGroup) parent, current)) break;
+        collapse(parent);
         current = parent;
-        depth++;
       }
     } catch (Throwable ignored) {
     }
+  }
+
+  private static void collapse(View view) {
+    view.setVisibility(View.GONE);
+    ViewGroup.LayoutParams lp = view.getLayoutParams();
+    if (lp != null) {
+      lp.height = 0;
+      if (lp instanceof ViewGroup.MarginLayoutParams) {
+        ((ViewGroup.MarginLayoutParams) lp).setMargins(0, 0, 0, 0);
+      }
+      view.setLayoutParams(lp);
+    }
+  }
+
+  private static boolean isEmptyAdWrapper(ViewGroup parent, View adChild) {
+    String name = parent.getClass().getSimpleName();
+    if (name.contains("RecyclerView") || name.contains("ListView") || name.contains("ViewPager")) {
+      return false;
+    }
+    if (parent.getPaddingTop() != 0 || parent.getPaddingBottom() != 0) return false;
+    ViewGroup.LayoutParams lp = parent.getLayoutParams();
+    if (lp != null && lp.height != ViewGroup.LayoutParams.WRAP_CONTENT) return false;
+    for (int i = 0; i < parent.getChildCount(); i++) {
+      View child = parent.getChildAt(i);
+      if (child != adChild && child.getVisibility() != View.GONE) return false;
+    }
+    return true;
   }
 
   private static boolean isAdComponent(String className) {

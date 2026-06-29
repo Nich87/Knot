@@ -268,6 +268,7 @@ public class LineVersion {
 
     public static class Ads {
       public String ladAdView = "";
+      public String ladAdViewV2 = "";
       public String smartChannel = "";
       public String classAdSdkBase = "";
       public String classAdMolinBase = "";

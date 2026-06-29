@@ -141,6 +141,7 @@ public class Version2660 {
     v.ads.classAdSdkBase = "com.linecorp.line.ladsdk";
     v.ads.classAdMolinBase = "com.linecorp.line.admolin";
     v.ads.ladAdView = v.ads.classAdSdkBase + ".ui.common.view.lifecycle.LadAdView";
+    v.ads.ladAdViewV2 = v.ads.classAdSdkBase + ".ui.v2.common.lifecycle.LyadAdView";
     v.ads.smartChannel = v.ads.classAdMolinBase + ".smartch.v2.view.SmartChannelViewLayout";
 
     v.home.resRecommendation = "home_tab_contents_recommendation_placement";
