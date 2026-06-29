@@ -31,28 +31,7 @@ public class RemoveAds implements BaseHook {
           .hook(Reflect.findMethodExact(ladCls, "onAttachedToWindow"))
           .intercept(
               chain -> {
-                try {
-                  View target = (View) chain.getThisObject();
-                  View root = (View) target.getParent().getParent();
-                  ViewGroup.LayoutParams lp = root.getLayoutParams();
-                  if (lp != null) {
-                    lp.height = 0;
-                    root.setLayoutParams(lp);
-                  }
-                  root.setVisibility(View.GONE);
-                } catch (Throwable e) {
-                  try {
-                    View target = (View) chain.getThisObject();
-                    View root = (View) target.getParent();
-                    ViewGroup.LayoutParams lp = root.getLayoutParams();
-                    if (lp != null) {
-                      lp.height = 0;
-                      root.setLayoutParams(lp);
-                    }
-                    root.setVisibility(View.GONE);
-                  } catch (Throwable ignored) {
-                  }
-                }
+                hideAdWrapper((View) chain.getThisObject());
                 return chain.proceed();
               });
 
@@ -78,11 +57,7 @@ public class RemoveAds implements BaseHook {
           .hook(Reflect.findMethodExact(smartCls, "dispatchDraw", Canvas.class))
           .intercept(
               chain -> {
-                try {
-                  View container = (View) ((View) chain.getThisObject()).getParent();
-                  container.setVisibility(View.GONE);
-                } catch (Throwable ignored) {
-                }
+                hideAdWrapper((View) chain.getThisObject());
                 return chain.proceed();
               });
     } catch (Throwable ignored) {
@@ -98,9 +73,58 @@ public class RemoveAds implements BaseHook {
             chain -> {
               Object result = chain.proceed();
               View view = (View) chain.getArg(0);
-              if (isAdComponent(view.getClass().getName())) view.setVisibility(View.GONE);
+              if (isAdComponent(view.getClass().getName())) {
+                hideAdWrapper(view);
+              }
               return result;
             });
+  }
+
+  private static void hideAdWrapper(View view) {
+    if (view == null) return;
+    try {
+      View current = view;
+      int depth = 0;
+      while (current != null && depth < 5) {
+        current.setVisibility(View.GONE);
+        ViewGroup.LayoutParams lp = current.getLayoutParams();
+        if (lp != null) {
+          lp.height = 0;
+          if (lp instanceof ViewGroup.MarginLayoutParams) {
+            ((ViewGroup.MarginLayoutParams) lp).setMargins(0, 0, 0, 0);
+          }
+          current.setLayoutParams(lp);
+        }
+        current.setPadding(0, 0, 0, 0);
+
+        View parent = (View) current.getParent();
+        if (!(parent instanceof ViewGroup)) break;
+
+        ViewGroup vg = (ViewGroup) parent;
+        String pName = vg.getClass().getSimpleName();
+        if (pName.contains("RecyclerView")
+            || pName.contains("ListView")
+            || pName.contains("ViewPager")) {
+          break;
+        }
+
+        boolean safeToHideParent = true;
+        for (int i = 0; i < vg.getChildCount(); i++) {
+          View child = vg.getChildAt(i);
+          if (child != current && child.getVisibility() != View.GONE) {
+            safeToHideParent = false;
+            break;
+          }
+        }
+        if (!safeToHideParent) {
+          break;
+        }
+
+        current = parent;
+        depth++;
+      }
+    } catch (Throwable ignored) {
+    }
   }
 
   private static boolean isAdComponent(String className) {
