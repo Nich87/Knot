@@ -73,7 +73,7 @@ public class Version2690 {
     v.chatListMoreMenu.popupListAdapterClass =
         "jp.naver.line.android.common.view.listview.PopupListView$b";
     v.chatListMoreMenu.fieldPopupItems = "a";
-    v.chatListMoreMenu.clickListenerClass = "eq1.a";
+    v.chatListMoreMenu.clickListenerClass = "ar1.a";
     v.chatListMoreMenu.methodAddItem = "a";
 
     v.readReceipt.readReceiptManagerClass = "ly2.e";
