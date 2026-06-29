@@ -250,7 +250,8 @@ public class RemoveHeaderButtons implements BaseHook {
     if (!(tabType instanceof Enum<?>)) return false;
     String name = ((Enum<?>) tabType).name();
     return name.equals(cfg.searchBarAgentI.homeTabName)
-        || name.equals(cfg.searchBarAgentI.homeTabV2Name);
+        || name.equals(cfg.searchBarAgentI.homeTabV2Name)
+        || name.equals("CHAT");
   }
 
   private static int dpToPx(Context context, int dp) {
