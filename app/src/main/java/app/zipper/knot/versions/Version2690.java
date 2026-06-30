@@ -356,6 +356,9 @@ public class Version2690 {
     v.chatEditSelectAll.methodToggleItem = "j";
     v.chatEditSelectAll.methodIsItemSelected = "n";
 
+    v.camera.cameraModuleClass = "k12.g";
+    v.camera.methodUseExternalCamera = "d";
+
     v.iab.inAppBrowserActivityClass = "com.linecorp.line.iab.browser.InAppBrowserActivity";
 
     return v;

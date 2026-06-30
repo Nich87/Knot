@@ -40,7 +40,13 @@ public class LineVersion {
     public ChatJump chatJump = new ChatJump();
     public ChatTimestamp chatTimestamp = new ChatTimestamp();
     public ChatEditSelectAll chatEditSelectAll = new ChatEditSelectAll();
+    public Camera camera = new Camera();
     public Iab iab = new Iab();
+
+    public static class Camera {
+      public String cameraModuleClass = "";
+      public String methodUseExternalCamera = "";
+    }
 
     public static class ChatTimestamp {
       public String displayTimeInterface = "";

@@ -356,6 +356,9 @@ public class Version2660 {
     v.chatEditSelectAll.methodToggleItem = "h";
     v.chatEditSelectAll.methodIsItemSelected = "l";
 
+    v.camera.cameraModuleClass = "dy1.h";
+    v.camera.methodUseExternalCamera = "c";
+
     v.iab.inAppBrowserActivityClass = "jp.naver.line.android.activity.iab.InAppBrowserActivity";
 
     return v;
