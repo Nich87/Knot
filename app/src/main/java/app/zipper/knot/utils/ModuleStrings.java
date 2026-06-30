@@ -110,6 +110,9 @@ public class ModuleStrings {
   public static final String OPT_SHOW_SECONDS_IN_CHAT_TIME_LABEL = "チャットの時刻に秒を表示";
   public static final String OPT_SHOW_SECONDS_IN_CHAT_TIME_DESC =
       "各メッセージ横の時刻表示に秒を追加します。 (例: 12:34 → 12:34:56)";
+  public static final String OPT_SELECT_ALL_IN_EDIT_MODE_LABEL = "メッセージ削除画面に全選択ボタンを追加";
+  public static final String OPT_SELECT_ALL_IN_EDIT_MODE_DESC =
+      "メッセージ削除画面の下部に、すべてのメッセージを選択・選択解除できるボタンを追加します。";
   public static final String OPT_FIX_ANNOUNCEMENT_NAME_LABEL = "アナウンス者名の表示を修正";
   public static final String OPT_FIX_ANNOUNCEMENT_NAME_DESC =
       "パッチ済みのLINEで、アナウンス登録時のシステムメッセージが「がアナウンスしました」と名前が空になる不具合を修正し、正しく表示されるようにします。";

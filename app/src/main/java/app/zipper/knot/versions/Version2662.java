@@ -348,6 +348,14 @@ public class Version2662 {
     v.chatTimestamp.displayTimeInterface = "g21.f";
     v.chatTimestamp.methodCreatedMillis = "a";
 
+    v.chatEditSelectAll.selectionProviderClass = "y11.c";
+    v.chatEditSelectAll.selectionStateClass = "y11.d";
+    v.chatEditSelectAll.methodGetSelectionState = "m";
+    v.chatEditSelectAll.methodGetItem = "A";
+    v.chatEditSelectAll.methodGetSelectedIds = "d";
+    v.chatEditSelectAll.methodToggleItem = "h";
+    v.chatEditSelectAll.methodIsItemSelected = "l";
+
     v.iab.inAppBrowserActivityClass = "jp.naver.line.android.activity.iab.InAppBrowserActivity";
 
     return v;

@@ -348,6 +348,14 @@ public class Version2671 {
     v.chatTimestamp.displayTimeInterface = "u21.f";
     v.chatTimestamp.methodCreatedMillis = "a";
 
+    v.chatEditSelectAll.selectionProviderClass = "m21.c";
+    v.chatEditSelectAll.selectionStateClass = "m21.d";
+    v.chatEditSelectAll.methodGetSelectionState = "m";
+    v.chatEditSelectAll.methodGetItem = "B";
+    v.chatEditSelectAll.methodGetSelectedIds = "d";
+    v.chatEditSelectAll.methodToggleItem = "g";
+    v.chatEditSelectAll.methodIsItemSelected = "n";
+
     v.iab.inAppBrowserActivityClass = "com.linecorp.line.iab.browser.api.InAppBrowserActivity";
 
     return v;

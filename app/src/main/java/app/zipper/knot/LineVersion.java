@@ -39,11 +39,23 @@ public class LineVersion {
     public AnnouncementFix announcementFix = new AnnouncementFix();
     public ChatJump chatJump = new ChatJump();
     public ChatTimestamp chatTimestamp = new ChatTimestamp();
+    public ChatEditSelectAll chatEditSelectAll = new ChatEditSelectAll();
     public Iab iab = new Iab();
 
     public static class ChatTimestamp {
       public String displayTimeInterface = "";
       public String methodCreatedMillis = "";
+    }
+
+    public static class ChatEditSelectAll {
+      public String selectionProviderClass = "";
+      public String selectionStateClass = "";
+      public String methodGetSelectionState = "";
+      public String methodGetItem = "";
+      public String methodGetCount = "getCount";
+      public String methodGetSelectedIds = "";
+      public String methodToggleItem = "";
+      public String methodIsItemSelected = "";
     }
 
     public static class Iab {
