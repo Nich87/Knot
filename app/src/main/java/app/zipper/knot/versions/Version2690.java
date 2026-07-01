@@ -84,7 +84,7 @@ public class Version2690 {
     v.readReceipt.methodReadAll = "c";
     v.readReceipt.operationNotifiedReadName = "NOTIFIED_READ_MESSAGE";
     v.readReceipt.badgeClearClass = "uw2.u";
-    v.readReceipt.longPressReadClass = "rr1";
+    v.readReceipt.longPressReadClass = "ns1";
 
     v.unsend.notifiedReadMessageHandlerClass = "f18.e2";
     v.unsend.notifiedSendReactionHandlerClass = "f18.p2";
