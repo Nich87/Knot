@@ -2,6 +2,8 @@ package app.zipper.knot.hooks;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -12,6 +14,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import app.zipper.knot.Knot;
 import app.zipper.knot.KnotConfig;
 import app.zipper.knot.LineVersion;
@@ -120,6 +123,7 @@ public class ProfileTimestampsHook implements BaseHook {
       LineTheme.invalidate();
       LineDBUtils.ContactTimes t = LineDBUtils.getContactTimes(mid);
       StringBuilder sb = new StringBuilder();
+      appendRow(sb, ModuleStrings.PROFILE_TS_MID, mid);
       appendRow(sb, ModuleStrings.PROFILE_TS_FRIEND_CREATED, t == null ? null : t.friendCreated);
       appendRow(sb, ModuleStrings.PROFILE_TS_FAVORITE, t == null ? null : t.favorite);
       appendRow(sb, ModuleStrings.PROFILE_TS_PROFILE_UPDATED, t == null ? null : t.profileUpdated);
@@ -129,6 +133,8 @@ public class ProfileTimestampsHook implements BaseHook {
           new AlertDialog.Builder(activity, themeId)
               .setTitle(ModuleStrings.PROFILE_TS_DIALOG_TITLE)
               .setMessage(sb.toString().trim())
+              .setNeutralButton(
+                  ModuleStrings.PROFILE_TS_COPY_MID, (d, which) -> copyMid(activity, mid))
               .setPositiveButton(ModuleStrings.COMMON_CLOSE, null)
               .show(),
           activity);
@@ -137,8 +143,24 @@ public class ProfileTimestampsHook implements BaseHook {
     }
   }
 
+  private static void copyMid(Activity activity, String mid) {
+    try {
+      ClipboardManager clipboard =
+          (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+      if (clipboard == null) return;
+      clipboard.setPrimaryClip(ClipData.newPlainText(ModuleStrings.PROFILE_TS_MID, mid));
+      Toast.makeText(activity, ModuleStrings.PROFILE_TS_MID_COPIED, Toast.LENGTH_SHORT).show();
+    } catch (Throwable e) {
+      Knot.log("Knot: ProfileTimestampsHook copyMid error: " + e);
+    }
+  }
+
   private static void appendRow(StringBuilder sb, String label, Long millis) {
-    sb.append(label).append(": ").append(format(millis)).append("\n");
+    appendRow(sb, label, format(millis));
+  }
+
+  private static void appendRow(StringBuilder sb, String label, String value) {
+    sb.append(label).append(": ").append(value).append("\n");
   }
 
   private static String format(Long millis) {

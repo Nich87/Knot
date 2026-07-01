@@ -86,14 +86,17 @@ public class ModuleStrings {
   public static final String OPT_PREVENT_UNSEND_MESSAGE_DESC =
       "相手がメッセージの送信を取り消しても、自分の端末には残るようにします。取り消されたメッセージにはアイコンが表示され、タップすることで取消日時を確認できます。";
 
-  public static final String OPT_SHOW_PROFILE_TIMESTAMPS_LABEL = "プロフィールに日時情報を表示";
+  public static final String OPT_SHOW_PROFILE_TIMESTAMPS_LABEL = "プロフィールに詳細情報を表示";
   public static final String OPT_SHOW_PROFILE_TIMESTAMPS_DESC =
-      "友だちのプロフィール画面の右上にアイコンを追加します。タップすると、友だち追加・お気に入り登録・プロフィール更新の日時をダイアログで表示します。記録がない項目は「—」と表示されます。";
+      "友だちのプロフィール画面の右上にⓘアイコンを追加します。タップすると、MID・友だち追加・お気に入り登録・プロフィール更新の日時をダイアログで表示します。記録がない項目は「—」と表示されます。";
   public static final String PROFILE_TS_FRIEND_CREATED = "友だち追加";
   public static final String PROFILE_TS_FAVORITE = "お気に入り";
   public static final String PROFILE_TS_PROFILE_UPDATED = "プロフ更新";
   public static final String PROFILE_TS_EMPTY = "—";
-  public static final String PROFILE_TS_DIALOG_TITLE = "日時情報";
+  public static final String PROFILE_TS_DIALOG_TITLE = "プロフィール情報";
+  public static final String PROFILE_TS_MID = "MID";
+  public static final String PROFILE_TS_COPY_MID = "MIDをコピー";
+  public static final String PROFILE_TS_MID_COPIED = "MIDをコピーしました";
 
   public static final String OPT_HIGH_QUALITY_PHOTO_LABEL = "写真の送信品質を向上";
   public static final String OPT_HIGH_QUALITY_PHOTO_DESC =
